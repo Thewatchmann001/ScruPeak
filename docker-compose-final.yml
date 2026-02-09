@@ -1,0 +1,36 @@
+# Docker Compose - Land Registry Database
+# Fixed version without init script issues
+
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: landbiznes_db
+    environment:
+      POSTGRES_DB: landbiznes
+      POSTGRES_USER: landbiznes
+      POSTGRES_PASSWORD: landbiznes
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U landbiznes"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  landbiznes-network:
+    driver: bridge
+
+# After starting container with: docker-compose up -d db
+# Apply schema with: docker exec -i landbiznes_db psql -U landbiznes -d landbiznes < init-scripts/01-schema.sql

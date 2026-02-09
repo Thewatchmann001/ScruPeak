@@ -1,0 +1,188 @@
+services:
+  # =========================================================================
+  # Core Infrastructure
+  # =========================================================================
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: landbiznes_db
+    environment:
+      POSTGRES_DB: landbiznes
+      POSTGRES_USER: landbiznes
+      POSTGRES_PASSWORD: landbiznes
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U landbiznes"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: landbiznes_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # MeiliSearch Search Engine
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: landbiznes_search
+    environment:
+      - MEILI_MASTER_KEY=masterKey123
+      - MEILI_ENV=production
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # Microservices
+  # =========================================================================
+  
+  # Main Backend Service (User, Auth, Payments, Land CRUD)
+  backend:
+    build: 
+      context: ./apps/backend
+    container_name: landbiznes_backend
+    environment:
+      - DATABASE_URL=postgresql://landbiznes:landbiznes@db:5432/landbiznes
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=changeme_dev_secret_key
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - MEILI_URL=http://meilisearch:7700
+      - MEILI_MASTER_KEY=masterKey123
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+  # Celery Worker (Background Tasks)
+  worker:
+    build:
+      context: ./apps/backend
+    container_name: landbiznes_worker
+    command: celery -A app.core.celery_app.celery worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://landbiznes:landbiznes@db:5432/landbiznes
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=changeme_dev_secret_key
+      - MEILI_URL=http://meilisearch:7700
+      - MEILI_MASTER_KEY=masterKey123
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+      - db
+      - meilisearch
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+  # Spatial Intelligence Service (Geometry, Validation, Grid)
+  spatial-service:
+    build:
+      context: ./apps/spatial-service
+    container_name: landbiznes_spatial
+    environment:
+      - DATABASE_URL=postgresql://landbiznes:landbiznes@db:5432/landbiznes
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+  # AI Service (Chatbot, Valuation, Suitability)
+  ai-service:
+    build:
+      context: ./apps/ai-service
+    container_name: landbiznes_ai
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # Gateway & Frontend
+  # =========================================================================
+
+  # API Gateway (Routing, Rate Limiting, Aggregation)
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+    container_name: landbiznes_gateway
+    ports:
+      - "8000:3000"
+    environment:
+      - PORT=3000
+      - BACKEND_URL=http://backend:8000
+      - SPATIAL_URL=http://spatial-service:8000
+      - AI_URL=http://ai-service:8000
+    depends_on:
+      - backend
+      - spatial-service
+      - ai-service
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+  # Web Frontend (React + Vite)
+  web:
+    build:
+      context: ./apps/web
+    container_name: landbiznes_web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - landbiznes-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  meili_data:
+    driver: local
+
+networks:
+  landbiznes-network:
+    driver: bridge
