@@ -25,9 +25,15 @@ app.on(['POST', 'GET'], '/api/auth/**', (c) => {
 });
 
 const port = 4005;
-console.log(`Server is running on port ${port}`);
+console.log(`Attempting to start server on port ${port}...`);
 
-serve({
-  fetch: app.fetch,
-  port
-});
+try {
+    serve({
+      fetch: app.fetch,
+      port
+    }, (info) => {
+        console.log(`Server is running on port ${info.port}`);
+    });
+} catch (e) {
+    console.error("Failed to start server:", e);
+}
