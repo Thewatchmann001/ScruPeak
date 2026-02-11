@@ -14,9 +14,15 @@ export default function PremiumHero() {
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (district) params.append("district", district);
-    if (landType) params.append("type", landType);
+    if (landType) params.append("land_type", landType);
     if (purpose) params.append("purpose", purpose);
-    if (budget) params.append("budget", budget);
+
+    // Simple budget mapping
+    if (budget === "0-25000") { params.append("max_price", "25000"); }
+    else if (budget === "25000-50000") { params.append("min_price", "25000"); params.append("max_price", "50000"); }
+    else if (budget === "50000-100000") { params.append("min_price", "50000"); params.append("max_price", "100000"); }
+    else if (budget === "100000+") { params.append("min_price", "100000"); }
+
     navigate(`/marketplace?${params.toString()}`);
   };
 
@@ -181,6 +187,22 @@ export default function PremiumHero() {
                   <span>Explore</span>
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-8 max-w-4xl mx-auto mb-12 text-center animate-slide-up-delayed-3">
+            <div>
+              <div className="text-3xl lg:text-4xl font-black text-orange-500">2,847</div>
+              <div className="text-gray-400 font-medium text-xs lg:text-sm mt-2 uppercase tracking-tighter">Verified Properties</div>
+            </div>
+            <div>
+              <div className="text-3xl lg:text-4xl font-black text-orange-500">89%</div>
+              <div className="text-gray-400 font-medium text-xs lg:text-sm mt-2 uppercase tracking-tighter">Community Witnessed</div>
+            </div>
+            <div>
+              <div className="text-3xl lg:text-4xl font-black text-orange-500">Zero</div>
+              <div className="text-gray-400 font-medium text-xs lg:text-sm mt-2 uppercase tracking-tighter">Court Disputes</div>
             </div>
           </div>
 

@@ -5,8 +5,11 @@ from sqlalchemy import select, and_, func, desc
 from sqlalchemy.orm import defer
 from uuid import UUID
 import logging
-from typing import Optional
+from typing import Optional, List, Any, Dict
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
+router = APIRouter()
 
 from app.core.database import get_db
 from app.models import Land, User, LandStatus, UserRole
@@ -140,7 +143,7 @@ async def create_land(
     logger.info(f"New land listed (Pending): {new_land.id} by {current_user.id}")
     
     # 5. Trigger Background Tasks
-    from app.tasks import sync_land_to_search
+    from app.tasks import sync_land_to_search, extract_document_details_task
     
     land_dict = {
         "id": str(new_land.id),
@@ -152,4 +155,104 @@ async def create_land(
     }
     sync_land_to_search.delay(land_dict)
     
+    # Trigger document extraction (from survey plan)
+    extract_document_details_task.delay(str(new_land.id), survey_plan_url)
+
     return new_land
+
+@router.get(
+    "",
+    response_model=PaginatedResponse,
+    summary="Search land listings"
+)
+async def search_land(
+    q: Optional[str] = Query(None),
+    district: Optional[str] = Query(None),
+    land_type: Optional[str] = Query(None),
+    purpose: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Advanced search for land properties with pagination and filters.
+    """
+    query = select(Land).options(defer(Land.location), defer(Land.boundary))
+
+    if q:
+        query = query.filter(
+            (Land.title.ilike(f"%{q}%")) |
+            (Land.description.ilike(f"%{q}%")) |
+            (Land.region.ilike(f"%{q}%")) |
+            (Land.district.ilike(f"%{q}%"))
+        )
+
+    if district:
+        query = query.filter(Land.district.ilike(f"%{district}%"))
+
+    # Assuming 'purpose' is used for land_type or dedicated field if it exists
+    # In my seeded data, I used 'purpose' for residential/commercial/etc.
+    if land_type:
+        query = query.filter(Land.purpose.ilike(f"%{land_type}%"))
+
+    if purpose:
+        query = query.filter(Land.purpose.ilike(f"%{purpose}%"))
+
+    if min_price is not None:
+        query = query.filter(Land.price >= min_price)
+
+    if max_price is not None:
+        query = query.filter(Land.price <= max_price)
+
+    # Simple pagination
+    total_count_query = select(func.count()).select_from(query.subquery())
+    total_count_result = await db.execute(total_count_query)
+    total_count = total_count_result.scalar() or 0
+
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    # Manually convert to response schema to avoid serialization issues with Any
+    land_items = [LandResponse.model_validate(item) for item in items]
+
+    total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 0
+
+    return PaginatedResponse(
+        items=land_items,
+        total=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        has_next=page < total_pages,
+        has_prev=page > 1
+    )
+
+@router.get(
+    "/{land_id}",
+    response_model=LandResponse,
+    summary="Get land details"
+)
+async def get_land_detail(
+    land_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get detailed information for a specific land property.
+    """
+    result = await db.execute(
+        select(Land)
+        .filter(Land.id == land_id)
+        .options(defer(Land.location), defer(Land.boundary))
+    )
+    land = result.scalar_one_or_none()
+
+    if not land:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Land property not found"
+        )
+
+    return land

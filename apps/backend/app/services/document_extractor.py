@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 from typing import Dict, Any, Optional
 import PyPDF2
+from app.services.deepseek_ai import get_deepseek_service
 
 logger = logging.getLogger(__name__)
 
@@ -154,13 +155,29 @@ class DocumentExtractor:
         return None
 
     @staticmethod
-    def extract_details(file_path: str) -> Dict[str, Any]:
+    async def extract_details(file_path: str) -> Dict[str, Any]:
         """
         Main entry point. Extracts text and parses details.
+        Uses Hybrid Strategy: OCR -> AI Extraction -> Regex Fallback.
         """
         text = DocumentExtractor._get_text_content(file_path)
         
-        # Parse Details
+        # 1. Try AI Extraction (Best Quality)
+        ai_service = get_deepseek_service()
+        if ai_service.enabled:
+            logger.info("Using AI for detailed extraction...")
+            ai_result = await ai_service.extract_land_details(text)
+            if ai_result.get("success"):
+                data = ai_result["data"]
+                return {
+                    "success": True,
+                    "extraction_method": "AI (DeepSeek) + " + ("AWS Textract" if DocumentExtractor.aws_extractor.client and text else "Local PDF"),
+                    "data": data,
+                    "raw_text_preview": text[:200]
+                }
+
+        # 2. Fallback to Regex Parsing
+        logger.info("AI extraction disabled or failed, falling back to Regex...")
         coords = DocumentExtractor.parse_coordinates(text)
         owner = DocumentExtractor.parse_owner_name(text)
         
@@ -180,12 +197,12 @@ class DocumentExtractor:
 
         return {
             "success": True,
-            "extraction_method": "AWS Textract" if DocumentExtractor.aws_extractor.client and text else "Local PDF",
+            "extraction_method": "Regex Fallback (" + ("AWS Textract" if DocumentExtractor.aws_extractor.client and text else "Local PDF") + ")",
             "extracted_text_preview": text[:200] + "...",
             "data": {
                 "owner_name": owner,
                 "coordinates": coords,
-                "ownership_history": history,
+                "history": history,
                 "document_type": "Title Deed (Detected)" if "Deed" in text else "Land Document"
             }
         }

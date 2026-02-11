@@ -106,3 +106,66 @@ def process_blockchain_hash(land_id: str):
         raise e
     finally:
         session.close()
+
+
+@celery.task(name="extract_document_details_task")
+def extract_document_details_task(land_id: str, file_path: str):
+    """
+    Extracts details from land document and updates the database record.
+    """
+    logger.info(f"Extracting details from document {file_path} for Land {land_id}...")
+
+    session = get_sync_db_session()
+    try:
+        from app.services.document_extractor import DocumentExtractor
+        import asyncio
+
+        # Helper to run async in sync
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        result = loop.run_until_complete(DocumentExtractor.extract_details(file_path))
+
+        if result.get("success"):
+            data = result.get("data")
+            land = session.query(Land).filter(Land.id == land_id).first()
+            if land:
+                # Update land fields from extracted data if they are empty
+                if not land.parcel_id:
+                    land.parcel_id = data.get("parcel_id")
+
+                if not land.size_sqm or land.size_sqm == 0:
+                    try:
+                        size = float(data.get("size_sqm", 0))
+                        if size > 0:
+                            land.size_sqm = size
+                    except:
+                        pass
+
+                # Update coordinates
+                coords = data.get("coordinates")
+                if coords and (not land.latitude or not land.longitude):
+                    try:
+                        land.latitude = float(coords.get("latitude"))
+                        land.longitude = float(coords.get("longitude"))
+                    except:
+                        pass
+
+                # Update owner name if possible (advisory)
+                # In real app, we might just store this in a 'extraction_metadata' field
+
+                session.commit()
+                logger.info(f"Extracted data saved for Land {land_id}")
+                return "Extraction successful"
+
+        return "Extraction failed or no data found"
+
+    except Exception as e:
+        logger.error(f"Extraction task failed: {e}")
+        session.rollback()
+        return f"Error: {e}"
+    finally:
+        session.close()

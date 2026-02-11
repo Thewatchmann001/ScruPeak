@@ -4,9 +4,12 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { VerificationBadge, VerificationIndicator } from "@/components/verification/VerificationUI";
 import { landService } from "@/services/landService";
+import { chatService } from "@/services/chatService";
+import { aiService, LanstimateResult } from "@/services/aiService";
 import { Button } from "@/components/ui/Button";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, MessageSquare, ShieldCheck, Zap, DollarSign, Maximize, TrendingUp, Home } from "lucide-react";
 import { useToast } from "@/context/ToastProvider";
+import { useNavigate } from "react-router-dom";
 
 // Extended interface to include status
 interface LandDetailProps {
@@ -39,15 +42,56 @@ interface LandDetailProps {
 
 export default function LandDetailPage(props: LandDetailProps) {
   const { id: paramId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [land, setLand] = useState<LandDetailProps>(props);
   const [loading, setLoading] = useState(!props.id && !!paramId);
   const [showObjectionModal, setShowObjectionModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<"overview" | "documents" | "intelligence">("overview");
+  const [lanstimate, setLanstimate] = useState<LanstimateResult | null>(null);
+  const [loadingLanstimate, setLoadingLanstimate] = useState(false);
   
   // Objection Form State
   const [objectionReason, setObjectionReason] = useState("");
   const [submittingObjection, setSubmittingObjection] = useState(false);
   const { showToast } = useToast();
+
+  const handleStartChat = async () => {
+    if (!land.id) return;
+    try {
+        const result = await chatService.startChat(land.id);
+        navigate(`/chat?chat_id=${result.chat_id}`);
+    } catch (error: any) {
+        showToast(error.response?.data?.detail || "Failed to start chat", "error");
+    }
+  };
+
+  const fetchLanstimate = async () => {
+    if (!land.location || !land.size || loadingLanstimate || lanstimate) return;
+
+    setLoadingLanstimate(true);
+    try {
+        const result = await aiService.getLanstimate({
+            location: {
+                district: land.location.district,
+                chiefdom: land.location.chiefdom,
+                community: land.location.community
+            },
+            size_sqm: land.size,
+            purpose: land.purpose || "Residential"
+        });
+        setLanstimate(result);
+    } catch (error) {
+        console.error("Failed to fetch Lanstimate", error);
+    } finally {
+        setLoadingLanstimate(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTab === "intelligence") {
+        fetchLanstimate();
+    }
+  }, [selectedTab, land]);
 
   useEffect(() => {
     // If no props provided, fetch data using ID
@@ -122,7 +166,7 @@ export default function LandDetailPage(props: LandDetailProps) {
   const riskLevel = (land.verificationScore || 0) >= 80 ? "low" : (land.verificationScore || 0) >= 50 ? "medium" : "high";
 
   return (
-    <div className="min-h-screen bg-neutral-50 relative">
+    <div className="min-h-screen bg-neutral-50 relative pt-20">
       {/* Back Button */}
       <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4">
@@ -208,39 +252,53 @@ export default function LandDetailPage(props: LandDetailProps) {
             </div>
 
             {/* Key Facts */}
-            <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-soft">
-              <h3 className="text-lg font-semibold text-neutral-900 mb-6">
-                Key Facts
+            <div className="bg-white rounded-2xl p-8 border border-neutral-200 shadow-xl overflow-hidden relative group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-orange-500/10 transition-colors" />
+
+              <h3 className="text-xl font-black text-neutral-900 mb-8 flex items-center gap-2">
+                <ShieldCheck className="w-6 h-6 text-orange-600" />
+                Property Essentials
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">Price</p>
-                  <p className="text-2xl font-bold text-neutral-900">
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <DollarSign className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Market Price</p>
+                  </div>
+                  <p className="text-3xl font-black text-neutral-900">
                     ${land.price?.toLocaleString()}
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">
-                    Size
-                  </p>
-                  <p className="text-2xl font-bold text-neutral-900">
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <Maximize className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Total Area</p>
+                  </div>
+                  <p className="text-3xl font-black text-neutral-900">
                     {land.size?.toLocaleString()}
                   </p>
-                  <p className="text-xs text-neutral-600">{land.sizeUnit}</p>
+                  <p className="text-xs font-bold text-orange-600 uppercase">{land.sizeUnit}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">
-                    Price / {land.sizeUnit}
-                  </p>
-                  <p className="text-2xl font-bold text-neutral-900">
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <TrendingUp className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Unit Price</p>
+                  </div>
+                  <p className="text-3xl font-black text-neutral-900">
                     ${Math.round((land.price || 0) / (land.size || 1))}
                   </p>
+                  <p className="text-xs font-bold text-neutral-400">per {land.sizeUnit}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">
-                    Purpose
-                  </p>
-                  <p className="text-lg font-bold text-primary-600 capitalize">
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <Home className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Permit Type</p>
+                  </div>
+                  <p className="text-xl font-black text-orange-600 capitalize">
                     {land.purpose}
                   </p>
                 </div>
@@ -384,27 +442,87 @@ export default function LandDetailPage(props: LandDetailProps) {
             )}
 
             {selectedTab === "intelligence" && (
-              <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-soft">
-                <h4 className="font-semibold text-neutral-900 mb-4">
-                  Land Intelligence
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                    <span className="text-neutral-700">Development Corridor:</span>
-                    <span className="font-medium">Primary Growth Zone</span>
+              <div className="space-y-6">
+                {/* Lanstimate Card */}
+                <div className="bg-gradient-to-br from-orange-50 to-white rounded-xl p-6 border border-orange-100 shadow-soft">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-orange-600 fill-orange-600" />
+                        <h4 className="font-bold text-neutral-900">Lanstimate™ AI Valuation</h4>
+                    </div>
+                    <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded uppercase tracking-wider">Advisory Only</span>
                   </div>
-                  <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                    <span className="text-neutral-700">Accessibility:</span>
-                    <span className="font-medium">High (Paved Road)</span>
-                  </div>
-                  <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                    <span className="text-neutral-700">Infrastructure:</span>
-                    <span className="font-medium">Water & Power Nearby</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-neutral-700">Flood Risk:</span>
-                    <span className="font-medium text-green-600">Low</span>
-                  </div>
+
+                  {loadingLanstimate ? (
+                    <div className="py-8 text-center text-neutral-500 animate-pulse">Calculating estimation...</div>
+                  ) : lanstimate ? (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white p-4 rounded-lg border border-orange-50 shadow-sm">
+                                <p className="text-xs text-neutral-500 mb-1 uppercase font-bold tracking-tight">Estimated Value</p>
+                                <p className="text-3xl font-black text-orange-600">${lanstimate.estimated_price.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border border-orange-50 shadow-sm">
+                                <p className="text-xs text-neutral-500 mb-1 uppercase font-bold tracking-tight">Confidence Score</p>
+                                <div className="flex items-end gap-2">
+                                    <p className="text-3xl font-black text-neutral-800">{Math.round(lanstimate.confidence_score * 100)}%</p>
+                                    <div className="h-6 w-16 bg-neutral-100 rounded-full overflow-hidden mb-1">
+                                        <div
+                                            className="h-full bg-orange-500"
+                                            style={{ width: `${lanstimate.confidence_score * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="text-xs font-bold text-neutral-600 uppercase tracking-wider">Valuation Factors</p>
+                            <div className="flex flex-wrap gap-2">
+                                {lanstimate.valuation_factors.map((factor, i) => (
+                                    <span key={i} className="text-xs bg-white border border-neutral-200 px-3 py-1 rounded-full text-neutral-700 shadow-sm">
+                                        {factor}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-orange-100">
+                             <div className="flex items-center gap-2 text-sm text-neutral-600 italic">
+                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                                {lanstimate.disclaimer}
+                             </div>
+                        </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                        <Button variant="outline" onClick={fetchLanstimate}>Generate Valuation</Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-soft">
+                    <h4 className="font-semibold text-neutral-900 mb-4">
+                    Environment & Infrastructure
+                    </h4>
+                    <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+                        <span className="text-neutral-700">Development Corridor:</span>
+                        <span className="font-medium">Primary Growth Zone</span>
+                    </div>
+                    <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+                        <span className="text-neutral-700">Accessibility:</span>
+                        <span className="font-medium">High (Paved Road)</span>
+                    </div>
+                    <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+                        <span className="text-neutral-700">Infrastructure:</span>
+                        <span className="font-medium">Water & Power Nearby</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-neutral-700">Flood Risk:</span>
+                        <span className="font-medium text-green-600">Low</span>
+                    </div>
+                    </div>
                 </div>
               </div>
             )}
@@ -436,10 +554,14 @@ export default function LandDetailPage(props: LandDetailProps) {
 
             {/* CTA */}
             <div className="space-y-3">
-              <button className="w-full py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-soft">
+              <button
+                onClick={handleStartChat}
+                className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white font-black rounded-xl hover:shadow-2xl transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+              >
+                <MessageSquare className="w-5 h-5" />
                 Make Inquiry
               </button>
-              <button className="w-full py-3 border border-neutral-300 text-neutral-700 font-semibold rounded-lg hover:bg-neutral-50 transition-colors">
+              <button className="w-full py-3 border-2 border-neutral-200 text-neutral-600 font-bold rounded-xl hover:bg-neutral-50 transition-all">
                 Save to List
               </button>
             </div>
@@ -447,7 +569,11 @@ export default function LandDetailPage(props: LandDetailProps) {
             {/* Contact Seller */}
             <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-soft">
               <h4 className="font-semibold text-neutral-900 mb-4">Contact Seller</h4>
-              <button className="w-full py-2 text-sm border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors">
+              <button
+                onClick={handleStartChat}
+                className="w-full py-2 text-sm border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors flex items-center justify-center gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
                 Message
               </button>
             </div>
