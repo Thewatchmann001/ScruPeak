@@ -146,12 +146,13 @@ class ParcelEvent:
     
     # Spatial relationship detected
     subject_csi: CompositeSpatialIdentity
-    other_csis: List[CompositeSpatialIdentity] = field(default_factory=list)
     
     # Relationship type
     spatial_relationship: str  # "overlap", "containment", "coincident", "disjoint"
-    overlap_area_sqm: Optional[float] = None
     
     # Initiator
     initiated_by: str  # actor name or system
+
+    other_csis: List[CompositeSpatialIdentity] = field(default_factory=list)
+    overlap_area_sqm: Optional[float] = None
     request_metadata: Dict = field(default_factory=dict)

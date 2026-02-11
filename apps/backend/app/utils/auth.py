@@ -141,7 +141,7 @@ class JWTHandler:
 # ============================================================================
 
 # Security scheme for Swagger documentation
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 jwt_handler = JWTHandler()
 
 
@@ -157,6 +157,13 @@ async def get_current_user(
         async def protected_route(user: User = Depends(get_current_user)):
             return {"user_id": user.id}
     """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = credentials.credentials
     
     # Decode token

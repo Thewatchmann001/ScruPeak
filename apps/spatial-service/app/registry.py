@@ -14,6 +14,7 @@ from csi_model import (
     LineageLink,
     EventType,
     ParcelEvent,
+    GridReference,
 )
 from datetime import datetime
 import uuid
@@ -80,7 +81,6 @@ class ParcelRegistry:
         parcel_code = f"SL-{grid_key}-{seq:04d}"
         
         # Create CSI
-        from grid import GridReference
         csi = CompositeSpatialIdentity(
             csi_id=csi_id,
             parcel_code=parcel_code,

@@ -98,25 +98,12 @@ class DeepSeekAIService:
     ) -> Dict[str, Any]:
         """
         Get plain English land guidance for Sierra Leone context
-        
-        Args:
-            question: User's question about land
-            context: Optional context (location, property type, etc.)
-        
-        Returns:
-            Structured guidance response
         """
         prompt = self._build_land_guidance_prompt(question, context)
         
         messages = [
-            {
-                "role": "system",
-                "content": prompt["system"]
-            },
-            {
-                "role": "user",
-                "content": prompt["user"]
-            }
+            {"role": "system", "content": prompt["system"]},
+            {"role": "user", "content": prompt["user"]}
         ]
         
         response = await self._make_request(messages, temperature=0.7)
@@ -128,7 +115,6 @@ class DeepSeekAIService:
                 "timestamp": datetime.utcnow().isoformat()
             }
         
-        # Ensure structured response
         return {
             "success": True,
             "guidance": response.get("guidance", response.get("response", "")),
@@ -146,28 +132,15 @@ class DeepSeekAIService:
     ) -> Dict[str, Any]:
         """
         Review land document and detect potential red flags
-        
-        Args:
-            document_text: Text content of document
-            document_type: Type of document (survey_plan, title_deed, etc.)
-        
-        Returns:
-            Document review with red flags and recommendations
         """
         prompt = self._build_document_review_prompt(document_text, document_type)
         
         messages = [
-            {
-                "role": "system",
-                "content": prompt["system"]
-            },
-            {
-                "role": "user",
-                "content": prompt["user"]
-            }
+            {"role": "system", "content": prompt["system"]},
+            {"role": "user", "content": prompt["user"]}
         ]
         
-        response = await self._make_request(messages, temperature=0.5)  # Lower temp for accuracy
+        response = await self._make_request(messages, temperature=0.5)
         
         if not response:
             return {
@@ -176,7 +149,6 @@ class DeepSeekAIService:
                 "timestamp": datetime.utcnow().isoformat()
             }
         
-        # Ensure structured response
         return {
             "success": True,
             "document_type": document_type,
@@ -188,88 +160,96 @@ class DeepSeekAIService:
             "disclaimer": "AI review is advisory only. All documents must be verified by qualified professionals.",
             "timestamp": datetime.utcnow().isoformat()
         }
-    
+
+    async def estimate_land_price(
+        self,
+        location: Dict[str, str],
+        size_sqm: float,
+        purpose: str,
+        nearby_prices: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """
+        Estimate land price using Lanstimate AI
+        """
+        prompt = self._build_lanstimate_prompt(location, size_sqm, purpose, nearby_prices)
+
+        messages = [
+            {"role": "system", "content": prompt["system"]},
+            {"role": "user", "content": prompt["user"]}
+        ]
+
+        response = await self._make_request(messages, temperature=0.3)
+
+        if not response:
+            return {
+                "success": False,
+                "error": "Lanstimate service unavailable",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        return {
+            "success": True,
+            "estimated_price": response.get("estimated_price", 0),
+            "price_range": response.get("price_range", [0, 0]),
+            "confidence_score": response.get("confidence_score", 0.0),
+            "valuation_factors": response.get("valuation_factors", []),
+            "market_trend": response.get("market_trend", "stable"),
+            "disclaimer": "Lanstimate is advisory only. Professional valuation recommended.",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
     def _build_land_guidance_prompt(
         self,
         question: str,
         context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, str]:
         """Build prompt for land guidance"""
-        
         context_str = ""
         if context:
             context_parts = []
-            if "location" in context:
-                context_parts.append(f"Location: {context['location']}")
-            if "property_type" in context:
-                context_parts.append(f"Property Type: {context['property_type']}")
-            if "size" in context:
-                context_parts.append(f"Size: {context['size']} sqm")
+            if "location" in context: context_parts.append(f"Location: {context['location']}")
+            if "property_type" in context: context_parts.append(f"Property Type: {context['property_type']}")
+            if "size" in context: context_parts.append(f"Size: {context['size']} sqm")
             context_str = "\n".join(context_parts)
         
         system_prompt = """You are a helpful AI assistant providing land transaction guidance for Sierra Leone.
+Your role is ADVISORY ONLY. Respond in JSON format."""
 
-Your role is ADVISORY ONLY. You must:
-- Provide clear, plain English explanations
-- Reference Sierra Leone land laws and customs where relevant
-- Always include cautions and disclaimers
-- Never make legal guarantees or promises
-- Suggest consulting professionals for official matters
+        user_prompt = f"User Question: {question}\nContext:\n{context_str}\nProvide advisory guidance."
+        return {"system": system_prompt, "user": user_prompt}
 
-Respond in JSON format with:
-{
-  "guidance": "Main answer to the question",
-  "explanation": "Detailed explanation",
-  "cautions": ["List of warnings"],
-  "next_steps": ["Recommended actions"]
-}"""
-
-        context_block = f"Context:\n{context_str}\n" if context_str else ""
-        user_prompt = f"""User Question: {question}
-        
-{context_block}
-        
-Provide guidance on this land-related question for Sierra Leone. Be specific, helpful, and always include appropriate cautions."""
-
-        return {
-            "system": system_prompt,
-            "user": user_prompt
-        }
-    
     def _build_document_review_prompt(
         self,
         document_text: str,
         document_type: str
     ) -> Dict[str, str]:
         """Build prompt for document review"""
-        
-        system_prompt = """You are an AI assistant reviewing land documents for Sierra Leone.
+        system_prompt = """You are an AI assistant reviewing land documents for Sierra Leone. Respond in JSON."""
+        user_prompt = f"Review this {document_type} document:\n{document_text[:3000]}"
+        return {"system": system_prompt, "user": user_prompt}
 
-Your role is to:
-- Identify potential red flags or inconsistencies
-- Suggest verification points
-- Provide recommendations
-- NEVER make definitive legal judgments
+    def _build_lanstimate_prompt(
+        self,
+        location: Dict[str, str],
+        size_sqm: float,
+        purpose: str,
+        nearby_prices: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, str]:
+        """Build prompt for Lanstimate price estimation"""
+        system_prompt = """You are Lanstimate, an expert AI land valuator for Sierra Leone.
+Provide estimated land prices based on location, size, and purpose.
+Respond ONLY in JSON format with estimated_price, price_range, confidence_score, valuation_factors, market_trend."""
 
-Respond in JSON format with:
-{
-  "summary": "Brief summary of document",
-  "red_flags": ["List of potential issues"],
-  "verification_points": ["Things to verify"],
-  "recommendations": ["Recommended actions"],
-  "confidence": 0.0-1.0
-}"""
+        nearby_str = ""
+        if nearby_prices:
+            nearby_str = "\nNearby recent prices:\n" + "\n".join([f"- ${p['price']} ({p['size']} sqm)" for p in nearby_prices])
 
-        user_prompt = f"""Review this {document_type} document:
-
-{document_text[:3000]}  # Limit text length
-
-Identify any red flags, inconsistencies, or items requiring verification. Be thorough but cautious."""
-
-        return {
-            "system": system_prompt,
-            "user": user_prompt
-        }
+        user_prompt = f"""Estimate price for:
+Location: {location.get('district')}, {location.get('chiefdom')}, {location.get('community')}
+Size: {size_sqm} sqm
+Purpose: {purpose}
+{nearby_str}"""
+        return {"system": system_prompt, "user": user_prompt}
 
 
 # Singleton instance
