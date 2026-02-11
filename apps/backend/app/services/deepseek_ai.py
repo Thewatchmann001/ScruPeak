@@ -161,6 +161,42 @@ class DeepSeekAIService:
             "timestamp": datetime.utcnow().isoformat()
         }
 
+    async def extract_land_details(
+        self,
+        document_text: str
+    ) -> Dict[str, Any]:
+        """
+        Extract structured details from document text using AI.
+        Higher accuracy than regex for complex documents.
+        """
+        prompt = self._build_extraction_prompt(document_text)
+
+        messages = [
+            {"role": "system", "content": prompt["system"]},
+            {"role": "user", "content": prompt["user"]}
+        ]
+
+        response = await self._make_request(messages, temperature=0.1) # Low temperature for extraction
+
+        if not response:
+            return {
+                "success": False,
+                "error": "Extraction service unavailable"
+            }
+
+        return {
+            "success": True,
+            "data": {
+                "owner_name": response.get("owner_name"),
+                "parcel_id": response.get("parcel_id"),
+                "size_sqm": response.get("size_sqm"),
+                "location": response.get("location", {}),
+                "coordinates": response.get("coordinates", {}),
+                "boundary_points": response.get("boundary_points", []),
+                "history": response.get("history", [])
+            }
+        }
+
     async def estimate_land_price(
         self,
         location: Dict[str, str],
@@ -226,6 +262,15 @@ Your role is ADVISORY ONLY. Respond in JSON format."""
         """Build prompt for document review"""
         system_prompt = """You are an AI assistant reviewing land documents for Sierra Leone. Respond in JSON."""
         user_prompt = f"Review this {document_type} document:\n{document_text[:3000]}"
+        return {"system": system_prompt, "user": user_prompt}
+
+    def _build_extraction_prompt(self, document_text: str) -> Dict[str, str]:
+        """Build prompt for structured data extraction"""
+        system_prompt = """You are a specialized land document parser for Sierra Leone.
+Extract key details from the provided document text.
+Return ONLY JSON with these fields: owner_name, parcel_id, size_sqm, location (district, chiefdom, community), coordinates (latitude, longitude), boundary_points (list of pairs), history (list of previous transfers)."""
+
+        user_prompt = f"Extract details from this document text:\n{document_text[:4000]}"
         return {"system": system_prompt, "user": user_prompt}
 
     def _build_lanstimate_prompt(

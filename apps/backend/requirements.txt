@@ -61,3 +61,5 @@ websockets==16.0 ; python_version >= "3.11" and python_version < "4.0"
 solana
 solders
 fastapi-mail
+PyPDF2==3.0.1
+ulid-py==1.1.0

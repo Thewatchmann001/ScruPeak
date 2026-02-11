@@ -61,6 +61,22 @@ async def save_file(file: UploadFile) -> str:
     return str(file_path)
 
 
+async def save_upload_file(file: UploadFile, sub_dir: str = "general") -> str:
+    """Helper for other routers to save files"""
+    target_dir = UPLOAD_DIR / sub_dir
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    file_ext = Path(file.filename).suffix.lower()
+    unique_filename = f"{uuid4()}{file_ext}"
+    file_path = target_dir / unique_filename
+
+    contents = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    return str(file_path)
+
+
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document(
     file: UploadFile = File(...),
@@ -168,7 +184,8 @@ async def extract_document_details(
             f.write(contents)
         
         # Run Extraction
-        result = DocumentExtractor.extract_details(str(temp_path))
+        from app.services.document_extractor import DocumentExtractor
+        result = await DocumentExtractor.extract_details(str(temp_path))
         
         return result
     except Exception as e:

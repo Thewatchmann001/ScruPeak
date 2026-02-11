@@ -143,7 +143,7 @@ async def create_land(
     logger.info(f"New land listed (Pending): {new_land.id} by {current_user.id}")
     
     # 5. Trigger Background Tasks
-    from app.tasks import sync_land_to_search
+    from app.tasks import sync_land_to_search, extract_document_details_task
     
     land_dict = {
         "id": str(new_land.id),
@@ -155,6 +155,9 @@ async def create_land(
     }
     sync_land_to_search.delay(land_dict)
     
+    # Trigger document extraction (from survey plan)
+    extract_document_details_task.delay(str(new_land.id), survey_plan_url)
+
     return new_land
 
 @router.get(
