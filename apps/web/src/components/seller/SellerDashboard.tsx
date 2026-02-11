@@ -51,6 +51,18 @@ export default function SellerDashboard() {
 
   if (!isAuthenticated) return null;
 
+  const handleCreateListing = () => {
+    // If KYC is not verified, redirect to KYC page
+    if (!user?.kyc_verified) {
+      // Use navigate with state to show a message on the KYC page if desired
+      navigate('/kyc');
+      return;
+    }
+    
+    // Only open modal if verified
+    setIsCreateModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 pt-20">
       {/* Header */}
@@ -70,7 +82,7 @@ export default function SellerDashboard() {
             </Button>
             <Button 
               className="bg-primary text-white hover:bg-primary/90"
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleCreateListing}
             >
               <Plus className="w-4 h-4 mr-2" />
               New Listing

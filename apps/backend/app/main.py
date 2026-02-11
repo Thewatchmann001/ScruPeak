@@ -224,7 +224,7 @@ def create_app() -> FastAPI:
         auth, users, land, agents, escrow, chat, blockchain, admin, 
         documents, payments, title_verification, fraud_detection, dispute_resolution,
         compliance, digital_signatures, blockchain_contracts, multi_stakeholder_roles,
-        ml_services, ai, tasks, payments_monime, kyc, registry
+        ml_services, ai, tasks, payments_monime, kyc, registry, taxation
     )
     from app.websockets import routes as ws_routes
     
@@ -329,6 +329,12 @@ def create_app() -> FastAPI:
     app.include_router(
         compliance.router,
         tags=["Legal Compliance"]
+    )
+
+    # NEW: Taxation & Revenue
+    app.include_router(
+        taxation.router,
+        tags=["Taxation"]
     )
     
     # NEW: Digital Signatures System

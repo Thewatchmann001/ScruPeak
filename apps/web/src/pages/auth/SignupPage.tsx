@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Mail, Lock, User, Loader2, ArrowRight, CheckCircle, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Loader2, ArrowRight, CheckCircle, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -22,6 +22,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { register: registerAuth } = useAuth();
   const navigate = useNavigate();
 
@@ -111,57 +112,30 @@ export default function SignupPage() {
               </div>
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
-                className="pl-12 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-all duration-200"
+                className="pl-12 pr-12 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-all duration-200"
                 placeholder="Create a password"
                 label="Password"
                 error={errors.password?.message}
                 {...register("password")}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center top-[30px] text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                I want to
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="role-buyer"
-                    value="buyer"
-                    className="peer sr-only"
-                    {...register("role")}
-                  />
-                  <label
-                    htmlFor="role-buyer"
-                    className="flex flex-col items-center justify-between rounded-xl border-2 border-gray-200 bg-white p-4 hover:bg-gray-50 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary cursor-pointer transition-all duration-200"
-                  >
-                    <span className="text-sm font-bold">Buy Land</span>
-                  </label>
-                  <CheckCircle className="absolute top-2 right-2 h-4 w-4 text-primary opacity-0 peer-checked:opacity-100 transition-opacity" />
-                </div>
-                
-                <div className="relative">
-                  <input
-                    type="radio"
-                    id="role-owner"
-                    value="owner"
-                    className="peer sr-only"
-                    {...register("role")}
-                  />
-                  <label
-                    htmlFor="role-owner"
-                    className="flex flex-col items-center justify-between rounded-xl border-2 border-gray-200 bg-white p-4 hover:bg-gray-50 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary cursor-pointer transition-all duration-200"
-                  >
-                    <span className="text-sm font-bold">Sell Land</span>
-                  </label>
-                  <CheckCircle className="absolute top-2 right-2 h-4 w-4 text-primary opacity-0 peer-checked:opacity-100 transition-opacity" />
-                </div>
-              </div>
-              {errors.role && <p className="text-sm text-red-500 mt-1">{errors.role.message}</p>}
-            </div>
+            {/* Role selection removed as per user request */}
+            <input type="hidden" value="buyer" {...register("role")} />
+
           </div>
 
           <Button

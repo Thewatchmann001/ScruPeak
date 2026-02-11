@@ -32,5 +32,20 @@ export const landService = {
       result?: any;
       error?: string;
     }>(`/api/v1/tasks/${taskId}`);
+  },
+
+  publishNotice: async (landId: string) => {
+    return api.post<Land>(`/api/v1/land/${landId}/publish-notice`, {});
+  },
+
+  lodgeObjection: async (landId: string, reason: string, evidenceUrl?: string) => {
+    const params = new URLSearchParams();
+    params.append('reason', reason);
+    if (evidenceUrl) params.append('evidence_url', evidenceUrl);
+    
+    return api.post<{ message: string, dispute_id: string }>(
+      `/api/v1/land/${landId}/objection?${params.toString()}`, 
+      {}
+    );
   }
 };

@@ -14,6 +14,7 @@ interface CreateListingModalProps {
 export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListingModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successData, setSuccessData] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -23,14 +24,36 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
     region: '',
     district: '',
     latitude: '',
-    longitude: ''
+    longitude: '',
+    spousal_consent: false,
+    surveyor_id: '',
+  });
+
+  const [files, setFiles] = useState<{
+    survey_plan: File | null;
+    title_deed: File | null;
+    spousal_consent_doc: File | null;
+  }>({
+    survey_plan: null,
+    title_deed: null,
+    spousal_consent_doc: null
   });
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    if (type === 'checkbox') {
+        setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+    } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof typeof files) => {
+    if (e.target.files && e.target.files[0]) {
+        setFiles(prev => ({ ...prev, [fieldName]: e.target.files![0] }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,31 +62,37 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
     setLoading(true);
 
     try {
-      const payload = {
-        ...formData,
-        price: parseFloat(formData.price || '0'),
-        size_sqm: parseFloat(formData.size_acres || '0') * 4046.86, // Convert Acres to SQM
-        location: {
-          latitude: parseFloat(formData.latitude || '0'),
-          longitude: parseFloat(formData.longitude || '0')
-        }
-      };
+      const formPayload = new FormData();
+      formPayload.append('title', formData.title);
+      formPayload.append('description', formData.description);
+      formPayload.append('price', formData.price);
+      formPayload.append('size_sqm', (parseFloat(formData.size_acres || '0') * 4046.86).toString());
+      formPayload.append('region', formData.region);
+      formPayload.append('district', formData.district);
+      formPayload.append('latitude', formData.latitude);
+      formPayload.append('longitude', formData.longitude);
+      formPayload.append('spousal_consent', formData.spousal_consent.toString());
+      if (formData.surveyor_id) formPayload.append('surveyor_id', formData.surveyor_id);
 
-      await api.post('/land', payload);
-      alert('Listing created successfully!');
+      // Files
+      if (!files.survey_plan) throw new Error("Survey Plan is required");
+      formPayload.append('survey_plan', files.survey_plan);
+      
+      if (!files.title_deed) throw new Error("Title Deed is required");
+      formPayload.append('title_deed', files.title_deed);
+
+      if (formData.spousal_consent && files.spousal_consent_doc) {
+          formPayload.append('spousal_consent_doc', files.spousal_consent_doc);
+      }
+
+      await api.post('/land', formPayload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      alert('Listing created successfully! Pending Admin Approval.');
       onSuccess();
       onClose();
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        price: '',
-        size_acres: '',
-        region: '',
-        district: '',
-        latitude: '',
-        longitude: ''
-      });
+      // Reset form...
     } catch (err: any) {
       console.error('Failed to create listing:', err);
       let errorMessage = 'Failed to create listing. Please check your inputs.';
@@ -203,6 +232,44 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                   required
                 />
               </div>
+            </div>
+
+            {/* Compliance Section */}
+            <div className="pt-4 border-t border-gray-100 space-y-4">
+                <h3 className="font-semibold text-gray-900">Compliance Documents</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Survey Plan (Required)</label>
+                        <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'survey_plan')} required className="text-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title Deed (Required)</label>
+                        <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'title_deed')} required className="text-sm" />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="checkbox" 
+                            name="spousal_consent" 
+                            id="spousal_consent"
+                            checked={formData.spousal_consent}
+                            onChange={handleChange}
+                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <label htmlFor="spousal_consent" className="text-sm font-medium text-gray-700">
+                            I have Spousal Consent to sell this property
+                        </label>
+                    </div>
+                    {formData.spousal_consent && (
+                        <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-1">Consent Document</label>
+                             <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'spousal_consent_doc')} className="text-sm" />
+                        </div>
+                    )}
+                </div>
             </div>
           </div>
 

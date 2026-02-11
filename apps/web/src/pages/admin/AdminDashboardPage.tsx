@@ -133,6 +133,55 @@ export default function AdminDashboardPage() {
         />
       </motion.div>
 
+      {/* Financial & Regulatory */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+           <div className="flex items-center justify-between mb-4">
+             <h3 className="text-lg font-semibold flex items-center">
+               <FileText className="w-5 h-5 mr-2 text-green-600" />
+               Tax & Revenue
+             </h3>
+             <Button variant="outline" size="sm" onClick={() => window.location.href='/admin/tax'}>Manage</Button>
+           </div>
+           <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-700 font-medium">Pending Collections</p>
+                <p className="text-2xl font-bold text-green-900">$124,500</p>
+              </div>
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700 font-medium">Compliant Lands</p>
+                <p className="text-2xl font-bold text-blue-900">85%</p>
+              </div>
+           </div>
+        </Card>
+
+        <Card className="p-6">
+           <div className="flex items-center justify-between mb-4">
+             <h3 className="text-lg font-semibold flex items-center">
+               <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
+               Public Notices
+             </h3>
+             <Button variant="outline" size="sm" onClick={() => window.location.href='/admin/notices'}>View All</Button>
+           </div>
+           <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-orange-500">
+                 <div>
+                    <p className="font-medium text-gray-900">Land SL-092-22</p>
+                    <p className="text-xs text-gray-500">Notice expires in 3 days</p>
+                 </div>
+                 <Button size="sm" variant="ghost" className="text-orange-600">Review</Button>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-green-500">
+                 <div>
+                    <p className="font-medium text-gray-900">Land SL-092-18</p>
+                    <p className="text-xs text-gray-500">Notice period complete</p>
+                 </div>
+                 <Button size="sm" variant="ghost" className="text-green-600">Approve</Button>
+              </div>
+           </div>
+        </Card>
+      </div>
+
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card className="p-6">

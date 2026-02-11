@@ -61,13 +61,23 @@ export default function Footer() {
         <div className="border-t border-white/20" />
 
         {/* Bottom Section */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm opacity-70">
-            2026 LandBiznes. All rights reserved.
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <p className="text-sm opacity-60">
+            &copy; 2026 LandBiznes. All rights reserved.
           </p>
-          <p className="text-sm opacity-70">
-            Made with trust for Sierra Leone
-          </p>
+          <div className="flex flex-col items-center sm:items-end">
+            <p className="text-sm opacity-80">
+              Made with trust for Sierra Leone
+            </p>
+            <a 
+              href="https://www.watchmann.dev" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-orange-500 tracking-wide mt-1 hover:text-orange-400 transition-colors"
+            >
+              by Watchmann
+            </a>
+          </div>
         </div>
       </div>
     </footer>

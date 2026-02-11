@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ArrowDown, Shield, MapPin, Target, CreditCard } from "lucide-react";
+import { useAuth } from '@/context/AuthContext';
+
 export default function PremiumHero() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [district, setDistrict] = useState("");
   const [landType, setLandType] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -183,13 +186,15 @@ export default function PremiumHero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up-delayed-3">
-            <button
-              onClick={() => navigate('/auth/register')}
-              className="group px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-lg rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl flex items-center gap-3"
-            >
-              <span>Get Started</span>
-              <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
-            </button>
+            {!user && (
+              <button
+                onClick={() => navigate('/auth/register')}
+                className="group px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-lg rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl flex items-center gap-3"
+              >
+                <span>Get Started</span>
+                <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+              </button>
+            )}
             
             <button
               onClick={handleSearch}
@@ -197,6 +202,17 @@ export default function PremiumHero() {
             >
               Browse Marketplace
             </button>
+          </div>
+
+          <div className="text-center mt-12">
+            {!user && (
+              <button
+                onClick={() => navigate('/auth/login?redirect=/kyc')}
+                className="inline-block px-8 py-3 bg-orange-50 text-orange-700 font-bold rounded-lg border border-orange-200 hover:bg-orange-100 transition-colors"
+              >
+                Register Your Land Now
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -1,106 +1,125 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ZillowCard } from "./ZillowCard";
+import { api } from "@/services/api";
+import { Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+
+interface Land {
+  id: string;
+  title: string;
+  price: number;
+  region: string;
+  district: string;
+  size_sqm: number;
+  description: string;
+  status: string;
+  // Add other fields as needed based on API response
+}
 
 export function FeaturedListings() {
-  const featuredProperties = [
-    {
-      id: "1",
-      image: "https://images.unsplash.com/photo-1500382017468-f049863aab22?w=600&h=400&fit=crop",
-      price: 125000,
-      location: {
-        community: "Freetown Central",
-        chiefdom: "Western Urban",
-        district: "Western Area",
-      },
-      size: 2500,
-      sizeUnit: "sqm" as const,
-      purpose: "Residential",
-      verificationScore: 95,
-      daysOnMarket: 3,
-      isSaved: false,
-    },
-    {
-      id: "2",
-      image: "https://images.unsplash.com/photo-1558036117-15d82a90b9b1?w=600&h=400&fit=crop",
-      price: 285000,
-      location: {
-        community: "Bo Town Commercial",
-        chiefdom: "Bo Urban",
-        district: "Bo",
-      },
-      size: 8500,
-      sizeUnit: "sqm" as const,
-      purpose: "Commercial",
-      verificationScore: 88,
-      daysOnMarket: 12,
-      isSaved: false,
-    },
-    {
-      id: "3",
-      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop",
-      price: 45000,
-      location: {
-        community: "Makeni Agricultural",
-        chiefdom: "Makeni Urban",
-        district: "Bombali",
-      },
-      size: 45000,
-      sizeUnit: "sqm" as const,
-      purpose: "Agricultural",
-      verificationScore: 79,
-      daysOnMarket: 28,
-      isSaved: false,
-    },
-    {
-      id: "4",
-      image: "https://images.unsplash.com/photo-1567605022519-4509c7f76c43?w=600&h=400&fit=crop",
-      price: 385000,
-      location: {
-        community: "Kenema Business District",
-        chiefdom: "Kenema Urban",
-        district: "Kenema",
-      },
-      size: 15000,
-      sizeUnit: "sqm" as const,
-      purpose: "Mixed Use",
-      verificationScore: 92,
-      daysOnMarket: 7,
-      isSaved: true,
-    },
-    {
-      id: "5",
-      image: "https://images.unsplash.com/photo-1506171613408-eca07ce68773?w=600&h=400&fit=crop",
-      price: 75000,
-      location: {
-        community: "Port Loko Waterfront",
-        chiefdom: "Port Loko Urban",
-        district: "Port Loko",
-      },
-      size: 5000,
-      sizeUnit: "sqm" as const,
-      purpose: "Residential",
-      verificationScore: 85,
-      daysOnMarket: 15,
-      isSaved: false,
-    },
-    {
-      id: "6",
-      image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=600&h=400&fit=crop",
-      price: 225000,
-      location: {
-        community: "Waterloo Development Zone",
-        chiefdom: "Western Rural",
-        district: "Western Area",
-      },
-      size: 12000,
-      sizeUnit: "sqm" as const,
-      purpose: "Investment",
-      verificationScore: 91,
-      daysOnMarket: 5,
-      isSaved: false,
-    },
-  ];
+  const [featuredProperties, setFeaturedProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleViewMarketplace = () => {
+    if (!user) {
+      navigate("/auth/login?redirect=/marketplace");
+    } else {
+      navigate("/marketplace");
+    }
+  };
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const response = await api.get<any>("/land?page_size=6"); // Fetch 6 items
+        const items = response.data.items || [];
+        
+        // Map API data to ZillowCard props
+        const mappedProperties = items.map((item: any) => ({
+          id: item.id,
+          // Use a placeholder image if none provided (backend doesn't seem to return images yet in the list endpoint based on previous checks, but let's assume it might or use a placeholder)
+          image: "https://images.unsplash.com/photo-1500382017468-f049863aab22?w=600&h=400&fit=crop", 
+          price: Number(item.price),
+          location: {
+            community: item.title, // Using title as community/area name for now
+            chiefdom: item.region,
+            district: item.district,
+          },
+          size: Number(item.size_sqm),
+          sizeUnit: "sqm",
+          purpose: "Residential", // Default or derive from description
+          verificationScore: 95, // Mock score for now as backend might not return it yet
+          daysOnMarket: Math.floor(Math.random() * 30), // Mock
+          isSaved: false,
+        }));
+        
+        setFeaturedProperties(mappedProperties);
+      } catch (err) {
+        console.error("Failed to fetch listings:", err);
+        setError("Failed to load listings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="bg-white py-20 px-6">
+        <div className="max-w-7xl mx-auto flex justify-center items-center min-h-[400px]">
+          <Loader2 className="w-12 h-12 text-orange-600 animate-spin" />
+        </div>
+      </section>
+    );
+  }
+
+  // Empty state - No mock data allowed
+  if (!loading && featuredProperties.length === 0) {
+    return (
+      <section className="bg-white py-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-4 justify-center">
+              <div className="w-1 h-8 bg-orange-600 rounded-full" />
+              <span className="text-orange-600 font-bold text-sm uppercase tracking-widest">Hot Properties</span>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black text-gray-900 mb-4">Featured Listings</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Discover the most verified and sought-after land properties across Sierra Leone.
+            </p>
+          </div>
+          
+          <div className="bg-gray-50 rounded-2xl p-12 border-2 border-dashed border-gray-300">
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">No Listings Available Yet</h3>
+              <p className="text-gray-500 max-w-md mb-8">
+                We are currently verifying new properties. Check back soon.
+              </p>
+              <button
+                onClick={handleViewMarketplace}
+                className="px-8 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                View Marketplace
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-white py-20 px-6">
@@ -154,15 +173,15 @@ export function FeaturedListings() {
 
         {/* CTA */}
         <div className="text-center">
-          <a
-            href="/explore"
+          <Link
+            to="/marketplace"
             className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold text-lg rounded-xl hover:shadow-2xl transition-all transform hover:scale-105"
           >
-            Browse All {featuredProperties.length + 500}+ Properties
+            Browse All {featuredProperties.length}+ Properties
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

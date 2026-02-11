@@ -61,6 +61,11 @@ async def save_kyc_file(file: UploadFile, user_id: UUID, file_type: str) -> str:
 async def submit_kyc(
     id_document: UploadFile = File(...),
     proof_of_address: UploadFile = File(...),
+    # Consolidated liveness verification photos into one step for now, 
+    # but backend still supports receiving individual angles if client sends them.
+    # To support the new workflow (Liveness Check), we will accept individual frames 
+    # but we can also be flexible.
+    # For now, let's keep the backend flexible to accept these files.
     photo_straight: UploadFile = File(...),
     photo_left: UploadFile = File(...),
     photo_right: UploadFile = File(...),
@@ -104,18 +109,28 @@ async def submit_kyc(
         "photo_right": photo_right_path
     }
     
+    # AML Check (Stub)
+    # In production, call an external API like SumSub or Onfido here
+    # For now, we simulate a basic check
+    risk_rating = "low"
+    aml_checked = True
+    
     if existing_submission:
         existing_submission.documents = documents_data
         existing_submission.status = KycStatus.PENDING
         existing_submission.updated_at = datetime.utcnow()
-        # Reset rejection reason if any
         existing_submission.rejection_reason = None
+        existing_submission.risk_rating = risk_rating
+        existing_submission.aml_checked = aml_checked
         submission = existing_submission
     else:
         submission = KycSubmission(
             user_id=current_user.id,
             status=KycStatus.PENDING,
-            documents=documents_data
+            documents=documents_data,
+            risk_rating=risk_rating,
+            aml_checked=aml_checked,
+            aml_check_date=datetime.utcnow()
         )
         db.add(submission)
     

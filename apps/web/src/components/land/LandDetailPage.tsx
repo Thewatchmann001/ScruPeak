@@ -1,54 +1,128 @@
 "use client";
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
 import { VerificationBadge, VerificationIndicator } from "@/components/verification/VerificationUI";
+import { landService } from "@/services/landService";
+import { Button } from "@/components/ui/Button";
+import { AlertTriangle, X } from "lucide-react";
+import { useToast } from "@/context/ToastProvider";
 
+// Extended interface to include status
 interface LandDetailProps {
-  id: string;
-  location: {
+  id?: string;
+  status?: string; // available, under_notice, disputed, sold
+  location?: {
     country: string;
     district: string;
     chiefdom: string;
     community: string;
   };
-  size: number;
-  sizeUnit: "sqm" | "acres";
-  purpose: string;
-  price: number;
-  verificationScore: number;
-  ownership: {
+  size?: number;
+  sizeUnit?: "sqm" | "acres";
+  purpose?: string;
+  price?: number;
+  verificationScore?: number;
+  ownership?: {
     familyName: string;
     yearsHeld: number;
     dispute: boolean;
   };
-  documents: Array<{
+  documents?: Array<{
     type: string;
     status: "verified" | "pending" | "flagged";
     date: string;
   }>;
-  risks: string[];
+  risks?: string[];
   mapImage?: string;
 }
 
-export function LandDetailPage({
-  id,
-  location,
-  size,
-  sizeUnit,
-  purpose,
-  price,
-  verificationScore,
-  ownership,
-  documents,
-  risks,
-  mapImage,
-}: LandDetailProps) {
+export default function LandDetailPage(props: LandDetailProps) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const [land, setLand] = useState<LandDetailProps>(props);
+  const [loading, setLoading] = useState(!props.id && !!paramId);
+  const [showObjectionModal, setShowObjectionModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<"overview" | "documents" | "intelligence">("overview");
-  const riskLevel = verificationScore >= 80 ? "low" : verificationScore >= 50 ? "medium" : "high";
+  
+  // Objection Form State
+  const [objectionReason, setObjectionReason] = useState("");
+  const [submittingObjection, setSubmittingObjection] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    // If no props provided, fetch data using ID
+    if (!props.id && paramId) {
+      setLoading(true);
+      // In a real app, we would fetch from API
+      // landService.getById(paramId).then(...)
+      // For now, we simulate fetching and use mock data mixed with params
+      setTimeout(() => {
+        setLand({
+            id: paramId,
+            status: "under_notice", // SIMULATED STATUS FOR DEMO
+            location: {
+                country: "Sierra Leone",
+                district: "Western Area Rural",
+                chiefdom: "Waterloo",
+                community: "Bureh Town"
+            },
+            size: 2500,
+            sizeUnit: "sqm",
+            purpose: "Residential",
+            price: 45000,
+            verificationScore: 92,
+            ownership: {
+                familyName: "Kamara Family",
+                yearsHeld: 45,
+                dispute: false
+            },
+            documents: [
+                { type: "Survey Plan", status: "verified", date: "2023-11-15" },
+                { type: "Title Deed", status: "verified", date: "2023-10-01" },
+                { type: "Tax Receipt", status: "pending", date: "2024-01-10" }
+            ],
+            risks: [],
+            mapImage: "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/-13.123,8.456,16,0/800x600?access_token=pk.mock"
+        });
+        setLoading(false);
+      }, 1000);
+    }
+  }, [paramId, props.id]);
+
+  const handleLodgeObjection = async () => {
+    if (!objectionReason || objectionReason.length < 10) {
+        showToast("Please provide a detailed reason (min 10 chars)", "error");
+        return;
+    }
+    
+    setSubmittingObjection(true);
+    try {
+        if (land.id) {
+            await landService.lodgeObjection(land.id, objectionReason);
+            showToast("Objection lodged successfully. Admin will review.", "success");
+            setShowObjectionModal(false);
+            setObjectionReason("");
+            // Update status locally
+            setLand(prev => ({ ...prev, status: "disputed" }));
+        }
+    } catch (error) {
+        showToast("Failed to lodge objection", "error");
+    } finally {
+        setSubmittingObjection(false);
+    }
+  };
+
+  if (loading) {
+      return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // Fallback if no data
+  if (!land.location) return <div className="min-h-screen flex items-center justify-center">Land not found</div>;
+
+  const riskLevel = (land.verificationScore || 0) >= 80 ? "low" : (land.verificationScore || 0) >= 50 ? "medium" : "high";
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 relative">
       {/* Back Button */}
       <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4">
@@ -63,11 +137,43 @@ export function LandDetailPage({
           </Link>
         </div>
       </div>
+
+      {/* Status Banner */}
+      {land.status === "under_notice" && (
+        <div className="bg-orange-50 border-b border-orange-200 px-6 py-3">
+            <div className="max-w-5xl mx-auto flex items-center justify-between">
+                <div className="flex items-center text-orange-800">
+                    <AlertTriangle className="w-5 h-5 mr-2" />
+                    <span className="font-medium">Public Notice Period Active</span>
+                    <span className="mx-2">•</span>
+                    <span className="text-sm">Community members may lodge objections until Feb 28, 2026</span>
+                </div>
+                <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                    onClick={() => setShowObjectionModal(true)}
+                >
+                    Lodge Objection
+                </Button>
+            </div>
+        </div>
+      )}
+
+      {land.status === "disputed" && (
+        <div className="bg-red-50 border-b border-red-200 px-6 py-3">
+            <div className="max-w-5xl mx-auto flex items-center text-red-800">
+                <AlertTriangle className="w-5 h-5 mr-2" />
+                <span className="font-medium">Property Under Dispute - Transactions Suspended</span>
+            </div>
+        </div>
+      )}
+
       {/* Map Section */}
-      {mapImage && (
+      {land.mapImage && (
         <div className="h-96 bg-neutral-200 relative overflow-hidden">
           <img
-            src={mapImage}
+            src={land.mapImage}
             alt="Land map"
             className="w-full h-full object-cover"
           />
@@ -90,13 +196,13 @@ export function LandDetailPage({
             <div>
               <div className="mb-4">
                 <p className="text-sm text-neutral-600 mb-2">
-                  {location.country} • {location.district} • {location.chiefdom}
+                  {land.location.country} • {land.location.district} • {land.location.chiefdom}
                 </p>
                 <h1 className="text-4xl font-bold text-neutral-900 mb-2">
-                  {location.community}
+                  {land.location.community}
                 </h1>
                 <p className="text-lg text-neutral-600">
-                  {size.toLocaleString()} {sizeUnit} • {purpose}
+                  {land.size?.toLocaleString()} {land.sizeUnit} • {land.purpose}
                 </p>
               </div>
             </div>
@@ -110,7 +216,7 @@ export function LandDetailPage({
                 <div>
                   <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">Price</p>
                   <p className="text-2xl font-bold text-neutral-900">
-                    ${price.toLocaleString()}
+                    ${land.price?.toLocaleString()}
                   </p>
                 </div>
                 <div>
@@ -118,16 +224,16 @@ export function LandDetailPage({
                     Size
                   </p>
                   <p className="text-2xl font-bold text-neutral-900">
-                    {size.toLocaleString()}
+                    {land.size?.toLocaleString()}
                   </p>
-                  <p className="text-xs text-neutral-600">{sizeUnit}</p>
+                  <p className="text-xs text-neutral-600">{land.sizeUnit}</p>
                 </div>
                 <div>
                   <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">
-                    Price / {sizeUnit}
+                    Price / {land.sizeUnit}
                   </p>
                   <p className="text-2xl font-bold text-neutral-900">
-                    ${Math.round(price / size)}
+                    ${Math.round((land.price || 0) / (land.size || 1))}
                   </p>
                 </div>
                 <div>
@@ -135,7 +241,7 @@ export function LandDetailPage({
                     Purpose
                   </p>
                   <p className="text-lg font-bold text-primary-600 capitalize">
-                    {purpose}
+                    {land.purpose}
                   </p>
                 </div>
               </div>
@@ -176,38 +282,38 @@ export function LandDetailPage({
                     <div className="flex justify-between">
                       <span className="text-neutral-600">Family Name:</span>
                       <span className="font-medium text-neutral-900">
-                        {ownership.familyName}
+                        {land.ownership?.familyName}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-neutral-600">Years Held:</span>
                       <span className="font-medium text-neutral-900">
-                        {ownership.yearsHeld} years
+                        {land.ownership?.yearsHeld} years
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-neutral-600">Court Dispute:</span>
                       <span
                         className={`font-medium ${
-                          ownership.dispute
+                          land.ownership?.dispute
                             ? "text-red-600"
                             : "text-green-600"
                         }`}
                       >
-                        {ownership.dispute ? "Flagged" : "None"}
+                        {land.ownership?.dispute ? "Flagged" : "None"}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Risks */}
-                {risks.length > 0 && (
+                {land.risks && land.risks.length > 0 && (
                   <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-soft">
                     <h4 className="font-semibold text-neutral-900 mb-4">
                       Risk Indicators
                     </h4>
                     <div className="space-y-2">
-                      {risks.map((risk, idx) => (
+                      {land.risks.map((risk, idx) => (
                         <div key={idx} className="flex items-start gap-3">
                           <svg
                             className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5"
@@ -233,7 +339,7 @@ export function LandDetailPage({
 
             {selectedTab === "documents" && (
               <div className="space-y-4">
-                {documents.map((doc, idx) => (
+                {land.documents?.map((doc, idx) => (
                   <div
                     key={idx}
                     className="bg-white rounded-xl p-6 border border-neutral-200 shadow-soft flex items-center justify-between"
@@ -307,7 +413,7 @@ export function LandDetailPage({
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Verification Score */}
-            <VerificationIndicator score={verificationScore} risk={riskLevel} />
+            <VerificationIndicator score={land.verificationScore || 0} risk={riskLevel} />
 
             {/* Verification Details */}
             <div className="space-y-3">
@@ -322,9 +428,9 @@ export function LandDetailPage({
                 description="Local stakeholders validated"
               />
               <VerificationBadge
-                status={ownership.dispute ? "flag" : "verified"}
-                label={ownership.dispute ? "Court Dispute Detected" : "No Disputes"}
-                description={ownership.dispute ? "Pending investigation" : "Clear court history"}
+                status={land.ownership?.dispute ? "flag" : "verified"}
+                label={land.ownership?.dispute ? "Court Dispute Detected" : "No Disputes"}
+                description={land.ownership?.dispute ? "Pending investigation" : "Clear court history"}
               />
             </div>
 
@@ -348,6 +454,57 @@ export function LandDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Objection Modal */}
+      {showObjectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-900">Lodge Objection</h3>
+                    <button onClick={() => setShowObjectionModal(false)} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+                
+                <div className="space-y-4">
+                    <div className="p-4 bg-orange-50 rounded-lg text-sm text-orange-800">
+                        <p className="font-medium">Warning: False Claims</p>
+                        <p>Lodging a false objection is a punishable offense. Your identity will be recorded on-chain.</p>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Objection</label>
+                        <textarea 
+                            className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="Describe your claim (e.g., boundary dispute, inheritance claim)..."
+                            value={objectionReason}
+                            onChange={(e) => setObjectionReason(e.target.value)}
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Evidence (Optional URL)</label>
+                        <input 
+                            type="text" 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            placeholder="https://..."
+                        />
+                    </div>
+                </div>
+
+                <div className="mt-8 flex gap-3 justify-end">
+                    <Button variant="outline" onClick={() => setShowObjectionModal(false)}>Cancel</Button>
+                    <Button 
+                        onClick={handleLodgeObjection} 
+                        disabled={submittingObjection}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                        {submittingObjection ? "Submitting..." : "Submit Objection"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }

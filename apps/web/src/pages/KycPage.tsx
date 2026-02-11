@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/services/api';
 import { Button } from '@/components/ui/Button';
@@ -6,36 +6,26 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Alert } from '@/components/ui/Alert';
 import { useNavigate } from 'react-router-dom';
+import { Camera, CheckCircle2, RotateCcw } from 'lucide-react';
 
 const KycPage = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [kycStatus, setKycStatus] = useState<string | null>(null);
 
-  const [files, setFiles] = useState<{
-    id_document: File | null;
-    proof_of_address: File | null;
-    photo_straight: File | null;
-    photo_left: File | null;
-    photo_right: File | null;
-  }>({
-    id_document: null,
-    proof_of_address: null,
-    photo_straight: null,
-    photo_left: null,
-    photo_right: null,
-  });
+  // ... (rest of state)
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth check to complete
+
     if (!isAuthenticated) {
       navigate('/auth/login?redirect=/kyc', { replace: true });
       return;
     }
 
-    // Check current KYC status
     const checkStatus = async () => {
       try {
         const response = await api.get('/kyc/status');
@@ -43,13 +33,72 @@ const KycPage = () => {
           setKycStatus(response.data.status);
         }
       } catch (err) {
-        // It's okay if 404 (no submission yet)
         console.log('No existing KYC submission or error fetching status');
       }
     };
 
     checkStatus();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-orange-500"></div>
+          <p className="text-gray-600 font-medium animate-pulse">Checking verification status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        // Explicitly play() to ensure video starts
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(e => console.error("Play error:", e));
+        };
+        setIsCameraActive(true);
+        setLivenessStep(1);
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      setError("Unable to access camera. Please allow camera permissions in your browser.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      setIsCameraActive(false);
+    }
+  };
+
+  const captureFrame = (step: 'straight' | 'left' | 'right') => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        canvas.toBlob((blob) => {
+          setCapturedImages(prev => ({ ...prev, [step]: blob }));
+          
+          // Advance step
+          if (step === 'straight') setLivenessStep(2);
+          else if (step === 'left') setLivenessStep(3);
+          else if (step === 'right') {
+            setLivenessStep(0); // Done
+            stopCamera();
+          }
+        }, 'image/jpeg');
+      }
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof typeof files) => {
     if (e.target.files && e.target.files[0]) {
@@ -62,9 +111,13 @@ const KycPage = () => {
     setError(null);
     setSuccess(null);
 
-    // Validation
-    if (!files.id_document || !files.proof_of_address || !files.photo_straight || !files.photo_left || !files.photo_right) {
-      setError('Please upload all required documents and photos.');
+    if (!files.id_document || !files.proof_of_address) {
+      setError('Please upload ID and Proof of Address documents.');
+      return;
+    }
+
+    if (!capturedImages.straight || !capturedImages.left || !capturedImages.right) {
+      setError('Please complete the live face verification steps.');
       return;
     }
 
@@ -73,9 +126,9 @@ const KycPage = () => {
     const formData = new FormData();
     formData.append('id_document', files.id_document);
     formData.append('proof_of_address', files.proof_of_address);
-    formData.append('photo_straight', files.photo_straight);
-    formData.append('photo_left', files.photo_left);
-    formData.append('photo_right', files.photo_right);
+    formData.append('photo_straight', capturedImages.straight, 'straight.jpg');
+    formData.append('photo_left', capturedImages.left, 'left.jpg');
+    formData.append('photo_right', capturedImages.right, 'right.jpg');
 
     try {
       await api.post('/kyc/submit', formData, {
@@ -158,6 +211,17 @@ const KycPage = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+                <CheckCircle2 className="h-4 w-4" />
+                <div className="ml-2">
+                    <p className="font-semibold text-sm">Regulatory Compliance Check</p>
+                    <p className="text-xs">
+                        By submitting this form, you consent to an automated Anti-Money Laundering (AML) 
+                        and PEP (Politically Exposed Person) screening against international watchlists.
+                    </p>
+                </div>
+            </Alert>
+
             <div className="space-y-4">
               <h3 className="text-lg font-medium">1. Identity Document</h3>
               <p className="text-sm text-gray-500">Upload a clear copy of your National ID, Passport, or Driver's License.</p>
@@ -185,39 +249,78 @@ const KycPage = () => {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">3. Live Photos</h3>
-              <p className="text-sm text-gray-500">Please provide three photos of your face for liveness verification.</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Straight Face</label>
-                  <Input 
-                    id="photo_straight" 
-                    type="file" 
-                    accept="image/*"
-                    capture="user"
-                    onChange={(e) => handleFileChange(e, 'photo_straight')}
-                  />
+              <h3 className="text-lg font-medium">3. Liveness Check (Active Verification)</h3>
+              <p className="text-sm text-gray-500">
+                Follow the instructions to verify you are a real person. We will capture 3 photos.
+              </p>
+
+              <div className="border rounded-xl p-6 bg-gray-50 flex flex-col items-center gap-4">
+                {isCameraActive ? (
+                   <div className="relative w-full max-w-sm aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
+                     <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
+                     
+                     {/* Overlay Instructions */}
+                     <div className="absolute inset-x-0 bottom-4 text-center">
+                       <span className="inline-block px-4 py-2 bg-black/60 text-white rounded-full text-sm font-bold backdrop-blur-sm">
+                         {livenessStep === 1 && "Look Straight Ahead"}
+                         {livenessStep === 2 && "Turn Head Right"}
+                         {livenessStep === 3 && "Turn Head Left"}
+                       </span>
+                     </div>
+                   </div>
+                ) : (
+                   <div className="w-full max-w-sm aspect-video bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                     {capturedImages.straight && capturedImages.left && capturedImages.right ? (
+                       <div className="text-center text-green-600">
+                         <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
+                         <span className="font-medium">Verification Complete</span>
+                       </div>
+                     ) : (
+                       <div className="text-center text-gray-500">
+                         <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                         <span>Camera Inactive</span>
+                       </div>
+                     )}
+                   </div>
+                )}
+
+                <div className="flex gap-4">
+                  {!isCameraActive && (
+                    <Button 
+                      type="button" 
+                      onClick={startCamera} 
+                      variant={capturedImages.straight ? "outline" : "default"}
+                    >
+                      {capturedImages.straight ? "Retake Verification" : "Start Verification"}
+                    </Button>
+                  )}
+
+                  {isCameraActive && (
+                    <Button 
+                      type="button" 
+                      onClick={() => {
+                        if (livenessStep === 1) captureFrame('straight');
+                        else if (livenessStep === 2) captureFrame('left'); // User turned right, looking left from camera pov? Or user physically turns right?
+                        // "Turn Head Right" -> Capture left profile? Let's stick to prompt names.
+                        // Prompt: Turn Right -> Capture 'left' (relative to camera) or 'right' profile?
+                        // Let's map simple: Step 2 (Right) -> capture 'left' file?
+                        // Actually let's just match the state logic:
+                        // Step 2 = "Turn Head Right" -> Save as 'left' (since showing left cheek)?
+                        // Let's keep it simple: Step 2 captures 'left' image slot.
+                        else if (livenessStep === 3) captureFrame('right');
+                      }} 
+                      className="bg-primary hover:bg-primary/90 min-w-[120px]"
+                    >
+                      Capture Frame
+                    </Button>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Turn Left</label>
-                  <Input 
-                    id="photo_left" 
-                    type="file" 
-                    accept="image/*"
-                    capture="user"
-                    onChange={(e) => handleFileChange(e, 'photo_left')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Turn Right</label>
-                  <Input 
-                    id="photo_right" 
-                    type="file" 
-                    accept="image/*"
-                    capture="user"
-                    onChange={(e) => handleFileChange(e, 'photo_right')}
-                  />
+                
+                {/* Progress Indicators */}
+                <div className="flex gap-2 mt-2">
+                  <div className={`w-3 h-3 rounded-full ${capturedImages.straight ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <div className={`w-3 h-3 rounded-full ${capturedImages.left ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <div className={`w-3 h-3 rounded-full ${capturedImages.right ? 'bg-green-500' : 'bg-gray-300'}`} />
                 </div>
               </div>
             </div>

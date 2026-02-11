@@ -31,6 +31,8 @@ class LandStatus(str, enum.Enum):
     PENDING = "pending"
     SOLD = "sold"
     DISPUTED = "disputed"
+    PENDING_APPROVAL = "pending_approval"
+    REJECTED = "rejected"
 
 
 class DocumentType(str, enum.Enum):
@@ -106,6 +108,9 @@ class Land(Base):
     )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    ulid = Column(String(26), default=lambda: str(ulid.new()), unique=True, index=True)
+    parcel_id = Column(String(50), unique=True, index=True)  # New Smart ID
+    grid_id = Column(String(20), index=True)  # For spatial grouping
     owner_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     title = Column(String(500), nullable=False, index=True)
     description = Column(Text)
@@ -121,6 +126,17 @@ class Land(Base):
     blockchain_hash = Column(String(255), index=True)  # Document hash on Solana
     blockchain_verified = Column(Boolean, default=False)
     blockchain_verified_at = Column(DateTime)
+    
+    # Approval Workflow
+    has_survey_plan = Column(Boolean, default=False)
+    has_chief_letter = Column(Boolean, default=False)
+    has_agreement = Column(Boolean, default=False)
+    spousal_consent = Column(Boolean, default=False)  # NEW: Spousal consent flag
+    surveyor_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)  # NEW: Licensed surveyor
+    
+    approved_by = Column(UUID(as_uuid=True), ForeignKey('users.id'))
+    rejection_reason = Column(Text)
+    approval_date = Column(DateTime)
     
     # Metadata
     latitude = Column(Float)
@@ -346,7 +362,12 @@ class Notification(Base):
 # Import TitleVerification to ensure relationship is mapped
 # This must be imported after Land model is defined but before application startup
 from app.models.title_verification import TitleVerification
-
+from app.models.advanced_registry import CadastralHistory, Encumbrance, Surveyor
+from app.models.taxation import TaxAssessment
+from app.models.digital_signatures import (
+    DocumentSignatureRequest, SignatureField, SignatureResponse, SignatureAuditTrail,
+    SignatureTemplate, SignatureCertificate
+)
 
 # ============================================================================
 # PAYMENT TRANSACTION MODEL
@@ -425,6 +446,12 @@ class KycSubmission(Base):
     status = Column(Enum(KycStatus), default=KycStatus.PENDING, nullable=False, index=True)
     documents = Column(JSON)
     notes = Column(Text)
+    
+    # Risk & AML
+    risk_rating = Column(String(50), default="low")  # low, medium, high
+    aml_checked = Column(Boolean, default=False)
+    aml_check_date = Column(DateTime)
+    
     reviewed_by = Column(UUID(as_uuid=True), ForeignKey('users.id'))
     rejection_reason = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)

@@ -26,7 +26,12 @@ class GridReference:
 
     def canonical_key(self) -> str:
         """Deterministic grid key for parcel coding"""
-        return f"{self.grid_id:03d}{self.grid_x:02d}{self.grid_y:02d}"
+        # Using 5 digits for grid_id to accommodate range up to ~34,000 (200x171)
+        return f"{self.formatted_grid_id()}{self.grid_x:02d}{self.grid_y:02d}"
+
+    def formatted_grid_id(self) -> str:
+        """Return the zero-padded grid ID (e.g., 00001)"""
+        return f"{self.grid_id:05d}"
 
 
 def compute_grid_id(lat: float, lon: float):

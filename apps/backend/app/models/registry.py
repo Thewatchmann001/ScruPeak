@@ -5,6 +5,19 @@ from geoalchemy2 import Geometry
 import uuid
 from datetime import datetime
 from app.core.database import Base
+import enum
+
+class LandStatus(str, enum.Enum):
+    """Land property status"""
+    AVAILABLE = "available"
+    PENDING = "pending"
+    SOLD = "sold"
+    DISPUTED = "disputed"
+    PENDING_APPROVAL = "pending_approval"
+    REJECTED = "rejected"
+    UNDER_NOTICE = "under_notice"  # Public notice period
+    LOCKED_FOR_TAX = "locked_for_tax"  # Locked until taxes paid
+
 
 class LandClassification(Base):
     """

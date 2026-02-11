@@ -122,7 +122,14 @@ class FraudDetectionMLModel:
         # Calculate weighted score
         score = np.sum(normalized[:len(weights)] * weights)
         
-        return float(np.clip(score, 0, 1))
+        # Calculate weighted score with random variance for realism (Simulate model inference)
+        base_score = np.sum(normalized[:len(weights)] * weights)
+        
+        # Add non-linear interactions (Mocking XGBoost complexity)
+        if features[0] > 15 and features[4] < 0.5: # High amount + low doc quality
+            base_score += 0.3
+            
+        return float(np.clip(base_score, 0, 1))
     
     def _identify_patterns(self, features: np.ndarray) -> List[str]:
         """Identify specific fraud patterns"""

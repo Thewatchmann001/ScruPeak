@@ -145,6 +145,41 @@ async def upload_document(
     return document
 
 
+@router.post("/extract", status_code=status.HTTP_200_OK)
+async def extract_document_details(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Upload and extract details from a land document (PDF/Text).
+    Returns coordinates, owner name, and history.
+    Does NOT save the file permanently (processing only).
+    """
+    if not validate_file(file):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
+    # Save temp file
+    temp_path = UPLOAD_DIR / f"temp_{uuid4()}_{file.filename}"
+    ensure_upload_dir()
+    
+    try:
+        contents = await file.read()
+        with open(temp_path, "wb") as f:
+            f.write(contents)
+        
+        # Run Extraction
+        result = DocumentExtractor.extract_details(str(temp_path))
+        
+        return result
+    except Exception as e:
+        logger.error(f"Extraction failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Cleanup
+        if temp_path.exists():
+            os.remove(temp_path)
+
+
 @router.get("/{document_id}", response_model=DocumentResponse, status_code=status.HTTP_200_OK)
 async def get_document(
     document_id: UUID,

@@ -126,12 +126,33 @@ class LandBase(BaseModel):
     price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
     region: str = Field(..., min_length=2, max_length=100)
     district: str = Field(..., min_length=2, max_length=100)
-    location: LocationSchema
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    
+    # Required documents checklist
+    has_survey_plan: bool = False
+    has_chief_letter: bool = False
+    has_agreement: bool = False
+    spousal_consent: bool = False  # NEW
+    surveyor_id: Optional[UUID] = None  # NEW
 
 
 class LandCreate(LandBase):
     """Land creation schema"""
-    pass
+    location: Optional[LocationSchema] = None
+    
+    @root_validator(pre=True)
+    def unpack_location(cls, values):
+        # Allow creating with nested location for backward compatibility
+        loc = values.get('location')
+        if loc:
+            if isinstance(loc, dict):
+                values['latitude'] = loc.get('latitude')
+                values['longitude'] = loc.get('longitude')
+            else:
+                values['latitude'] = loc.latitude
+                values['longitude'] = loc.longitude
+        return values
 
 
 class LandUpdate(BaseModel):
@@ -145,12 +166,20 @@ class LandUpdate(BaseModel):
 class LandResponse(LandBase):
     """Land response schema"""
     id: UUID
+    ulid: Optional[str] = None
+    parcel_id: Optional[str] = None
+    grid_id: Optional[str] = None
     owner_id: UUID
     status: LandStatus
     blockchain_verified: bool
     blockchain_hash: Optional[str]
     created_at: datetime
     updated_at: datetime
+    
+    # Approval details
+    approved_by: Optional[UUID] = None
+    rejection_reason: Optional[str] = None
+    approval_date: Optional[datetime] = None
     
     class Config:
         from_attributes = True

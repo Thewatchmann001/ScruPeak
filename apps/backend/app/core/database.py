@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool, QueuePool, AsyncAdaptedQueuePool
 from sqlalchemy.orm import declarative_base
 import logging
+import sqlite3
 
 from app.core.config import get_settings, get_database_url, get_redis_url
 
@@ -40,6 +41,30 @@ engine = create_async_engine(
         }} if settings.DB_TYPE == "postgres" else {"check_same_thread": False} if settings.DB_TYPE == "sqlite" else {})
     }
 )
+
+@event.listens_for(engine.sync_engine, "connect")
+def connect(dbapi_connection, connection_record):
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        try:
+            dbapi_connection.enable_load_extension(True)
+            # Try to load spatialite if available
+            dbapi_connection.load_extension("mod_spatialite")
+        except Exception as e:
+            logger.warning(f"Could not load mod_spatialite: {e}")
+            # Define mock functions to prevent crashes on Windows/Mac without spatialite
+            # This allows the app to run but spatial queries will fail or be limited
+            def CheckSpatialIndex(*args):
+                return 0
+            
+            def RecoverGeometryColumn(*args):
+                return 0
+            
+            def DiscardGeometryColumn(*args):
+                return 0
+                
+            dbapi_connection.create_function("CheckSpatialIndex", 2, CheckSpatialIndex)
+            dbapi_connection.create_function("RecoverGeometryColumn", 4, RecoverGeometryColumn)
+            dbapi_connection.create_function("DiscardGeometryColumn", 4, DiscardGeometryColumn)
 
 # Session factory for creating database sessions
 AsyncSessionLocal = async_sessionmaker(

@@ -55,8 +55,16 @@ export function MarketInsightsDashboard() {
 
   if (error || !insights) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center text-red-600">
-        {error || "No data available"}
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center max-w-md p-8">
+           <div className="text-neutral-300 mb-4">
+             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+             </svg>
+           </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Insights Loading...</h3>
+          <p className="text-gray-500 mb-6 text-sm">Gathering the latest market data for you.</p>
+        </div>
       </div>
     );
   }

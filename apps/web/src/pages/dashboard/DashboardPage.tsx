@@ -44,12 +44,21 @@ export default function DashboardPage() {
         </div>
         <div className="flex gap-3">
           {(user?.role === 'owner' || user?.role === 'agent') && (
-            <Link to="/sell">
-              <Button className="bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
-                <FileText className="w-4 h-4 mr-2" />
-                New Listing
-              </Button>
-            </Link>
+            user?.kyc_verified ? (
+              <Link to="/sell">
+                <Button className="bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+                  <FileText className="w-4 h-4 mr-2" />
+                  New Listing
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/kyc">
+                <Button className="bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Verify to List
+                </Button>
+              </Link>
+            )
           )}
           <Link to="/marketplace">
              <Button variant="outline">

@@ -1,15 +1,33 @@
 import { betterAuth } from "better-auth";
-import { Pool } from "pg";
+import Database from "better-sqlite3";
 import dotenv from "dotenv";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+    }
+});
+
 export const auth = betterAuth({
-    database: new Pool({
-        connectionString: process.env.DATABASE_URL
-    }),
+    database: new Database("auth.db"),
     emailAndPassword: {  
-        enabled: true
+        enabled: true,
+        requireEmailVerification: false,
+        async sendResetPassword(user, url) {
+            await transporter.sendMail({
+                from: process.env.SMTP_FROM || '"LandBiznes Support" <noreply@landbiznes.com>',
+                to: user.email,
+                subject: "Reset your password",
+                html: `<p>Click the link below to reset your password:</p><a href="${url}">${url}</a>`
+            });
+        }
     },
     user: {
         additionalFields: {
@@ -19,5 +37,12 @@ export const auth = betterAuth({
                 defaultValue: "user"
             }
         }
-    }
+    },
+    advanced: {
+        defaultCookieAttributes: {
+            sameSite: "lax", 
+            secure: false // Allow cookies on http://localhost
+        }
+    },
+    trustedOrigins: ["http://localhost:3000", "http://localhost:5173", "http://localhost:3004", "http://127.0.0.1:3000"]
 });

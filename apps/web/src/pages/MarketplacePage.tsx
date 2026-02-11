@@ -78,43 +78,7 @@ export default function MarketplacePage() {
             />
           </div>
 
-          {/* Task Status Checker (Demo for "Processing..." requirement) */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-8">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Background Task Monitor</h3>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Enter Task ID (e.g., from API response)"
-                className="flex-1 p-2 text-sm border border-gray-300 rounded"
-                value={taskId}
-                onChange={(e) => setTaskId(e.target.value)}
-              />
-              <button
-                onClick={checkTaskStatus}
-                className="px-4 py-2 bg-gray-800 text-white text-sm rounded hover:bg-gray-700"
-              >
-                Check Status
-              </button>
-            </div>
-            {taskStatus && (
-              <div className="mt-2 text-sm">
-                <span className="font-medium">Status: </span>
-                <span className={`font-bold ${
-                  taskStatus.status === 'SUCCESS' ? 'text-green-600' :
-                  taskStatus.status === 'PENDING' || taskStatus.status === 'STARTED' ? 'text-blue-600' :
-                  'text-red-600'
-                }`}>
-                  {taskStatus.status}
-                </span>
-                {taskStatus.status === 'PENDING' && <span className="ml-2 text-gray-500">(Processing...)</span>}
-                {taskStatus.result && (
-                  <pre className="mt-1 p-2 bg-gray-100 rounded text-xs overflow-auto">
-                    {JSON.stringify(taskStatus.result, null, 2)}
-                  </pre>
-                )}
-              </div>
-            )}
-          </div>
+
         </div>
 
         {/* Results */}
@@ -123,8 +87,20 @@ export default function MarketplacePage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
         ) : error ? (
-          <div className="text-center text-red-600 py-12">
-            {error}
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <div className="bg-gray-50 p-4 rounded-full mb-4">
+              <SearchX className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load listings</h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6 text-sm">
+              We're having trouble connecting to the marketplace right now.
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="text-primary-600 font-medium hover:underline text-sm"
+            >
+              Try Again
+            </button>
           </div>
         ) : (
           <>
