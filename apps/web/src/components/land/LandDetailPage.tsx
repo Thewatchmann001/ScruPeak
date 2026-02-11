@@ -7,7 +7,7 @@ import { landService } from "@/services/landService";
 import { chatService } from "@/services/chatService";
 import { aiService, LanstimateResult } from "@/services/aiService";
 import { Button } from "@/components/ui/Button";
-import { AlertTriangle, X, MessageSquare, ShieldCheck, Zap } from "lucide-react";
+import { AlertTriangle, X, MessageSquare, ShieldCheck, Zap, DollarSign, Maximize, TrendingUp, Home } from "lucide-react";
 import { useToast } from "@/context/ToastProvider";
 import { useNavigate } from "react-router-dom";
 
@@ -252,39 +252,53 @@ export default function LandDetailPage(props: LandDetailProps) {
             </div>
 
             {/* Key Facts */}
-            <div className="bg-white rounded-xl p-6 border border-neutral-200 shadow-soft">
-              <h3 className="text-lg font-semibold text-neutral-900 mb-6">
-                Key Facts
+            <div className="bg-white rounded-2xl p-8 border border-neutral-200 shadow-xl overflow-hidden relative group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-orange-500/10 transition-colors" />
+
+              <h3 className="text-xl font-black text-neutral-900 mb-8 flex items-center gap-2">
+                <ShieldCheck className="w-6 h-6 text-orange-600" />
+                Property Essentials
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">Price</p>
-                  <p className="text-2xl font-bold text-neutral-900">
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <DollarSign className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Market Price</p>
+                  </div>
+                  <p className="text-3xl font-black text-neutral-900">
                     ${land.price?.toLocaleString()}
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">
-                    Size
-                  </p>
-                  <p className="text-2xl font-bold text-neutral-900">
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <Maximize className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Total Area</p>
+                  </div>
+                  <p className="text-3xl font-black text-neutral-900">
                     {land.size?.toLocaleString()}
                   </p>
-                  <p className="text-xs text-neutral-600">{land.sizeUnit}</p>
+                  <p className="text-xs font-bold text-orange-600 uppercase">{land.sizeUnit}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">
-                    Price / {land.sizeUnit}
-                  </p>
-                  <p className="text-2xl font-bold text-neutral-900">
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <TrendingUp className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Unit Price</p>
+                  </div>
+                  <p className="text-3xl font-black text-neutral-900">
                     ${Math.round((land.price || 0) / (land.size || 1))}
                   </p>
+                  <p className="text-xs font-bold text-neutral-400">per {land.sizeUnit}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-600 mb-2 uppercase font-semibold">
-                    Purpose
-                  </p>
-                  <p className="text-lg font-bold text-primary-600 capitalize">
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-neutral-500">
+                    <Home className="w-4 h-4" />
+                    <p className="text-xs uppercase font-black tracking-widest">Permit Type</p>
+                  </div>
+                  <p className="text-xl font-black text-orange-600 capitalize">
                     {land.purpose}
                   </p>
                 </div>
@@ -540,10 +554,14 @@ export default function LandDetailPage(props: LandDetailProps) {
 
             {/* CTA */}
             <div className="space-y-3">
-              <button className="w-full py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-soft">
+              <button
+                onClick={handleStartChat}
+                className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white font-black rounded-xl hover:shadow-2xl transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+              >
+                <MessageSquare className="w-5 h-5" />
                 Make Inquiry
               </button>
-              <button className="w-full py-3 border border-neutral-300 text-neutral-700 font-semibold rounded-lg hover:bg-neutral-50 transition-colors">
+              <button className="w-full py-3 border-2 border-neutral-200 text-neutral-600 font-bold rounded-xl hover:bg-neutral-50 transition-all">
                 Save to List
               </button>
             </div>

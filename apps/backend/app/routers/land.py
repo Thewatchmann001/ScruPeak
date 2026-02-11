@@ -164,12 +164,17 @@ async def create_land(
 )
 async def search_land(
     q: Optional[str] = Query(None),
+    district: Optional[str] = Query(None),
+    land_type: Optional[str] = Query(None),
+    purpose: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Search for land properties with pagination.
+    Advanced search for land properties with pagination and filters.
     """
     query = select(Land).options(defer(Land.location), defer(Land.boundary))
 
@@ -180,6 +185,23 @@ async def search_land(
             (Land.region.ilike(f"%{q}%")) |
             (Land.district.ilike(f"%{q}%"))
         )
+
+    if district:
+        query = query.filter(Land.district.ilike(f"%{district}%"))
+
+    # Assuming 'purpose' is used for land_type or dedicated field if it exists
+    # In my seeded data, I used 'purpose' for residential/commercial/etc.
+    if land_type:
+        query = query.filter(Land.purpose.ilike(f"%{land_type}%"))
+
+    if purpose:
+        query = query.filter(Land.purpose.ilike(f"%{purpose}%"))
+
+    if min_price is not None:
+        query = query.filter(Land.price >= min_price)
+
+    if max_price is not None:
+        query = query.filter(Land.price <= max_price)
 
     # Simple pagination
     total_count_query = select(func.count()).select_from(query.subquery())

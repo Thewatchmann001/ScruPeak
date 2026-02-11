@@ -9,6 +9,9 @@ export const landService = {
   search: async (params: {
     q?: string;
     status?: string;
+    district?: string;
+    land_type?: string;
+    purpose?: string;
     min_price?: number;
     max_price?: number;
     region?: string;

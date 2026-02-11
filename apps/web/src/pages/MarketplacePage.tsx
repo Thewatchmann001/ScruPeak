@@ -1,23 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { landService } from '@/services/landService';
 import { Land, PaginatedResponse } from '@/types';
 import { LandCard } from '@/components/land/LandCard';
-import { MapPinOff, SearchX, Map as MapIcon, Grid as GridIcon } from 'lucide-react';
+import { MapPinOff, SearchX, Map as MapIcon, Grid as GridIcon, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { InteractiveMap } from '@/components/map/InteractiveMap';
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
   const [lands, setLands] = useState<Land[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(queryParams.get('q') || '');
+  const [district, setDistrict] = useState(queryParams.get('district') || '');
+  const [landType, setLandType] = useState(queryParams.get('land_type') || '');
+  const [purpose, setPurpose] = useState(queryParams.get('purpose') || '');
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [taskId, setTaskId] = useState('');
-  const [taskStatus, setTaskStatus] = useState<{ status: string; result?: any } | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const fetchLands = async () => {
@@ -26,6 +31,9 @@ export default function MarketplacePage() {
       try {
         const response = await landService.search({
           q: searchQuery,
+          district,
+          land_type: landType,
+          purpose,
           page,
           page_size: 12
         });
@@ -49,18 +57,7 @@ export default function MarketplacePage() {
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, page]);
-
-  const checkTaskStatus = async () => {
-    if (!taskId) return;
-    try {
-      const response = await landService.getTaskStatus(taskId);
-      setTaskStatus(response.data);
-    } catch (err) {
-      console.error('Failed to check task:', err);
-      setTaskStatus({ status: 'ERROR', result: 'Failed to fetch status' });
-    }
-  };
+  }, [searchQuery, district, landType, purpose, page]);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-8">
@@ -87,18 +84,82 @@ export default function MarketplacePage() {
             </div>
           </div>
 
-          <div className="flex gap-4 mb-6">
-            <input
-              type="text"
-              placeholder="Search by title, location, or description..."
-              className="flex-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setPage(1); // Reset to first page on search
-              }}
-            />
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Search by title, location, or description..."
+                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <Button
+                variant={showFilters ? 'primary' : 'outline'}
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+            >
+                <Filter className="w-4 h-4" />
+                Filters
+            </Button>
           </div>
+
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm mb-6 animate-in slide-in-from-top duration-200">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+                    <input
+                        type="text"
+                        value={district}
+                        onChange={(e) => setDistrict(e.target.value)}
+                        placeholder="e.g. Freetown"
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Land Type</label>
+                    <select
+                        value={landType}
+                        onChange={(e) => setLandType(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                    >
+                        <option value="">All Types</option>
+                        <option value="residential">Residential</option>
+                        <option value="commercial">Commercial</option>
+                        <option value="agricultural">Agricultural</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+                    <select
+                        value={purpose}
+                        onChange={(e) => setPurpose(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                    >
+                        <option value="">All Purposes</option>
+                        <option value="residential">Build Home</option>
+                        <option value="commercial">Business</option>
+                        <option value="agricultural">Farming</option>
+                    </select>
+                </div>
+                <div className="md:col-span-3 flex justify-end">
+                    <button
+                        onClick={() => {
+                            setDistrict('');
+                            setLandType('');
+                            setPurpose('');
+                            setSearchQuery('');
+                        }}
+                        className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                        Clear all filters
+                    </button>
+                </div>
+            </div>
+          )}
 
 
         </div>
