@@ -116,6 +116,13 @@ async def login(
         )
     
     # Verify password
+    if not user.password_hash:
+        logger.warning(f"Login attempt with password on social-only account: {credentials.email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This account uses social login. Please sign in with Google."
+        )
+
     if not verify_password(credentials.password, user.password_hash):
         logger.warning(f"Failed login attempt for user: {credentials.email}")
         raise HTTPException(

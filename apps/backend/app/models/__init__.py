@@ -74,7 +74,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     phone = Column(String(20))
     name = Column(String(255), nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=True)
     role = Column(Enum(UserRole), default=UserRole.BUYER, nullable=False, index=True)
     kyc_verified = Column(Boolean, default=False, index=True)
     kyc_verified_at = Column(DateTime)
