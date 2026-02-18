@@ -16,7 +16,27 @@ const KycPage = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [kycStatus, setKycStatus] = useState<string | null>(null);
 
-  // ... (rest of state)
+  const [files, setFiles] = useState<{
+    id_document: File | null;
+    proof_of_address: File | null;
+  }>({
+    id_document: null,
+    proof_of_address: null,
+  });
+
+  const [capturedImages, setCapturedImages] = useState<{
+    straight: Blob | null;
+    left: Blob | null;
+    right: Blob | null;
+  }>({
+    straight: null,
+    left: null,
+    right: null,
+  });
+
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [livenessStep, setLivenessStep] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (authLoading) return; // Wait for auth check to complete
@@ -28,7 +48,7 @@ const KycPage = () => {
 
     const checkStatus = async () => {
       try {
-        const response = await api.get('/kyc/status');
+        const response: any = await api.get('/kyc/status');
         if (response.data) {
           setKycStatus(response.data.status);
         }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, 
@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   Briefcase
 } from 'lucide-react';
-import { api } from '@/services/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Link } from 'react-router-dom';
@@ -45,7 +44,8 @@ export default function AdminDashboardPage() {
           users_count: 152,
           lands_count: 45,
           active_sessions: 12,
-          pending_kyc: 5
+          pending_kyc: 5,
+          pending_agents: 3
         });
       } catch (error) {
         console.error('Failed to fetch admin stats', error);

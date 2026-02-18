@@ -27,7 +27,7 @@ export default function AdminAgentsPage() {
 
   const fetchAgents = async () => {
     try {
-      const response = await api.get('/admin/agents/pending');
+      const response: any = await api.get('/admin/agents/pending');
       setAgents(response.data);
     } catch (error) {
       console.error('Failed to fetch pending agents', error);
@@ -39,7 +39,7 @@ export default function AdminAgentsPage() {
 
   const handleVerify = async (agentId: string) => {
     try {
-      await api.post(`/admin/agents/${agentId}/verify`);
+      await api.post(`/admin/agents/${agentId}/verify`, {});
       toast.success('Agent verified successfully');
       // Refresh list
       fetchAgents();
@@ -108,9 +108,9 @@ export default function AdminAgentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {agent.kyc_verified ? (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Verified</Badge>
+                        <Badge variant="success">Verified</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-orange-500 border-orange-200 bg-orange-50">Pending</Badge>
+                        <Badge variant="warning">Pending</Badge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

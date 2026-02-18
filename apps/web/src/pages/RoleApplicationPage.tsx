@@ -33,7 +33,7 @@ const RoleApplicationPage = () => {
     setLoading(true);
 
     try {
-      await api.post('/users/upgrade/seller');
+      await api.post('/users/upgrade/seller', {});
       setSuccess('Successfully upgraded to Seller (Owner) role! You can now list your land.');
       await checkAuth(); // Refresh user state
       // Redirect after short delay
@@ -142,9 +142,9 @@ const RoleApplicationPage = () => {
                 <h4 className="font-medium flex items-center gap-2 mb-2">
                   Status Check:
                   {user.kyc_verified ? (
-                    <Badge className="bg-green-500">KYC Verified</Badge>
+                    <Badge variant="success">KYC Verified</Badge>
                   ) : (
-                    <Badge variant="outline" className="text-orange-500 border-orange-200 bg-orange-50">KYC Required</Badge>
+                    <Badge variant="warning">KYC Required</Badge>
                   )}
                 </h4>
                 {!user.kyc_verified && (

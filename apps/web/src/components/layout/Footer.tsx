@@ -1,82 +1,68 @@
 import { Link } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { Shield, Globe, Twitter, Linkedin, Github } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+    <footer className="bg-slate-950 text-white py-24 px-4 border-t border-white/5">
       <div className="max-w-7xl mx-auto">
-        {/* Main Footer Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* Brand Column */}
-          <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+          <div className="space-y-8">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center shadow-lg shadow-orange-600/20">
+                <Shield className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">
-                Land<span className="text-primary-500">Biznes</span>
+              <span className="text-2xl font-black tracking-tighter">
+                LAND<span className="text-orange-500">BIZNES</span>
               </span>
             </Link>
-            <p className="text-sm opacity-70">
-              Sierra Leone's most trusted land marketplace with verified
-              secure transactions.
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
+              Sierra Leone's leading land registry and marketplace. Delivering institutional-grade security for the next generation of property investors.
             </p>
+            <div className="flex gap-4">
+              <SocialLink icon={Twitter} href="#" />
+              <SocialLink icon={Linkedin} href="#" />
+              <SocialLink icon={Github} href="#" />
+            </div>
           </div>
 
-          {/* Platform Links */}
           <FooterColumn
-            title="Platform"
+            title="Registry"
             links={[
-              { label: "Listings", href: "/marketplace" },
-              { label: "Dashboard", href: "/sell" },
-              { label: "Escrow", href: "/escrow" },
-              { label: "Verification", href: "/kyc" },
+              { label: "Marketplace", href: "/marketplace" },
+              { label: "Title Verification", href: "/features" },
+              { label: "Interactive Map", href: "/map" },
+              { label: "ULID Standards", href: "/features" },
             ]}
           />
 
-          {/* Company Links */}
           <FooterColumn
             title="Company"
             links={[
               { label: "About Us", href: "/about" },
-              { label: "Blog", href: "/blog" },
+              { label: "Legal Registry", href: "/about" },
               { label: "Contact", href: "/contact" },
               { label: "Careers", href: "/careers" },
             ]}
           />
 
-          {/* Legal Links */}
           <FooterColumn
             title="Legal"
             links={[
               { label: "Terms of Service", href: "/terms" },
               { label: "Privacy Policy", href: "/privacy" },
-              { label: "Cookie Policy", href: "/cookies" },
+              { label: "Compliance", href: "/privacy" },
               { label: "Licenses", href: "/licenses" },
             ]}
           />
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-white/20" />
-
-        {/* Bottom Section */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <p className="text-sm opacity-60">
-            &copy; 2026 LandBiznes. All rights reserved.
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
+            &copy; {new Date().getFullYear()} LandBiznes. National Land Registry Infrastructure.
           </p>
-          <div className="flex flex-col items-center sm:items-end">
-            <p className="text-sm opacity-80">
-              Made with trust for Sierra Leone
-            </p>
-            <a 
-              href="https://www.watchmann.dev" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-xs font-bold text-orange-500 tracking-wide mt-1 hover:text-orange-400 transition-colors"
-            >
-              by Watchmann
-            </a>
+          <div className="flex items-center gap-2 text-slate-500 hover:text-orange-500 transition-colors cursor-pointer">
+            <Globe size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Global Standards Implemented</span>
           </div>
         </div>
       </div>
@@ -84,28 +70,27 @@ export default function Footer() {
   );
 }
 
-function FooterColumn({
-  title,
-  links,
-}: {
-  title: string;
-  links: { label: string; href: string }[];
-}) {
+function FooterColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
   return (
-    <div className="space-y-4">
-      <h4 className="font-semibold">{title}</h4>
-      <ul className="space-y-2">
+    <div className="space-y-8">
+      <h4 className="font-black text-white uppercase tracking-[0.2em] text-[10px]">{title}</h4>
+      <ul className="space-y-4">
         {links.map((link) => (
           <li key={link.label}>
-            <Link
-              to={link.href}
-              className="text-sm opacity-70 hover:opacity-100 hover:text-primary-400 transition-all duration-300"
-            >
+            <Link to={link.href} className="text-slate-400 hover:text-orange-500 transition-colors text-sm font-medium">
               {link.label}
             </Link>
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function SocialLink({ icon: Icon, href }: { icon: any, href: string }) {
+  return (
+    <a href={href} className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center text-slate-400 hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all">
+      <Icon size={18} />
+    </a>
   );
 }

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Mail, Lock, User, Loader2, ArrowRight, CheckCircle, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Loader2, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,7 +15,7 @@ const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["buyer", "owner"]).default("buyer"),
+  role: z.enum(["buyer", "owner"]),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
