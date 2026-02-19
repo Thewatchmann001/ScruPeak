@@ -7,22 +7,9 @@ import { Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
-interface Land {
-  id: string;
-  title: string;
-  price: number;
-  region: string;
-  district: string;
-  size_sqm: number;
-  description: string;
-  status: string;
-  // Add other fields as needed based on API response
-}
-
 export function FeaturedListings() {
   const [featuredProperties, setFeaturedProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -62,7 +49,6 @@ export function FeaturedListings() {
         setFeaturedProperties(mappedProperties);
       } catch (err) {
         console.error("Failed to fetch listings:", err);
-        setError("Failed to load listings");
       } finally {
         setLoading(false);
       }

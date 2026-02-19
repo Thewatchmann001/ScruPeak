@@ -3,7 +3,7 @@ import { api } from './api';
 export const paymentService = {
   createBuyerAccounts: async (buyerName: string) => {
     return api.post<{ sle_account: string; usd_account: string }>(
-      '/api/v1/payments/monime/accounts',
+      '/payments/monime/accounts',
       { buyer_name: buyerName }
     );
   },
@@ -13,7 +13,7 @@ export const paymentService = {
       redirectUrl: string;
       sessionId: string;
       payment_id: string;
-    }>('/api/v1/payments/monime/checkout', {
+    }>('/payments/monime/checkout', {
       escrow_id: escrowId,
       currency,
     });
@@ -27,7 +27,7 @@ export const paymentService = {
     description?: string;
   }) => {
     return api.post<{ payout: any }>(
-      '/api/v1/payments/monime/payout',
+      '/payments/monime/payout',
       params
     );
   },
@@ -40,14 +40,14 @@ export const paymentService = {
     description?: string;
   }) => {
     return api.post<{ transfer: any }>(
-      '/api/v1/payments/monime/transfer',
+      '/payments/monime/transfer',
       params
     );
   },
 
   getReceipt: async (transactionId: string) => {
     return api.get<{ receipt: any }>(
-      `/api/v1/payments/monime/receipt/${transactionId}`
+      `/payments/monime/receipt/${transactionId}`
     );
   },
 };

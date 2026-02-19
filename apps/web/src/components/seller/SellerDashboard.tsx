@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Filter, MoreHorizontal, Eye, MessageSquare, ShieldCheck } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, Eye, MessageSquare, ShieldCheck, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import { CreateListingModal } from "./CreateListingModal";
-import { Land } from "@/types";
+import { Land, PaginatedResponse } from "@/types";
 
 export default function SellerDashboard() {
   const { user, isAuthenticated } = useAuth();
@@ -24,7 +24,7 @@ export default function SellerDashboard() {
   const fetchListings = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/land/my-listings');
+      const response = await api.get<PaginatedResponse<Land>>('/land/my-listings');
       setListings(response.data.items || []);
     } catch (error) {
       console.error("Failed to fetch listings:", error);
@@ -133,7 +133,7 @@ export default function SellerDashboard() {
                   className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
                 />
               </div>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="sm">
                 <Filter className="w-4 h-4" />
               </Button>
             </div>
@@ -166,7 +166,7 @@ export default function SellerDashboard() {
                         <div className="flex flex-col">
                           <span className="font-medium text-neutral-900">{listing.title}</span>
                           <span className="text-xs text-neutral-500 flex items-center gap-1 mt-1">
-                            <MapPinIcon className="w-3 h-3" />
+                            <MapPin className="w-3 h-3" />
                             {listing.district}, {listing.region}
                           </span>
                         </div>
@@ -203,7 +203,7 @@ export default function SellerDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                        <Button variant="ghost" size="sm" className="hover:bg-gray-100">
                           <MoreHorizontal className="w-4 h-4 text-gray-500" />
                         </Button>
                       </td>
@@ -266,23 +266,5 @@ function StatusBadge({ status }: { status: string }) {
     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${className}`}>
       {label}
     </span>
-  );
-}
-
-function MapPinIcon({ className }: { className?: string }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
   );
 }

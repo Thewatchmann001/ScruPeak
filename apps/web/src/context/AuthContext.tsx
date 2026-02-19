@@ -48,7 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         name,
-        role // This will be handled if defined in additionalFields on server
+        // @ts-ignore - better-auth types might not include additional fields by default
+        role
     });
     if (error) {
         throw error;

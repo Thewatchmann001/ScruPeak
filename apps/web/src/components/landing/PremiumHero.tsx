@@ -1,22 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ArrowDown, Shield, MapPin, Target, CreditCard } from "lucide-react";
+import { Search, ArrowDown, Shield, MapPin, Target, CreditCard, Sparkles } from "lucide-react";
 import { useAuth } from '@/context/AuthContext';
+import { motion } from "framer-motion";
 
 export default function PremiumHero() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [district, setDistrict] = useState("");
-  const [landType, setLandType] = useState("");
-  const [purpose, setPurpose] = useState("");
-  const [budget, setBudget] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (district) params.append("district", district);
-    if (landType) params.append("type", landType);
-    if (purpose) params.append("purpose", purpose);
-    if (budget) params.append("budget", budget);
+    if (searchQuery) params.append("q", searchQuery);
     navigate(`/marketplace?${params.toString()}`);
   };
 
@@ -27,287 +22,108 @@ export default function PremiumHero() {
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
+    <div className="relative w-full min-h-screen bg-slate-950 overflow-hidden flex items-center justify-center">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
         <img 
-          src="/images/hero.png" 
+          src="https://images.unsplash.com/photo-1500382017468-9049fee74a62?auto=format&fit=crop&q=80&w=2664"
           alt="Land Background" 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover opacity-40 grayscale-[0.5]"
         />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/50 to-slate-950" />
       </div>
 
-      {/* Enhanced Background with Layered Effects */}
-      <div className="absolute inset-0">
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-black/80 to-gray-950/90" />
-        
-        {/* Animated grid lines */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(90deg, rgba(249,115,22,0.1) 1px, transparent 1px),
-              linear-gradient(180deg, rgba(249,115,22,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px',
-            animation: 'gridMove 20s linear infinite'
-          }} />
-        </div>
-
-        {/* Floating orbs */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-orange-600/3 rounded-full blur-3xl animate-float-delayed" />
-        <div className="absolute top-2/3 left-1/3 w-48 h-48 bg-orange-400/7 rounded-full blur-2xl animate-float-slow" />
+      {/* Animated Elements */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pt-20 lg:pt-32 pb-16 lg:pb-24">
-        <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
-          <div className="text-center mb-12 lg:mb-16 animate-slide-up">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-full px-4 py-2 mb-6 lg:mb-8">
-              <Shield className="w-4 h-4 text-orange-500" />
-              <span className="text-sm font-semibold text-orange-500 uppercase tracking-wider">
-                Verified Land Marketplace
-              </span>
-            </div>
-
-            {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-4 lg:mb-6 leading-tight">
-              Buy <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-300">Verified Land</span>
-              <br className="hidden lg:block" /> in Sierra Leone — Without Fear
-            </h1>
-
-            {/* Subheading */}
-            <p className="text-lg lg:text-xl text-gray-300 max-w-3xl mx-auto mb-8 lg:mb-12">
-              Verified family ownership. Survey plans confirmed. Community witnessed. Escrow-protected payments.
-            </p>
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-5xl mx-auto"
+        >
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 mb-8 backdrop-blur-md">
+            <Sparkles className="w-4 h-4 text-orange-500" />
+            <span className="text-xs font-bold text-slate-300 uppercase tracking-[0.2em]">
+              The Gold Standard for Verified Land
+            </span>
           </div>
 
-          {/* Trust Indicators */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 lg:mb-12 max-w-4xl mx-auto animate-slide-up-delayed">
-            {[
-              { icon: Shield, label: "No Double Sales", color: "text-green-500" },
-              { icon: MapPin, label: "Survey Confirmed", color: "text-blue-500" },
-              { icon: Target, label: "Community Verified", color: "text-purple-500" },
-              { icon: CreditCard, label: "Escrow Protected", color: "text-orange-500" }
-            ].map((item, index) => (
-              <div key={index} className="flex items-center gap-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 lg:p-4">
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color.replace('text-', '')}/10`}>
-                  <item.icon className={`w-4 h-4 lg:w-5 lg:h-5 ${item.color}`} />
-                </div>
-                <span className="text-sm lg:text-base font-medium text-white">{item.label}</span>
+          {/* Main Heading */}
+          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white mb-6 leading-[0.9] tracking-tighter">
+            Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-300">Absolute</span>
+            <br /> Certainty in Ownership
+          </h1>
+
+          {/* Subheading - Fixed spacing for AI-Powered */}
+          <p className="text-lg lg:text-2xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed">
+            Sierra Leone's leading land registry and marketplace.
+            Verify titles instantly with <span className="text-white font-semibold">AI-Powered</span> intelligence.
+          </p>
+
+          {/* Zillow-style Search Bar */}
+          <div className="max-w-3xl mx-auto mb-12">
+            <div className="bg-white rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Enter district, chiefdom, or village..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="w-full pl-12 pr-4 py-4 text-slate-900 font-medium focus:outline-none placeholder:text-slate-400 text-lg"
+                />
               </div>
-            ))}
-          </div>
-
-          {/* Search Bar - MAINTAINED AS REQUESTED */}
-          <div className="max-w-5xl mx-auto mb-8 lg:mb-12 animate-slide-up-delayed-2">
-            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-1">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 lg:gap-3 p-4 lg:p-5">
-                {/* District */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="District/Chiefdom"
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all backdrop-blur-sm"
-                  />
-                </div>
-
-                {/* Land Type */}
-                <div className="relative">
-                  <select
-                    value={landType}
-                    onChange={(e) => setLandType(e.target.value)}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all backdrop-blur-sm appearance-none"
-                  >
-                    <option value="" className="bg-gray-900">Land Type</option>
-                    <option value="residential" className="bg-gray-900">Residential</option>
-                    <option value="commercial" className="bg-gray-900">Commercial</option>
-                    <option value="agricultural" className="bg-gray-900">Agricultural</option>
-                    <option value="industrial" className="bg-gray-900">Industrial</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <ArrowDown className="w-4 h-4 text-gray-400" />
-                  </div>
-                </div>
-
-                {/* Purpose */}
-                <div className="relative">
-                  <select
-                    value={purpose}
-                    onChange={(e) => setPurpose(e.target.value)}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all backdrop-blur-sm appearance-none"
-                  >
-                    <option value="" className="bg-gray-900">Purpose</option>
-                    <option value="build" className="bg-gray-900">Build Home</option>
-                    <option value="invest" className="bg-gray-900">Invest</option>
-                    <option value="farm" className="bg-gray-900">Farm</option>
-                    <option value="develop" className="bg-gray-900">Develop</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <ArrowDown className="w-4 h-4 text-gray-400" />
-                  </div>
-                </div>
-
-                {/* Budget */}
-                <div className="relative">
-                  <select
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all backdrop-blur-sm appearance-none"
-                  >
-                    <option value="" className="bg-gray-900">Budget (Le)</option>
-                    <option value="0-25000" className="bg-gray-900">Under Le25K</option>
-                    <option value="25000-50000" className="bg-gray-900">Le25K - Le50K</option>
-                    <option value="50000-100000" className="bg-gray-900">Le50K - Le100K</option>
-                    <option value="100000+" className="bg-gray-900">Le100K+</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <ArrowDown className="w-4 h-4 text-gray-400" />
-                  </div>
-                </div>
-
-                {/* Search Button */}
-                <button
-                  onClick={handleSearch}
-                  className="group px-6 py-3 lg:py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                >
-                  <Search className="w-4 h-4 lg:w-5 lg:h-5" />
-                  <span>Explore</span>
-                </button>
-              </div>
+              <button
+                onClick={handleSearch}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-black px-10 py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 text-lg"
+              >
+                Search
+              </button>
             </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up-delayed-3">
-            {!user && (
-              <button
-                onClick={() => navigate('/auth/register')}
-                className="group px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-lg rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl flex items-center gap-3"
-              >
-                <span>Get Started</span>
-                <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
-              </button>
-            )}
-            
-            <button
-              onClick={handleSearch}
-              className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-            >
-              Browse Marketplace
-            </button>
+          {/* Quick Stats / Trust Indicators */}
+          <div className="flex flex-wrap justify-center gap-8 text-white/60">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-orange-500" />
+              <span className="font-bold text-sm uppercase tracking-widest">100% Secure Escrow</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-orange-500" />
+              <span className="font-bold text-sm uppercase tracking-widest">Digital Survey Verified</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-orange-500" />
+              <span className="font-bold text-sm uppercase tracking-widest">Government Aligned</span>
+            </div>
           </div>
-
-          <div className="text-center mt-12">
-            {!user && (
-              <button
-                onClick={() => navigate('/auth/login?redirect=/kyc')}
-                className="inline-block px-8 py-3 bg-orange-50 text-orange-700 font-bold rounded-lg border border-orange-200 hover:bg-orange-100 transition-colors"
-              >
-                Register Your Land Now
-              </button>
-            )}
-          </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 animate-bounce">
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-xs text-gray-400 font-medium tracking-wider">SCROLL</span>
-          <ArrowDown className="w-5 h-5 text-orange-500" />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 1 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+      >
+        <div className="flex flex-col items-center gap-2 opacity-50">
+          <span className="text-[10px] text-white font-bold tracking-[0.3em] uppercase">Scroll to explore</span>
+          <ArrowDown className="w-5 h-5 text-orange-500 animate-bounce" />
         </div>
-      </div>
+      </motion.div>
 
-      {/* Custom Styles */}
-      <style>{`
-        @keyframes gridMove {
-          0% {
-            background-position: 0 0;
-          }
-          100% {
-            background-position: 50px 50px;
-          }
-        }
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0) scale(1);
-          }
-          50% {
-            transform: translateY(-20px) scale(1.05);
-          }
-        }
-        @keyframes float-delayed {
-          0%, 100% {
-            transform: translateY(0) scale(1);
-          }
-          50% {
-            transform: translateY(30px) scale(1.03);
-          }
-        }
-        @keyframes float-slow {
-          0%, 100% {
-            transform: translateY(0) scale(1);
-          }
-          50% {
-            transform: translateY(-15px) scale(1.02);
-          }
-        }
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-float {
-          animation: float 8s ease-in-out infinite;
-        }
-        .animate-float-delayed {
-          animation: float-delayed 10s ease-in-out infinite;
-          animation-delay: 1s;
-        }
-        .animate-float-slow {
-          animation: float-slow 12s ease-in-out infinite;
-          animation-delay: 2s;
-        }
-        .animate-slide-up {
-          animation: slide-up 0.8s ease-out forwards;
-        }
-        .animate-slide-up-delayed {
-          animation: slide-up 0.8s ease-out 0.2s forwards;
-          opacity: 0;
-        }
-        .animate-slide-up-delayed-2 {
-          animation: slide-up 0.8s ease-out 0.4s forwards;
-          opacity: 0;
-        }
-        .animate-slide-up-delayed-3 {
-          animation: slide-up 0.8s ease-out 0.6s forwards;
-          opacity: 0;
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-        }
-        ::-webkit-scrollbar-thumb {
-          background: linear-gradient(to bottom, #f97316, #fb923c);
-          border-radius: 4px;
-        }
-      `}</style>
+      {/* Abstract Background Grid Overlay */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
+           style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
     </div>
   );
 }

@@ -21,7 +21,7 @@ export default function VerifyEmailPage() {
       }
 
       try {
-        await api.post(`/auth/verify-email?token=${token}`);
+        await api.post(`/auth/verify-email?token=${token}`, {});
         setStatus('success');
         setMessage('Your email has been successfully verified!');
       } catch (error: any) {
