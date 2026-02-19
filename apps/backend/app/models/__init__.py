@@ -13,6 +13,7 @@ from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 import uuid
 import enum
+import ulid
 
 from app.core.database import Base
 

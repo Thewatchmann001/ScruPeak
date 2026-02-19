@@ -17,6 +17,8 @@ from app.schemas import (
 )
 from app.utils.auth import get_current_user
 
+router = APIRouter(prefix="/land", tags=["Land"])
+
 @router.post(
     "",
     response_model=LandResponse,
@@ -153,3 +155,134 @@ async def create_land(
     sync_land_to_search.delay(land_dict)
     
     return new_land
+
+@router.get(
+    "",
+    response_model=PaginatedResponse,
+    summary="Search for land properties"
+)
+async def get_lands(
+    q: Optional[str] = Query(None, description="Search keyword"),
+    status: Optional[LandStatus] = Query(LandStatus.AVAILABLE),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    region: Optional[str] = Query(None),
+    district: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Search and filter available land listings with pagination.
+    """
+    query = select(Land).options(defer(Land.location))
+
+    filters = []
+    if status:
+        filters.append(Land.status == status)
+    if region:
+        filters.append(Land.region.ilike(f"%{region}%"))
+    if district:
+        filters.append(Land.district.ilike(f"%{district}%"))
+    if min_price:
+        filters.append(Land.price >= min_price)
+    if max_price:
+        filters.append(Land.price <= max_price)
+    if q:
+        filters.append(and_(
+            (Land.title.ilike(f"%{q}%")) |
+            (Land.description.ilike(f"%{q}%"))
+        ))
+
+    if filters:
+        query = query.where(and_(*filters))
+
+    # Count total
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Sort and paginate
+    query = query.order_by(desc(Land.created_at))
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    total_pages = (total + page_size - 1) // page_size
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "items": items,
+        "has_next": page < total_pages,
+        "has_prev": page > 1
+    }
+
+@router.get(
+    "/{land_id}",
+    response_model=LandDetailResponse,
+    summary="Get land details by ID"
+)
+async def get_land_by_id(
+    land_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get full details for a specific land parcel, including documents and history.
+    """
+    query = select(Land).where(Land.id == land_id).options(defer(Land.location))
+    result = await db.execute(query)
+    land = result.scalars().first()
+
+    if not land:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Land property not found"
+        )
+
+    # In a real app, we'd load documents and history here or via relationships
+    # For now, return the land object which matches the response model
+    return land
+
+@router.get(
+    "/my-listings",
+    response_model=PaginatedResponse,
+    summary="Get current user's land listings"
+)
+async def get_my_listings(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get all land listings owned by the currently authenticated user.
+    """
+    query = select(Land).where(Land.owner_id == current_user.id).options(defer(Land.location))
+
+    # Count total
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Sort and paginate
+    query = query.order_by(desc(Land.created_at))
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    total_pages = (total + page_size - 1) // page_size
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "items": items,
+        "has_next": page < total_pages,
+        "has_prev": page > 1
+    }

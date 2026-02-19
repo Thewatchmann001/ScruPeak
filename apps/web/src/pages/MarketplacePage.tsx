@@ -26,11 +26,8 @@ export default function MarketplacePage() {
           page,
           page_size: 12
         });
-        // Axios wraps response in data
-        const data = response.data as unknown as PaginatedResponse<Land>; 
-        // Note: Check if response.data is directly the object or if axios wraps it. 
-        // Usually axios returns { data: ... }. landService.search returns axios promise.
         
+        const data = response.data;
         setLands(data.items);
         setTotalPages(data.total_pages);
       } catch (err) {

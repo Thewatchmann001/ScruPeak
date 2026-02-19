@@ -48,7 +48,7 @@ const KycPage = () => {
 
     const checkStatus = async () => {
       try {
-        const response: any = await api.get('/kyc/status');
+        const response = await api.get<{ status: string }>('/kyc/status');
         if (response.data) {
           setKycStatus(response.data.status);
         }

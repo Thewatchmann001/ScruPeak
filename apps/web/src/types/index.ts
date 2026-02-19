@@ -29,10 +29,8 @@ export interface Land {
   classification_id?: string;
   classification?: LandClassification;
   size_sqm: number;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
+  latitude: number;
+  longitude: number;
   region: string;
   district: string;
   boundary?: {

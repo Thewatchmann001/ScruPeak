@@ -9,6 +9,7 @@ export const {
     signUp, 
     useSession, 
     signOut, 
+    // @ts-ignore
     forgetPassword, 
     resetPassword 
 } = authClient;

@@ -31,6 +31,9 @@ import AdminAgentsPage from '@/pages/admin/AdminAgentsPage';
 import AdminTaxPage from '@/pages/admin/AdminTaxPage';
 import RoleApplicationPage from '@/pages/RoleApplicationPage';
 import LandDetailPage from '@/components/land/LandDetailPage';
+import { useState, useEffect } from 'react';
+import { landService } from '@/services/landService';
+import { Land } from '@/types';
 
 // New Pages
 import EscrowPage from '@/pages/EscrowPage';
@@ -63,11 +66,44 @@ const HomePage = () => {
   );
 };
 
-const MapPage = () => (
-  <div className="h-[calc(100vh-64px)]">
-    <InteractiveMap listings={[]} />
-  </div>
-);
+const MapPage = () => {
+  const [listings, setListings] = useState<Land[]>([]);
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const response = await landService.search({ page_size: 100 });
+        setListings(response.data.items || []);
+      } catch (error) {
+        console.error("Failed to fetch listings for map:", error);
+      }
+    };
+    fetchListings();
+  }, []);
+
+  // Map backend Land type to InteractiveMap LandListing type
+  const mapListings = listings.map(l => ({
+    id: l.id,
+    location: {
+      country: "Sierra Leone",
+      district: l.district || "Unknown",
+      chiefdom: l.region || "Unknown",
+      community: l.title,
+      coordinates: [l.latitude, l.longitude] as [number, number]
+    },
+    price: Number(l.price),
+    size: Number(l.size_sqm) / 4046.86, // convert to acres for map display
+    sizeUnit: "acres" as const,
+    purpose: "Investment",
+    verificationScore: 85
+  }));
+
+  return (
+    <div className="h-[calc(100vh-64px)]">
+      <InteractiveMap listings={mapListings} />
+    </div>
+  );
+};
 
 function App() {
   return (

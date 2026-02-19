@@ -41,6 +41,7 @@ const RoleApplicationPage = () => {
         navigate('/sell');
       }, 2000);
     } catch (err: any) {
+      // @ts-ignore
       console.error(err);
       if (err.response?.status === 400 && err.response?.data?.detail?.includes('KYC')) {
         setError('KYC Verification is required to become a seller. Please complete KYC first.');
@@ -63,6 +64,7 @@ const RoleApplicationPage = () => {
       setSuccess('Agent application submitted successfully! Your application is under review by the administrator.');
       await checkAuth();
     } catch (err: any) {
+      // @ts-ignore
       console.error(err);
       if (err.response?.status === 409) {
         setError('You have already applied or are already an agent.');

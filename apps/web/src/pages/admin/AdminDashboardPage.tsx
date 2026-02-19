@@ -221,7 +221,16 @@ export default function AdminDashboardPage() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color, bg, link }: any) {
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  link?: string;
+}
+
+function StatCard({ title, value, icon: Icon, color, bg, link }: StatCardProps) {
   const content = (
     <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-primary">
       <div className="flex items-center justify-between">
