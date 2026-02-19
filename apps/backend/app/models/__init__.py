@@ -10,11 +10,14 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
-from geoalchemy2 import Geometry
 import uuid
 import enum
+import ulid as ulid_pkg
 
 from app.core.database import Base
+from app.core.config import get_settings
+
+settings = get_settings()
 
 
 class UserRole(str, enum.Enum):
@@ -41,6 +44,9 @@ class DocumentType(str, enum.Enum):
     SURVEY_REPORT = "survey_report"
     TAX_CERTIFICATE = "tax_certificate"
     GOVERNMENT_ID = "government_id"
+    CHIEF_LETTER = "chief_letter"
+    MINISTRY_DOCUMENT = "ministry_document"
+    PROPERTY_IMAGE = "property_image"
     OTHER = "other"
 
 
@@ -108,7 +114,7 @@ class Land(Base):
     )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    ulid = Column(String(26), default=lambda: str(ulid.new()), unique=True, index=True)
+    ulid = Column(String(26), default=lambda: str(ulid_pkg.new()), unique=True, index=True)
     parcel_id = Column(String(50), unique=True, index=True)  # New Smart ID
     grid_id = Column(String(20), index=True)  # For spatial grouping
     owner_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
@@ -119,8 +125,13 @@ class Land(Base):
     status = Column(Enum(LandStatus), default=LandStatus.AVAILABLE, nullable=False, index=True)
     
     # Geographic data (optimized for spatial queries)
-    location = Column(Geometry('POINT', srid=4326), nullable=False, index=True)  # Main location
-    boundary = Column(Geometry('POLYGON', srid=4326))  # Property boundary
+    if settings.DB_TYPE == "sqlite":
+        location = Column(Text, nullable=False)
+        boundary = Column(Text)
+    else:
+        from geoalchemy2 import Geometry
+        location = Column(Geometry('POINT', srid=4326), nullable=False, index=True)  # Main location
+        boundary = Column(Geometry('POLYGON', srid=4326))  # Property boundary
     
     # Blockchain
     blockchain_hash = Column(String(255), index=True)  # Document hash on Solana

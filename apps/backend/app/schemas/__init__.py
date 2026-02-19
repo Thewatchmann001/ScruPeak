@@ -39,6 +39,9 @@ class PaginatedResponse(BaseModel):
     has_next: bool = Field(description="Has next page")
     has_prev: bool = Field(description="Has previous page")
 
+    class Config:
+        from_attributes = True
+
 
 # ============================================================================
 # USER SCHEMAS
@@ -183,6 +186,11 @@ class LandResponse(LandBase):
     
     class Config:
         from_attributes = True
+
+
+class LandPaginatedResponse(PaginatedResponse):
+    """Paginated land response"""
+    items: List[LandResponse]
 
 
 class LandDetailResponse(LandResponse):

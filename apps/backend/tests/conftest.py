@@ -2,17 +2,20 @@
 Test configuration and fixtures for LandBiznes backend
 """
 import pytest
+import pytest_asyncio
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from typing import AsyncGenerator
+from sqlalchemy import event
+import sqlite3
 
 from app.main import create_app
 from app.core.database import Base, get_db
 
 
 # Test database URL
-TEST_DATABASE_URL = "postgresql+asyncpg://landbiznes:landbiznes@localhost:5432/landbiznes_test"
+TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 
 @pytest.fixture(scope="session")
@@ -24,8 +27,8 @@ def event_loop():
     loop.close()
 
 
-# Test database setup - using session scope for performance
-@pytest.fixture(scope="session")
+# Test database setup - using function scope for isolation with SQLite
+@pytest_asyncio.fixture(scope="function")
 def test_db_engine(event_loop):
     """Create test database engine"""
     engine = create_async_engine(
@@ -33,9 +36,25 @@ def test_db_engine(event_loop):
         echo=False,
         future=True,
     )
+
+    @event.listens_for(engine.sync_engine, "connect")
+    def connect(dbapi_connection, connection_record):
+        if isinstance(dbapi_connection, sqlite3.Connection):
+            def CheckSpatialIndex(*args): return 0
+            def RecoverGeometryColumn(*args): return 0
+            def DiscardGeometryColumn(*args): return 0
+            dbapi_connection.create_function("CheckSpatialIndex", 2, CheckSpatialIndex)
+            dbapi_connection.create_function("RecoverGeometryColumn", 4, RecoverGeometryColumn)
+            dbapi_connection.create_function("RecoverGeometryColumn", 5, RecoverGeometryColumn)
+            dbapi_connection.create_function("DiscardGeometryColumn", 4, DiscardGeometryColumn)
+            dbapi_connection.create_function("AddGeometryColumn", 5, lambda *args: 0)
+            dbapi_connection.create_function("CreateSpatialIndex", 3, lambda *args: 0)
     
     # Synchronously create/drop tables using asyncio.run
     def setup():
+        import os
+        if os.path.exists("./test.db"):
+            os.remove("./test.db")
         async def _create():
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
@@ -53,7 +72,7 @@ def test_db_engine(event_loop):
     cleanup()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session"""
     async_session = async_sessionmaker(
@@ -73,7 +92,7 @@ def app():
     return create_app()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(app, test_db_session):
     """Create test client with dependency override"""
     
@@ -82,7 +101,7 @@ async def client(app, test_db_session):
     
     app.dependency_overrides[get_db] = override_get_db
     
-    async with AsyncClient(app=app, base_url="http://test") as async_client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as async_client:
         yield async_client
     
     app.dependency_overrides.clear()

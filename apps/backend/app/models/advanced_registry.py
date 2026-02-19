@@ -5,11 +5,13 @@ Implements Cadastral Versioning, Encumbrance Management, and Surveyor Authentica
 from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Numeric, Text, Index, JSON, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from geoalchemy2 import Geometry
 import uuid
 import enum
 from datetime import datetime
 from app.core.database import Base
+from app.core.config import get_settings
+
+settings = get_settings()
 
 # ============================================================================
 # CADASTRAL MAP VERSIONING (TEMPORAL GIS)
@@ -36,7 +38,11 @@ class CadastralHistory(Base):
     land_id = Column(UUID(as_uuid=True), ForeignKey('land.id', ondelete='CASCADE'), nullable=False)
     
     # Snapshot of the geometry at this point in time
-    geometry_snapshot = Column(Geometry('POLYGON', srid=4326), nullable=False)
+    if settings.DB_TYPE == "sqlite":
+        geometry_snapshot = Column(Text, nullable=False)
+    else:
+        from geoalchemy2 import Geometry
+        geometry_snapshot = Column(Geometry('POLYGON', srid=4326), nullable=False)
     
     # Change Metadata
     change_type = Column(Enum(CadastralChangeType), nullable=False)
