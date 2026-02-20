@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon, CircleMarker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css"; // Restored: Import directly from node_modules for offline support
+import { SpatialGridLayer } from "./SpatialGridLayer";
 
 // Fix for default marker icons in Next.js
 if (typeof window !== "undefined") {
@@ -160,6 +161,7 @@ export function InteractiveMap({
         scrollWheelZoom={true}
       >
         <TileLayer url={getTileUrl()} attribution={getAttribution()} />
+        <SpatialGridLayer />
         <MapUpdater listings={listingsWithCoords} selectedListingId={selectedListingId} />
 
         {listingsWithCoords.map((listing) => {
@@ -293,6 +295,10 @@ export function InteractiveMap({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
             <span className="text-gray-600">Selected Listing</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 border-t border-dashed border-orange-400"></div>
+            <span className="text-gray-600">Spatial Grid (2km)</span>
           </div>
         </div>
       </div>

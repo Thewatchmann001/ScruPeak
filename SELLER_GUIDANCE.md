@@ -47,6 +47,12 @@ When you list a land, the system automatically assigns two unique identifiers:
 1.  **ULID (Permanent Unique Land ID)**: A 26-character immutable identifier (e.g., `01KHVH...`) used for on-chain tracking and blockchain verification.
 2.  **Smart Parcel ID**: A structured ID based on geographic location (e.g., `SL-8629-17403-0001`). This ID embeds the country code, a random security salt, the spatial grid ID, and the sequence number of the parcel within that grid.
 
+### Spatial Awareness in Maps
+The LandBiznes marketplace map directly leverages the national coordinate system:
+*   **Grid Overlay**: When zoomed in, you can see the 2km x 2km national grid cells that define the `grid_id`.
+*   **Real-time Spatial ID**: As you move your cursor over the map, the system calculates and displays the specific **Spatial ID** for that location in real-time, matching exactly how the registry assigns IDs.
+*   **Immutable Boundaries**: Property boundaries are tied to these coordinates, ensuring that the visual map and the legal registry are always perfectly aligned.
+
 ## Summary Checklist
 - [ ] Registered account
 - [ ] Uploaded ID & Proof of Address
