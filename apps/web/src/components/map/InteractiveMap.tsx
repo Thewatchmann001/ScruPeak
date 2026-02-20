@@ -18,20 +18,19 @@ if (typeof window !== "undefined") {
 
 interface LandListing {
   id: string;
-  location: {
-    country: string;
-    district: string;
-    chiefdom: string;
-    community: string;
-    coordinates?: [number, number]; // [lat, lng]
-    bounds?: [[number, number], [number, number], [number, number], [number, number]]; // Polygon bounds
-  };
+  parcel_id?: string;
+  ulid?: string;
+  title: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
   price: number;
-  size: number;
-  sizeUnit: "sqm" | "acres";
-  purpose: string;
-  verificationScore: number;
-  image?: string;
+  size_sqm: number;
+  region: string;
+  district: string;
+  status: string;
+  boundary?: string; // WKT or geojson? Assume WKT for now based on backend
+  verificationScore?: number;
 }
 
 interface InteractiveMapProps {
@@ -51,7 +50,7 @@ function MapUpdater({ listings, selectedListingId }: { listings: LandListing[]; 
     if (listings.length === 0) return;
 
     const validListings = listings.filter(
-      (listing) => listing.location.coordinates && listing.location.coordinates.length === 2
+      (listing) => listing.latitude && listing.longitude
     );
 
     if (validListings.length === 0) {
@@ -62,13 +61,13 @@ function MapUpdater({ listings, selectedListingId }: { listings: LandListing[]; 
 
     if (selectedListingId) {
       const selected = validListings.find((l) => l.id === selectedListingId);
-      if (selected?.location.coordinates) {
-        map.setView(selected.location.coordinates, 15);
+      if (selected) {
+        map.setView([selected.latitude, selected.longitude], 17);
       }
     } else {
       // Fit bounds to show all listings
       const bounds = L.latLngBounds(
-        validListings.map((l) => l.location.coordinates! as [number, number])
+        validListings.map((l) => [l.latitude, l.longitude] as [number, number])
       );
       map.fitBounds(bounds, { padding: [50, 50] });
     }
@@ -120,23 +119,8 @@ export function InteractiveMap({
     }
   };
 
-  // Generate coordinates for listings that don't have them (mock data for demo)
-  const listingsWithCoords = listings.map((listing, index) => {
-    if (listing.location.coordinates) {
-      return listing;
-    }
-    // Generate mock coordinates based on index (for demo purposes)
-    // In production, these should come from the backend
-    const lat = defaultCenter[0] + (Math.random() - 0.5) * 2;
-    const lng = defaultCenter[1] + (Math.random() - 0.5) * 2;
-    return {
-      ...listing,
-      location: {
-        ...listing.location,
-        coordinates: [lat, lng] as [number, number],
-      },
-    };
-  });
+  // No need to generate mock coords anymore if backend is providing them
+  const listingsWithCoords = listings;
 
   if (!isClient) {
     return (
@@ -165,22 +149,72 @@ export function InteractiveMap({
         <MapUpdater listings={listingsWithCoords} selectedListingId={selectedListingId} />
 
         {listingsWithCoords.map((listing) => {
-          if (!listing.location.coordinates) return null;
+          if (!listing.latitude || !listing.longitude) return null;
 
           const isSelected = listing.id === selectedListingId;
           const markerColor = isSelected ? "#ef4444" : "#0ea5e9";
+          const center: [number, number] = [listing.latitude, listing.longitude];
+
+          // Calculate representative boundary if not provided (square centered at marker)
+          let boundaryCoords: [number, number][] = [];
+          if (listing.boundary) {
+             // Basic WKT parsing (rough)
+             const match = listing.boundary.match(/\(\((.*)\)\)/);
+             if (match) {
+               boundaryCoords = match[1].split(',').map(pair => {
+                 const [lng, lat] = pair.trim().split(' ').map(Number);
+                 return [lat, lng] as [number, number];
+               });
+             }
+          } else if (listing.size_sqm) {
+             // Use our coordinate system knowledge to calculate accurate square
+             const side = Math.sqrt(listing.size_sqm);
+             const halfSide = side / 2;
+
+             // Rough approximation in degrees (approx 111,000m per degree)
+             const latOffset = halfSide / 111000;
+             const lngOffset = halfSide / (111000 * Math.cos(listing.latitude * Math.PI / 180));
+
+             boundaryCoords = [
+               [listing.latitude - latOffset, listing.longitude - lngOffset],
+               [listing.latitude - latOffset, listing.longitude + lngOffset],
+               [listing.latitude + latOffset, listing.longitude + lngOffset],
+               [listing.latitude + latOffset, listing.longitude - lngOffset],
+               [listing.latitude - latOffset, listing.longitude - lngOffset],
+             ];
+          }
 
           return (
             <div key={listing.id}>
+              {/* Boundary Polygon */}
+              {boundaryCoords.length > 0 && (
+                <Polygon
+                  positions={boundaryCoords}
+                  pathOptions={{
+                    color: markerColor,
+                    fillColor: markerColor,
+                    fillOpacity: isSelected ? 0.4 : 0.2,
+                    weight: isSelected ? 3 : 1,
+                  }}
+                  eventHandlers={{
+                    click: () => onListingClick?.(listing.id),
+                  }}
+                >
+                  <Tooltip permanent={isSelected && mapType === 'roadmap'} direction="top">
+                    <span className="font-bold text-xs">{listing.parcel_id || 'Pending ID'}</span>
+                  </Tooltip>
+                </Polygon>
+              )}
+
               {/* Marker */}
               <CircleMarker
-                center={listing.location.coordinates}
-                radius={isSelected ? 12 : 8}
+                center={center}
+                radius={isSelected ? 6 : 4}
                 pathOptions={{
                   color: markerColor,
-                  fillColor: markerColor,
-                  fillOpacity: 0.7,
-                  weight: isSelected ? 3 : 2,
+                  fillColor: "#fff",
+                  fillOpacity: 1,
+                  weight: 2,
                 }}
                 eventHandlers={{
                   click: () => onListingClick?.(listing.id),
@@ -188,59 +222,39 @@ export function InteractiveMap({
               >
                 <Popup>
                   <div className="p-2 min-w-[200px]">
-                    <h3 className="font-bold text-gray-900 mb-1">{listing.location.community}</h3>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">
+                        {listing.parcel_id || 'ID Pending'}
+                      </span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        listing.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                      }`}>
+                        {listing.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1">{listing.title}</h3>
                     <p className="text-sm text-gray-600 mb-2">
-                      {listing.location.chiefdom}, {listing.location.district}
+                      {listing.district}, {listing.region}
                     </p>
-                    <div className="space-y-1 text-sm">
-                      <p className="font-semibold text-primary-600">
-                        ${listing.price.toLocaleString()}
+                    <div className="space-y-1 text-sm border-t pt-2">
+                      <p className="font-bold text-orange-600 text-lg">
+                        Le {listing.price.toLocaleString()}
                       </p>
-                      <p className="text-gray-600">
-                        {listing.size.toLocaleString()} {listing.sizeUnit} • {listing.purpose}
+                      <p className="text-gray-600 flex items-center gap-1">
+                        <span className="font-semibold text-gray-900">{listing.size_sqm.toLocaleString()}</span> sqm
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs font-medium text-gray-600">Verification:</span>
-                        <span
-                          className={`text-xs font-bold ${
-                            listing.verificationScore >= 80
-                              ? "text-green-600"
-                              : listing.verificationScore >= 50
-                              ? "text-yellow-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {listing.verificationScore}%
-                        </span>
-                      </div>
                     </div>
                     {onListingClick && (
                       <button
                         onClick={() => onListingClick(listing.id)}
-                        className="mt-3 w-full px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded hover:bg-primary-700 transition-colors"
+                        className="mt-3 w-full px-3 py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:bg-orange-700 transition-colors shadow-md"
                       >
-                        View Details
+                        VIEW PROPERTY DETAILS
                       </button>
                     )}
                   </div>
                 </Popup>
               </CircleMarker>
-
-              {/* Polygon bounds if available */}
-              {listing.location.bounds && (
-                <Polygon
-                  positions={listing.location.bounds}
-                  pathOptions={{
-                    color: markerColor,
-                    fillColor: markerColor,
-                    fillOpacity: 0.2,
-                    weight: 2,
-                  }}
-                  eventHandlers={{
-                    click: () => onListingClick?.(listing.id),
-                  }}
-                />
-              )}
             </div>
           );
         })}

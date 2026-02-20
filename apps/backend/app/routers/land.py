@@ -89,7 +89,7 @@ async def create_land(
         pass
 
     # 3. Create Land Record
-    from app.utils.spatial import compute_grid_id, generate_parcel_id
+    from app.utils.spatial import compute_grid_id, generate_parcel_id, generate_boundary_wkt
 
     # Extract grid info (returns grid_id, x, y)
     grid_data = compute_grid_id(latitude, longitude)
@@ -122,7 +122,8 @@ async def create_land(
         # Spatial
         grid_id=str(grid_id),
         parcel_id=generate_parcel_id(grid_id, sequence),
-        location=f"POINT({longitude} {latitude})"
+        location=f"POINT({longitude} {latitude})",
+        boundary=generate_boundary_wkt(latitude, longitude, size_sqm)
     )
     
     db.add(new_land)
