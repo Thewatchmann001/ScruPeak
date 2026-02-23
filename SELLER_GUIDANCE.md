@@ -22,8 +22,8 @@ Our system uses a secure, AI-powered liveness check to ensure all sellers are re
 ### Liveness Verification Steps:
 The system will capture 3 distinct profiles of your face:
 1.  **Look Straight**: Align your face with the center frame.
-2.  **Turn Right**: Turn your head slowly to the right.
-3.  **Turn Left**: Turn your head slowly to the left.
+2.  **Turn Left**: Turn your head slowly to the left.
+3.  **Turn Right**: Turn your head slowly to the right.
 
 *Behind the scenes, the system performs an automated Anti-Money Laundering (AML) and PEP screening against international watchlists to ensure regulatory compliance.*
 

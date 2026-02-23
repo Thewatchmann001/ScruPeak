@@ -1,49 +1,61 @@
 "use client";
 
+import { ShieldCheck, Users, ClipboardCheck, Scale } from "lucide-react";
+import { motion } from "framer-motion";
+
 export function TrustStrip() {
   const badges = [
     {
-      icon: "✓",
-      title: "Verified Survey Plan",
-      description: "Confirmed by licensed surveyors",
+      icon: ShieldCheck,
+      title: "Verified Survey",
+      description: "National grid aligned",
+      color: "text-orange-500",
+      bg: "bg-orange-500/10"
     },
     {
-      icon: "👥",
-      title: "Community Confirmed",
-      description: "Local stakeholders validated",
+      icon: Users,
+      title: "Community Witness",
+      description: "Local stakes validated",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10"
     },
     {
-      icon: "📋",
-      title: "Family Ownership Disclosed",
-      description: "Complete ownership history",
+      icon: ClipboardCheck,
+      title: "History Audit",
+      description: "Immutable ownership",
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10"
     },
     {
-      icon: "⚖️",
-      title: "No Court Disputes",
-      description: "Clear legal history",
+      icon: Scale,
+      title: "Legal Purity",
+      description: "Zero dispute check",
+      color: "text-indigo-500",
+      bg: "bg-indigo-500/10"
     },
   ];
 
   return (
-    <div className="bg-white py-8 border-b border-gray-200">
+    <div className="bg-[#0f172a] py-12 border-y border-slate-800">
       <div className="max-w-7xl mx-auto px-6">
-        <p className="text-center text-sm font-bold text-gray-600 uppercase tracking-widest mb-8">
-          Every listing verified for trust
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {badges.map((badge, idx) => (
-            <div
+            <motion.div
               key={idx}
-              className="flex items-center gap-4 p-4 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition-all transform hover:scale-105 hover:shadow-lg cursor-pointer"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              className="flex flex-col md:flex-row items-center md:items-start gap-4 p-2"
             >
-              <div className="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
-                {badge.icon}
+              <div className={`w-12 h-12 rounded-2xl ${badge.bg} ${badge.color} flex items-center justify-center flex-shrink-0 shadow-lg border border-white/5`}>
+                <badge.icon size={24} />
               </div>
-              <div>
-                <h4 className="font-bold text-gray-900 text-sm">{badge.title}</h4>
-                <p className="text-xs text-gray-600">{badge.description}</p>
+              <div className="text-center md:text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{badge.title}</h4>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{badge.description}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

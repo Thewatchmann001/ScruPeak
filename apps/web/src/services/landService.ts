@@ -25,6 +25,10 @@ export const landService = {
     return api.get<PaginatedResponse<Land>>(`/api/v1/land?${queryParams.toString()}`);
   },
 
+  getById: async (id: string) => {
+    return api.get<Land>(`/api/v1/land/${id}`);
+  },
+
   getTaskStatus: async (taskId: string) => {
     return api.get<{
       task_id: string;

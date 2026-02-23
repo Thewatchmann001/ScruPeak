@@ -23,12 +23,17 @@ export interface LandClassification {
 
 export interface Land {
   id: string;
+  ulid?: string;
+  parcel_id?: string;
+  spatial_id?: string;
   owner_id: string;
   title: string;
   description?: string;
   classification_id?: string;
   classification?: LandClassification;
   size_sqm: number;
+  latitude: number;
+  longitude: number;
   location: {
     latitude: number;
     longitude: number;

@@ -114,7 +114,7 @@ class Land(Base):
     )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    ulid = Column(String(26), default=lambda: str(ulid_pkg.new()), unique=True, index=True)
+    ulid = Column(String(26), default=lambda: str(ulid_pkg.ULID()), unique=True, index=True)
     parcel_id = Column(String(50), unique=True, index=True)  # New Smart ID
     grid_id = Column(String(20), index=True)  # For spatial grouping
     owner_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
