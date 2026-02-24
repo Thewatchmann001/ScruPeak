@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, MapPin, FileText, Camera, CheckCircle2, ArrowRight, ArrowLeft, Loader2, Upload, Info, ShieldCheck, Map as MapIcon, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea'; // Assuming this exists or I'll use standard textarea
+import { Alert } from '@/components/ui/Alert';
 import { api } from '@/services/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '@/components/ui/Badge';
 
 interface CreateListingModalProps {
   isOpen: boolean;
@@ -12,9 +14,9 @@ interface CreateListingModalProps {
 }
 
 export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListingModalProps) {
+  const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successData, setSuccessData] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -32,10 +34,16 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
   const [files, setFiles] = useState<{
     survey_plan: File | null;
     title_deed: File | null;
+    chief_letter: File | null;
+    property_image: File | null;
+    ministry_doc: File | null;
     spousal_consent_doc: File | null;
   }>({
     survey_plan: null,
     title_deed: null,
+    chief_letter: null,
+    property_image: null,
+    ministry_doc: null,
     spousal_consent_doc: null
   });
 
@@ -56,8 +64,7 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError(null);
     setLoading(true);
 
@@ -72,15 +79,24 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
       formPayload.append('latitude', formData.latitude);
       formPayload.append('longitude', formData.longitude);
       formPayload.append('spousal_consent', formData.spousal_consent.toString());
+
       if (formData.surveyor_id) formPayload.append('surveyor_id', formData.surveyor_id);
 
-      // Files
+      // Mandatory Files
       if (!files.survey_plan) throw new Error("Survey Plan is required");
       formPayload.append('survey_plan', files.survey_plan);
       
       if (!files.title_deed) throw new Error("Title Deed is required");
       formPayload.append('title_deed', files.title_deed);
 
+      if (!files.chief_letter) throw new Error("Chief's Consent Letter is required");
+      formPayload.append('chief_letter', files.chief_letter);
+
+      if (!files.property_image) throw new Error("Property Photo is required");
+      formPayload.append('property_image', files.property_image);
+
+      // Optional Files
+      if (files.ministry_doc) formPayload.append('ministry_doc', files.ministry_doc);
       if (formData.spousal_consent && files.spousal_consent_doc) {
           formPayload.append('spousal_consent_doc', files.spousal_consent_doc);
       }
@@ -89,200 +105,309 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
           headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      alert('Listing created successfully! Pending Admin Approval.');
       onSuccess();
       onClose();
-      // Reset form...
     } catch (err: any) {
-      console.error('Failed to create listing:', err);
-      let errorMessage = 'Failed to create listing. Please check your inputs.';
-      if (err.response?.data?.detail) {
-        if (typeof err.response.data.detail === 'string') {
-          errorMessage = err.response.data.detail;
-        } else if (Array.isArray(err.response.data.detail)) {
-          // Handle Pydantic validation errors
-          errorMessage = err.response.data.detail
-            .map((e: any) => `${e.loc[e.loc.length - 1]}: ${e.msg}`)
-            .join('\n');
-        } else if (typeof err.response.data.detail === 'object') {
-          errorMessage = JSON.stringify(err.response.data.detail);
-        }
-      }
-      setError(errorMessage);
+      setError(err.response?.data?.detail || err.message || 'Failed to create listing.');
     } finally {
       setLoading(false);
     }
   };
 
+  const steps = [
+    { id: 1, name: 'Basic Info', icon: FileText },
+    { id: 2, name: 'Location', icon: MapPin },
+    { id: 3, name: 'Documents', icon: ShieldCheck },
+    { id: 4, name: 'Review', icon: CheckCircle2 },
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">List New Land Property</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0f172a]/90 backdrop-blur-md p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-[#1e293b] border border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-slate-800 flex items-center justify-between bg-[#1e293b] sticky top-0 z-10">
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                 <Landmark className="h-5 w-5 text-white" />
+              </div>
+              National Land Registry
+            </h2>
+            <p className="text-slate-400 text-sm">Register your property on the secure digital ledger</p>
+          </div>
           <button 
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-all"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Progress Bar */}
+        <div className="px-8 pt-8 pb-4">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            {steps.map((step, idx) => (
+              <React.Fragment key={step.id}>
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                    currentStep === step.id ? 'bg-orange-600 border-orange-600 text-white scale-110 shadow-lg shadow-orange-600/20' :
+                    currentStep > step.id ? 'bg-green-500 border-green-500 text-white' : 'border-slate-700 text-slate-500'
+                  }`}>
+                    <step.icon size={18} />
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${currentStep === step.id ? 'text-orange-500' : 'text-slate-500'}`}>
+                    {step.name}
+                  </span>
+                </div>
+                {idx < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-4 rounded-full ${currentStep > step.id ? 'bg-green-500' : 'bg-slate-800'}`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-8 md:p-12">
           {error && (
-            <div className="p-4 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
+            <Alert variant="destructive" className="mb-8 bg-red-500/10 border-red-500/20 text-red-400 rounded-2xl">
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-              <Input
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="e.g. 2 Acres Beachfront Land in Freetown"
-                required
-              />
-            </div>
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: -20, x: 0 }}
+                className="space-y-6"
+              >
+                <div className="grid gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Property Title</label>
+                    <Input
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      className="bg-slate-900/50 border-slate-800 h-14 rounded-2xl text-lg focus:ring-orange-500/20"
+                      placeholder="e.g. 5 Acres Commercial Land in Newton"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Detailed Description</label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl p-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                      placeholder="Provide comprehensive details about accessibility, soil, and environment..."
+                    />
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-6">
+                     <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Price (Leones)</label>
+                        <div className="relative">
+                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 font-bold">Le</span>
+                           <Input
+                             name="price"
+                             type="number"
+                             value={formData.price}
+                             onChange={handleChange}
+                             className="bg-slate-900/50 border-slate-800 h-14 pl-12 rounded-2xl text-lg"
+                             placeholder="0.00"
+                           />
+                        </div>
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Size (Acres)</label>
+                        <Input
+                          name="size_acres"
+                          type="number"
+                          value={formData.size_acres}
+                          onChange={handleChange}
+                          className="bg-slate-900/50 border-slate-800 h-14 rounded-2xl text-lg"
+                          placeholder="e.g. 2.5"
+                        />
+                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Describe the property..."
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price (SLE)</label>
-                <Input
-                  name="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Size (Acres)</label>
-                <Input
-                  name="size_acres"
-                  type="number"
-                  value={formData.size_acres}
-                  onChange={handleChange}
-                  placeholder="e.g. 2.5"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
-                <Input
-                  name="region"
-                  value={formData.region}
-                  onChange={handleChange}
-                  placeholder="e.g. Western Area"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
-                <Input
-                  name="district"
-                  value={formData.district}
-                  onChange={handleChange}
-                  placeholder="e.g. Freetown"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                <Input
-                  name="latitude"
-                  type="number"
-                  step="any"
-                  value={formData.latitude}
-                  onChange={handleChange}
-                  placeholder="e.g. 8.484"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                <Input
-                  name="longitude"
-                  type="number"
-                  step="any"
-                  value={formData.longitude}
-                  onChange={handleChange}
-                  placeholder="e.g. -13.234"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Compliance Section */}
-            <div className="pt-4 border-t border-gray-100 space-y-4">
-                <h3 className="font-semibold text-gray-900">Compliance Documents</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Survey Plan (Required)</label>
-                        <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'survey_plan')} required className="text-sm" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title Deed (Required)</label>
-                        <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'title_deed')} required className="text-sm" />
-                    </div>
+            {currentStep === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+                <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-6 flex gap-4">
+                   <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0">
+                      <MapIcon size={24} />
+                   </div>
+                   <div>
+                      <h4 className="font-bold text-white mb-1">Geospatial Intelligence</h4>
+                      <p className="text-sm text-slate-400">Accurate coordinates allow the system to automatically generate your Smart Parcel ID and verify boundaries against the national grid.</p>
+                   </div>
                 </div>
 
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                        <input 
-                            type="checkbox" 
-                            name="spousal_consent" 
-                            id="spousal_consent"
-                            checked={formData.spousal_consent}
-                            onChange={handleChange}
-                            className="rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <label htmlFor="spousal_consent" className="text-sm font-medium text-gray-700">
-                            I have Spousal Consent to sell this property
+                <div className="grid md:grid-cols-2 gap-8">
+                   <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Region</label>
+                        <Input name="region" value={formData.region} onChange={handleChange} className="bg-slate-900/50 border-slate-800 h-12 rounded-xl" placeholder="e.g. Western Area" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">District</label>
+                        <Input name="district" value={formData.district} onChange={handleChange} className="bg-slate-900/50 border-slate-800 h-12 rounded-xl" placeholder="e.g. Waterloo" />
+                      </div>
+                   </div>
+                   <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Latitude</label>
+                        <Input name="latitude" type="number" step="any" value={formData.latitude} onChange={handleChange} className="bg-slate-900/50 border-slate-800 h-12 rounded-xl" placeholder="8.484..." />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Longitude</label>
+                        <Input name="longitude" type="number" step="any" value={formData.longitude} onChange={handleChange} className="bg-slate-900/50 border-slate-800 h-12 rounded-xl" placeholder="-13.234..." />
+                      </div>
+                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {currentStep === 3 && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+                 <div className="grid md:grid-cols-2 gap-4">
+                    {[
+                      { id: 'survey_plan', name: 'Survey Plan', req: true, icon: FileText },
+                      { id: 'title_deed', name: 'Title Deed', req: true, icon: Landmark },
+                      { id: 'chief_letter', name: "Chief's Consent", req: true, icon: ShieldCheck },
+                      { id: 'property_image', name: 'Property Photo', req: true, icon: Camera },
+                      { id: 'ministry_doc', name: 'Ministry Doc', req: false, icon: FileText },
+                    ].map((doc) => (
+                      <div key={doc.id} className={`p-4 rounded-2xl border-2 transition-all relative ${files[doc.id as keyof typeof files] ? 'border-green-500 bg-green-500/5' : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'}`}>
+                        <label className="flex items-center gap-4 cursor-pointer">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${files[doc.id as keyof typeof files] ? 'bg-green-500/20 text-green-500' : 'bg-slate-800 text-slate-400'}`}>
+                             <doc.icon size={20} />
+                           </div>
+                           <div className="flex-1 overflow-hidden">
+                              <p className="font-bold text-white text-sm flex items-center gap-2">
+                                {doc.name} {doc.req && <span className="text-[10px] text-orange-500 font-black">REQ</span>}
+                              </p>
+                              <p className="text-[10px] text-slate-500 truncate">
+                                {files[doc.id as keyof typeof files] ? files[doc.id as keyof typeof files]!.name : 'Click to upload'}
+                              </p>
+                           </div>
+                           <input type="file" className="hidden" onChange={(e) => handleFileChange(e, doc.id as any)} />
+                           {files[doc.id as keyof typeof files] ? <CheckCircle2 className="text-green-500 h-5 w-5" /> : <Upload className="text-slate-700 h-5 w-5" />}
                         </label>
+                      </div>
+                    ))}
+                 </div>
+
+                 <div className={`p-6 rounded-3xl border-2 transition-all ${formData.spousal_consent ? 'border-orange-500 bg-orange-500/5' : 'border-slate-800 bg-slate-900/50'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                       <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox" name="spousal_consent" id="spousal_consent"
+                            checked={formData.spousal_consent} onChange={handleChange}
+                            className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-orange-600 focus:ring-orange-500"
+                          />
+                          <label htmlFor="spousal_consent" className="font-bold text-white">Spousal Consent</label>
+                       </div>
+                       <Info size={16} className="text-slate-600" />
                     </div>
                     {formData.spousal_consent && (
-                        <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Consent Document</label>
-                             <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'spousal_consent_doc')} className="text-sm" />
-                        </div>
+                      <div className="mt-4 p-4 rounded-xl border border-orange-500/20 bg-slate-900/50">
+                         <label className="flex items-center justify-between cursor-pointer">
+                            <span className="text-sm text-slate-400">{files.spousal_consent_doc ? files.spousal_consent_doc.name : 'Upload signed consent form'}</span>
+                            <input type="file" className="hidden" onChange={(e) => handleFileChange(e, 'spousal_consent_doc')} />
+                            <Upload size={18} className="text-orange-500" />
+                         </label>
+                      </div>
                     )}
-                </div>
-            </div>
-          </div>
+                 </div>
+              </motion.div>
+            )}
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-primary text-white" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Listing'}
-            </Button>
+            {currentStep === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
+                <div className="text-center">
+                   <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-orange-500/20">
+                      <Info className="h-10 w-10 text-orange-500" />
+                   </div>
+                   <h3 className="text-2xl font-bold text-white">Review & Authenticate</h3>
+                   <p className="text-slate-400">By submitting, you confirm the legal ownership and accuracy of all data.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 bg-slate-900/50 p-8 rounded-[2rem] border border-slate-800">
+                   <div className="space-y-4">
+                      <div className="flex justify-between border-b border-slate-800 pb-2">
+                        <span className="text-slate-500 text-sm">Property</span>
+                        <span className="text-white font-bold">{formData.title}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-800 pb-2">
+                        <span className="text-slate-500 text-sm">Price</span>
+                        <span className="text-orange-500 font-bold">Le {parseFloat(formData.price || '0').toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-800 pb-2">
+                        <span className="text-slate-500 text-sm">Location</span>
+                        <span className="text-white font-medium">{formData.district}, {formData.region}</span>
+                      </div>
+                   </div>
+                   <div className="space-y-2">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Compliance Check</h4>
+                      {[
+                        { label: 'Survey Plan', val: files.survey_plan },
+                        { label: 'Title Deed', val: files.title_deed },
+                        { label: 'Chief Consent', val: files.chief_letter },
+                        { label: 'Property Photo', val: files.property_image }
+                      ].map(item => (
+                        <div key={item.label} className="flex items-center gap-2 text-sm">
+                           <CheckCircle2 size={14} className={item.val ? 'text-green-500' : 'text-slate-700'} />
+                           <span className={item.val ? 'text-slate-300' : 'text-slate-600'}>{item.label}</span>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 py-6 border-t border-slate-800 bg-[#1e293b]/50 flex items-center justify-between sticky bottom-0">
+          <Button
+            variant="ghost"
+            onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1) : onClose()}
+            className="text-slate-400 hover:text-white hover:bg-slate-800"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> {currentStep === 1 ? 'Cancel' : 'Back'}
+          </Button>
+
+          <div className="flex gap-4">
+            {currentStep < 4 ? (
+              <Button
+                onClick={() => setCurrentStep(currentStep + 1)}
+                className="h-12 px-10 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold shadow-lg shadow-orange-600/20 transition-all hover:scale-[1.02]"
+              >
+                Next Step <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="h-12 px-12 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold shadow-xl shadow-orange-600/20 transition-all hover:scale-[1.02]"
+              >
+                {loading ? <><Loader2 className="animate-spin mr-2 h-5 w-5" /> Authenticating...</> : 'Complete Registration'}
+              </Button>
+            )}
           </div>
-        </form>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

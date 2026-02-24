@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff, MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -26,8 +26,7 @@ export default function LoginPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   
-  // Prioritize redirect param, then location state, then default to home
-  const from = searchParams.get('redirect') || location.state?.from?.pathname || "/";
+  const from = searchParams.get('redirect') || location.state?.from?.pathname || "/dashboard";
 
   const {
     register,
@@ -41,11 +40,11 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      toast.success('Welcome back!');
+      toast.success('Identity Authenticated');
       navigate(from, { replace: true });
     } catch (error: any) {
       console.error(error);
-      const msg = error.message || error.statusText || 'Invalid email or password';
+      const msg = error.message || 'Invalid credentials. Access Denied.';
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -53,119 +52,114 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gray-50/50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#0B1015] px-4 py-12">
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-600/5 blur-[120px] rounded-full" />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-2xl border border-gray-100"
+        className="max-w-md w-full relative z-10"
       >
-        <div className="text-center">
-            <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 transform rotate-3">
-                <Lock className="w-8 h-8 text-primary" />
-            </div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
-            Welcome back
-          </h2>
-          <p className="mt-2 text-base text-gray-500">
-            Sign in to continue your journey with LandBiznes
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-5">
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none top-[30px] transition-colors group-focus-within:text-primary">
-                <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-primary" />
-              </div>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                className="pl-12 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-all duration-200"
-                placeholder="Email address"
-                label="Email"
-                error={errors.email?.message}
-                {...register("email")}
-              />
-            </div>
-
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none top-[30px] transition-colors group-focus-within:text-primary">
-                <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-primary" />
-              </div>
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                className="pl-12 pr-12 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-all duration-200"
-                placeholder="Password"
-                label="Password"
-                error={errors.password?.message}
-                {...register("password")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center top-[30px] text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </div>
+        <div className="bg-[#121923] border border-slate-800 p-10 rounded-[2.5rem] shadow-2xl space-y-8">
+          <div className="text-center">
+              <Link to="/" className="inline-flex items-center gap-2 mb-8">
+                <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/20">
+                    <MapPin className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-2xl font-black text-white uppercase tracking-tighter">Land<span className="text-orange-500">Biznes</span></span>
+              </Link>
+              <h2 className="text-3xl font-black text-white tracking-tight uppercase">
+                Registry Access
+              </h2>
+              <p className="mt-2 text-slate-400 font-medium">
+                Securely sign in to the national land registry.
+              </p>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Terminal</label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 group-focus-within:text-orange-500 transition-colors" />
+                  <input
+                    type="email"
+                    {...register("email")}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-2xl h-14 pl-12 pr-4 text-white placeholder:text-slate-700 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                    placeholder="name@agency.gov"
+                  />
+                  {errors.email && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.email.message}</p>}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Secure Pin</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 group-focus-within:text-orange-500 transition-colors" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-2xl h-14 pl-12 pr-12 text-white placeholder:text-slate-700 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                  {errors.password && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{errors.password.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="text-sm">
-              <Link
-                to="/auth/forgot-password"
-                className="font-medium text-primary hover:text-primary/80 transition-colors"
-              >
-                Forgot your password?
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <input
+                  id="remember"
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-slate-800 bg-slate-900 text-orange-600 focus:ring-orange-500/20"
+                />
+                <label htmlFor="remember" className="text-xs font-bold text-slate-400">Trust this device</label>
+              </div>
+              <Link to="/auth/forgot-password" className="text-xs font-bold text-orange-500 hover:text-orange-400 transition-colors">
+                Lost access?
               </Link>
             </div>
-          </div>
 
-          <Button
-            type="submit"
-            className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-
-          <p className="text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link
-              to="/auth/signup"
-              className="font-medium text-primary hover:text-primary/80 transition-colors"
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-14 bg-orange-600 hover:bg-orange-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-orange-600/20 border-none group"
             >
-              Sign up for free
-            </Link>
-          </p>
-        </form>
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  Authenticate Access <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+              )}
+            </Button>
+          </form>
+
+          <div className="pt-8 border-t border-slate-800 flex flex-col gap-4">
+             <div className="flex items-center gap-3 text-slate-500 text-[10px] font-bold uppercase tracking-widest justify-center">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                256-bit encrypted authentication
+             </div>
+             <p className="text-center text-sm text-slate-400 font-medium">
+               New to the system?{' '}
+               <Link to="/auth/register" className="text-white font-black hover:text-orange-500 transition-colors">
+                 Create Registry Account
+               </Link>
+             </p>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         name,
         role // This will be handled if defined in additionalFields on server
-    });
+    } as any);
     if (error) {
         throw error;
     }

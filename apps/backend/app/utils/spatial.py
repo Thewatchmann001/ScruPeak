@@ -71,3 +71,32 @@ def generate_parcel_id(grid_id: int, sequence: int) -> str:
     random_part = random.randint(1000, 9999)
     
     return f"SL-{random_part}-{grid_id:05d}-{sequence:04d}"
+
+def generate_boundary_wkt(lat: float, lon: float, size_sqm: float) -> str:
+    """
+    Generate a square boundary centered at lat/lon with accurate size_sqm.
+    Uses UTM projection for accurate metric calculations.
+    """
+    e, n = latlon_to_utm(lon, lat)
+    side = math.sqrt(float(size_sqm))
+    half = side / 2
+
+    # Square corners in UTM
+    corners_utm = [
+        (e - half, n - half),
+        (e + half, n - half),
+        (e + half, n + half),
+        (e - half, n + half),
+        (e - half, n - half)
+    ]
+
+    # Convert back to WGS84
+    from pyproj import Transformer
+    transformer_back = Transformer.from_crs("EPSG:32628", "EPSG:4326", always_xy=True)
+
+    corners_wgs = []
+    for ce, cn in corners_utm:
+        clon, clat = transformer_back.transform(ce, cn)
+        corners_wgs.append(f"{clon} {clat}")
+
+    return f"POLYGON(({', '.join(corners_wgs)}))"

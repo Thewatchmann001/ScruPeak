@@ -29,3 +29,4 @@ yarn-error.log*
 # Database
 postgres_data/
 node_modules
+uploads/

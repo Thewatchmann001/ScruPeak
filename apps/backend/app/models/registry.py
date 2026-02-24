@@ -1,10 +1,12 @@
 from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Numeric, Text, Index, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from geoalchemy2 import Geometry
 import uuid
 from datetime import datetime
 from app.core.database import Base
+from app.core.config import get_settings
+
+settings = get_settings()
 import enum
 
 class LandStatus(str, enum.Enum):
@@ -68,7 +70,12 @@ class Parcel(Base):
     classification_id = Column(UUID(as_uuid=True), ForeignKey('land_classifications.id'), nullable=True, index=True)
 
     spatial_identity_hash = Column(String(64), unique=True, nullable=False, index=True)
-    geometry = Column(Geometry('POLYGON', srid=4326), nullable=False)
+
+    if settings.DB_TYPE == "sqlite":
+        geometry = Column(Text, nullable=False)
+    else:
+        from geoalchemy2 import Geometry
+        geometry = Column(Geometry('POLYGON', srid=4326), nullable=False)
     
     area_sqm = Column(Numeric(20, 2), nullable=False)
     
