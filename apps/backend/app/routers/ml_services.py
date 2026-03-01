@@ -57,13 +57,16 @@ class TransactionFraudAnalysisRequest(BaseModel):
 # ENDPOINTS: PRICE PREDICTION
 # ============================================================================
 
-@router.post("/price-estimate")
-async def estimate_property_price(
+@router.post("/lanstimate")
+async def lanstimate_property_price(
     request: PriceEstimateRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Estimate land price using ML model"""
+    """
+    Lanstimate™ AI Valuation Engine: Estimates land market value based on
+    locality pricing averages, topography, and regional patterns.
+    """
     try:
         model = ml_registry.get_model("price_prediction")
         if not model:
@@ -173,13 +176,16 @@ async def get_price_trends(
 # ENDPOINTS: FRAUD DETECTION
 # ============================================================================
 
-@router.post("/fraud-analyze")
-async def analyze_fraud_with_ml(
+@router.post("/jems-fraud-analyze")
+async def analyze_fraud_with_jems(
     request: TransactionFraudAnalysisRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Analyze transaction for fraud using ML model"""
+    """
+    Jems AI Fraud Analysis: Non-invasive AI oversight layer for auditing transactions,
+    flagging anomalies, and monitoring user behavior patterns.
+    """
     try:
         model = ml_registry.get_model("fraud_detection")
         if not model:

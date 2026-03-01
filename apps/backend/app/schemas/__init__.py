@@ -173,6 +173,12 @@ class LandResponse(LandBase):
     status: LandStatus
     blockchain_verified: bool
     blockchain_hash: Optional[str]
+
+    # Trust Score details
+    trust_score: float = 0.0
+    trust_rating: Optional[str] = None
+    trust_factors: Optional[dict] = None
+
     created_at: datetime
     updated_at: datetime
     

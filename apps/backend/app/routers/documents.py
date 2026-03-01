@@ -26,9 +26,10 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 ALLOWED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}
 
 
-def ensure_upload_dir():
+def ensure_upload_dir(custom_path: Optional[Path] = None):
     """Ensure upload directory exists"""
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    target = custom_path or UPLOAD_DIR
+    target.mkdir(parents=True, exist_ok=True)
 
 
 def validate_file(file: UploadFile) -> bool:
@@ -43,22 +44,25 @@ def validate_file(file: UploadFile) -> bool:
     return True
 
 
-async def save_file(file: UploadFile) -> str:
-    """Save uploaded file and return path"""
-    ensure_upload_dir()
+async def save_upload_file(file: UploadFile, subfolder: str = "general") -> str:
+    """Save uploaded file and return URL/path"""
+    target_dir = UPLOAD_DIR / subfolder
+    ensure_upload_dir(target_dir)
     
-    # Generate unique filename
     file_ext = Path(file.filename).suffix.lower()
     unique_filename = f"{uuid4()}{file_ext}"
-    file_path = UPLOAD_DIR / unique_filename
+    file_path = target_dir / unique_filename
     
-    # Save file
     contents = await file.read()
     with open(file_path, "wb") as f:
         f.write(contents)
     
-    logger.info(f"File saved: {unique_filename}")
     return str(file_path)
+
+
+async def save_file(file: UploadFile) -> str:
+    """Save uploaded file and return path"""
+    return await save_upload_file(file)
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)

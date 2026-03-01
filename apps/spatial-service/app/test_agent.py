@@ -49,12 +49,27 @@ def test_basic_registration():
     return agent
 
 
-def test_overlap_detection(agent):
+def test_overlap_detection():
     """Test 2: Detect overlap (conflict)"""
     print("\n" + "="*70)
     print("TEST 2: Overlap Detection & Classification")
     print("="*70)
     
+    agent = SpatialIntelligenceAgent()
+
+    # Register first parcel
+    parcel_1 = agent.register_parcel(
+        geometry=[
+            (6.90, -13.30),
+            (6.91, -13.30),
+            (6.91, -13.31),
+            (6.90, -13.31),
+            (6.90, -13.30)
+        ],
+        owner="Alice",
+        initiated_by="land_officer_001"
+    )
+
     # Register overlapping parcel
     parcel_2 = agent.register_parcel(
         geometry=[
@@ -72,7 +87,7 @@ def test_overlap_detection(agent):
     
     # Detect conflict
     decision = agent.detect_and_classify_conflicts(
-        subject_parcel_code=agent.registry._parcels[list(agent.registry._parcels.keys())[0]].parcel_code,
+        subject_parcel_code=parcel_1.parcel_code,
         initiated_by="conflict_detector"
     )
     

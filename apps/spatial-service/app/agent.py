@@ -134,7 +134,8 @@ class SpatialIntelligenceAgent:
         parent_parcel_code: str,
         child_geometries: List[List[Tuple[float, float]]],
         relationship_type: str = "subdivision",
-        initiated_by: str = "system"
+        initiated_by: str = "system",
+        new_parent_geometry: Optional[List[Tuple[float, float]]] = None
     ) -> List[CompositeSpatialIdentity]:
         """
         Create a subdivision (parent remains intact; children born with lineage).
@@ -172,8 +173,13 @@ class SpatialIntelligenceAgent:
         
         # Create children with lineage
         children = []
-        for child_geom in child_geometries:
+        for i, child_geom in enumerate(child_geometries):
             grid_id, grid_x, grid_y = determine_reference_grid(child_geom)
+
+            # For the last child being created, update the mother polygon if requested
+            is_last = (i == len(child_geometries) - 1)
+            parent_update = new_parent_geometry if is_last else None
+
             child_csi = self.registry.create_child_parcel(
                 parent_csi=parent_csi,
                 child_geometry=child_geom,
@@ -181,7 +187,8 @@ class SpatialIntelligenceAgent:
                 grid_x=grid_x,
                 grid_y=grid_y,
                 relationship_type=relationship_type,
-                initiated_by=initiated_by
+                initiated_by=initiated_by,
+                new_parent_geometry=parent_update
             )
             children.append(child_csi)
         
