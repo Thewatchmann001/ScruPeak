@@ -27,18 +27,19 @@ class JemsAIService:
     """
     Jems AI Service
     Provides advisory AI assistance and non-invasive fraud oversight.
+    Uses OpenAI as primary and DeepSeek as fallback.
     """
     
-    BASE_URL = "https://api.deepseek.com/v1/chat/completions"
+    OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+    DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
     
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or getattr(settings, "DEEPSEEK_API_KEY", None)
-        enabled_flag = getattr(settings, "DEEPSEEK_ENABLED", True)
-        if not self.api_key:
-            logger.warning("Jems AI (DeepSeek) API key not configured. AI features will be disabled.")
-            self.enabled = False
-        else:
-            self.enabled = enabled_flag and bool(self.api_key)
+    def __init__(self):
+        self.openai_api_key = getattr(settings, "OPENAI_API_KEY", None)
+        self.deepseek_api_key = getattr(settings, "DEEPSEEK_API_KEY", None)
+        self.openai_enabled = getattr(settings, "OPENAI_ENABLED", True) and bool(self.openai_api_key)
+        self.deepseek_enabled = getattr(settings, "DEEPSEEK_ENABLED", True) and bool(self.deepseek_api_key)
+
+        self.enabled = self.openai_enabled or self.deepseek_enabled
         self.model = JemsAIModel.JEMS_CORE
     
     async def _make_request(
@@ -49,54 +50,67 @@ class JemsAIService:
     ) -> Optional[Dict[str, Any]]:
         """
         Make request to Jems AI backend.
-        Fallback to DeepSeek model if primary Jems AI logic/endpoint fails.
+        Primary: OpenAI (GPT-4o/o1)
+        Fallback: DeepSeek
         """
         if not self.enabled:
-            logger.warning("Jems AI is disabled - API key not configured")
+            logger.warning("Jems AI (Multi-Cloud) is disabled - No API keys configured")
             return None
-        
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        # Primary attempt with Jems AI specific configurations
-        # For now, we use the fused model which acts as Jems AI core
-        payload = {
-            "model": self.model.value, # JEMS_CORE
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "response_format": {"type": "json_object"}
-        }
-        
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                # Try primary Jems AI logic
-                response = await client.post(self.BASE_URL, headers=headers, json=payload)
-                response.raise_for_status()
-                data = response.json()
-                return self._parse_ai_response(data)
-                
-        except (httpx.HTTPError, Exception) as e:
-            logger.warning(f"Primary Jems AI logic failed, falling back to DeepSeek: {e}")
 
-            # FALLBACK to standard DeepSeek-Chat if Jems logic fails
-            fallback_payload = payload.copy()
-            fallback_payload["model"] = "deepseek-chat"
+        # 1. PRIMARY ATTEMPT: OpenAI
+        if self.openai_enabled:
+            headers = {
+                "Authorization": f"Bearer {self.openai_api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "gpt-4o", # High performance primary
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "response_format": {"type": "json_object"}
+            }
 
             try:
                 async with httpx.AsyncClient(timeout=30.0) as client:
-                    response = await client.post(self.BASE_URL, headers=headers, json=fallback_payload)
+                    response = await client.post(self.OPENAI_URL, headers=headers, json=payload)
                     response.raise_for_status()
                     data = response.json()
                     result = self._parse_ai_response(data)
                     if result:
+                        result["provider"] = "openai"
+                        return result
+            except Exception as e:
+                logger.warning(f"Primary OpenAI request failed: {e}. Attempting DeepSeek fallback...")
+
+        # 2. FALLBACK ATTEMPT: DeepSeek
+        if self.deepseek_enabled:
+            headers = {
+                "Authorization": f"Bearer {self.deepseek_api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "deepseek-chat",
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "response_format": {"type": "json_object"}
+            }
+
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(self.DEEPSEEK_URL, headers=headers, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    result = self._parse_ai_response(data)
+                    if result:
+                        result["provider"] = "deepseek"
                         result["fallback_used"] = True
-                    return result
-            except Exception as fe:
-                logger.error(f"Fallback to DeepSeek also failed: {fe}")
-                return None
+                        return result
+            except Exception as e:
+                logger.error(f"Fallback DeepSeek request failed: {e}")
+
+        return None
 
     def _parse_ai_response(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Extract and parse content from AI response choices"""

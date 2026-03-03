@@ -114,7 +114,11 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
     
-    # DeepSeek AI (Optional - advisory only)
+    # OpenAI AI (Primary Intelligence Layer)
+    OPENAI_API_KEY: Optional[str] = "proj_DWGnbduxzc3M7p3AD6IAZ1iC"
+    OPENAI_ENABLED: bool = True
+
+    # DeepSeek AI (Fallback Layer)
     DEEPSEEK_API_KEY: Optional[str] = None
     DEEPSEEK_ENABLED: bool = True  # Enable if API key is provided
     
