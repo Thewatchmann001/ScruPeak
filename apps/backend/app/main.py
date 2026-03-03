@@ -361,10 +361,11 @@ def create_app() -> FastAPI:
         tags=["Machine Learning Services"]
     )
     
-    # NEW: AI Advisory Services (DeepSeek - advisory only)
+    # NEW: Jems AI Advisory Services (Non-invasive Advisory & Fraud Layer)
     app.include_router(
         ai.router,
-        tags=["AI Advisory"]
+        prefix="/api/v1/ai",
+        tags=["Jems AI Advisory"]
     )
     
     # NEW: Task Status

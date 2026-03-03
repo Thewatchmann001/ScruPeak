@@ -4,15 +4,17 @@ Test configuration and fixtures for LandBiznes backend
 import pytest
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy import event
 from httpx import AsyncClient
 from typing import AsyncGenerator
 
 from app.main import create_app
 from app.core.database import Base, get_db
+from unittest.mock import MagicMock
 
 
-# Test database URL
-TEST_DATABASE_URL = "postgresql+asyncpg://landbiznes:landbiznes@localhost:5432/landbiznes_test"
+# Test database URL - Use SQLite for local test environment if Postgres is not available
+TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 
 @pytest.fixture(scope="session")
@@ -33,6 +35,19 @@ def test_db_engine(event_loop):
         echo=False,
         future=True,
     )
+
+    # Mock GeoAlchemy2 spatial functions for SQLite
+    @event.listens_for(engine.sync_engine, "connect")
+    def receive_connect(dbapi_connection, connection_record):
+        dbapi_connection.create_function("CheckSpatialIndex", 2, lambda x, y: 1)
+        dbapi_connection.create_function("AddGeometryColumn", 6, lambda *args: 1)
+        dbapi_connection.create_function("DiscardGeometryColumn", 2, lambda *args: 1)
+        dbapi_connection.create_function("DisableSpatialIndex", 2, lambda *args: 1)
+        # Return a dummy WKB for Point(0,0) with SRID 4326
+        dummy_wkb_hex = "0101000020E610000000000000000000000000000000000000"
+        # In SQLite, we use the hex string for simplicity or let GeoAlchemy handle bytes
+        dbapi_connection.create_function("GeomFromEWKT", 1, lambda x: dummy_wkb_hex)
+        dbapi_connection.create_function("AsEWKB", 1, lambda x: dummy_wkb_hex)
     
     # Synchronously create/drop tables using asyncio.run
     def setup():
@@ -69,7 +84,12 @@ async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.fixture
 def app():
-    """Create FastAPI test app"""
+    """Create FastAPI test app with mocked background tasks"""
+    # Mock sync_land_to_search task
+    import app.tasks as tasks
+    tasks.sync_land_to_search = MagicMock()
+    tasks.sync_land_to_search.delay = MagicMock()
+
     return create_app()
 
 
@@ -82,7 +102,8 @@ async def client(app, test_db_session):
     
     app.dependency_overrides[get_db] = override_get_db
     
-    async with AsyncClient(app=app, base_url="http://test") as async_client:
+    from httpx import ASGITransport
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as async_client:
         yield async_client
     
     app.dependency_overrides.clear()

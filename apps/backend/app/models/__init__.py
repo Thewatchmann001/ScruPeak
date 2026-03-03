@@ -13,6 +13,7 @@ from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 import uuid
 import enum
+import ulid as ulid_pkg
 
 from app.core.database import Base
 
@@ -108,7 +109,7 @@ class Land(Base):
     )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    ulid = Column(String(26), default=lambda: str(ulid.new()), unique=True, index=True)
+    ulid = Column(String(26), default=lambda: str(ulid_pkg.ULID()), unique=True, index=True)
     parcel_id = Column(String(50), unique=True, index=True)  # New Smart ID
     grid_id = Column(String(20), index=True)  # For spatial grouping
     owner_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
@@ -131,6 +132,7 @@ class Land(Base):
     has_survey_plan = Column(Boolean, default=False)
     has_chief_letter = Column(Boolean, default=False)
     has_agreement = Column(Boolean, default=False)
+    has_photo = Column(Boolean, default=False)  # NEW: Land photo requirement
     spousal_consent = Column(Boolean, default=False)  # NEW: Spousal consent flag
     surveyor_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)  # NEW: Licensed surveyor
     
@@ -144,6 +146,11 @@ class Land(Base):
     region = Column(String(100), index=True)
     district = Column(String(100), index=True)
     
+    # Trust Score Factor (New)
+    trust_score = Column(Float, default=0.0)
+    trust_rating = Column(String(50))
+    trust_factors = Column(JSON, default={})
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -240,28 +247,34 @@ class Escrow(Base):
 # ============================================================================
 
 class ChatMessage(Base):
-    """Chat messages with fraud detection"""
+    """Chat messages with Jems AI fraud detection and blockchain anchoring"""
     __tablename__ = "chat_messages"
     __table_args__ = (
         Index('idx_chat_messages_chat_id', 'chat_id'),
         Index('idx_chat_messages_sender_id', 'sender_id'),
+        Index('idx_chat_messages_land_ulid', 'land_ulid'),
         Index('idx_chat_messages_created_at', 'created_at'),
         Index('idx_chat_messages_fraud_alert', 'fraud_alert'),
     )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     chat_id = Column(String(100), nullable=False, index=True)
+    land_ulid = Column(String(26), ForeignKey('land.ulid'), nullable=True, index=True)
     sender_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
     message = Column(Text, nullable=False)
     attachments = Column(JSON, default=list)
     read_by = Column(JSON, default=list)
     
-    # Fraud Detection
+    # Jems AI Oversight
     contains_external_link = Column(Boolean, default=False, index=True)
     contains_phone = Column(Boolean, default=False)
     fraud_alert = Column(Boolean, default=False, index=True)
     fraud_reason = Column(String(255))
     
+    # Blockchain Anchoring
+    blockchain_tx_signature = Column(String(255), unique=True, index=True)
+    blockchain_timestamp = Column(DateTime)
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

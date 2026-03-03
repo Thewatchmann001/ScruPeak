@@ -76,11 +76,14 @@ class ParcelRegistry:
         
         seq = self._grid_sequences[grid_key]
         
-        # Generate parcel code: GRID_KEY + SEQUENCE
-        parcel_code = f"SL-{grid_key}-{seq:04d}"
+        # Generate parcel code: RANDOM-GRID-SEQUENCE
+        # 14-digit identifier: [4 Random]-[5 Grid]-[5 Sequence]
+        import random
+        random_part = random.randint(1000, 9999)
+        parcel_code = f"{random_part}-{grid_id:05d}-{seq:05d}"
         
         # Create CSI
-        from grid import GridReference
+        from grid_new import GridReference
         csi = CompositeSpatialIdentity(
             csi_id=csi_id,
             parcel_code=parcel_code,
@@ -145,7 +148,8 @@ class ParcelRegistry:
         grid_x: int,
         grid_y: int,
         relationship_type: str,  # "subdivision", "split"
-        initiated_by: str = "system"
+        initiated_by: str = "system",
+        new_parent_geometry: Optional[List[Tuple[float, float]]] = None
     ) -> CompositeSpatialIdentity:
         """
         Create a child parcel from a parent (subdivision or split).
@@ -166,6 +170,14 @@ class ParcelRegistry:
             initiated_by=initiated_by
         )
         
+        # If new parent geometry is provided, shrink the mother polygon
+        if new_parent_geometry:
+            parent_csi.update_geometry(
+                new_geometry=new_parent_geometry,
+                actor=initiated_by,
+                reason=f"Mother polygon shrunk due to {relationship_type} of {child_csi.parcel_code}"
+            )
+
         # Create lineage link
         lineage = LineageLink(
             parent_csi_id=parent_csi.csi_id,

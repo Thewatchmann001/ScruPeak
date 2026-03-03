@@ -51,8 +51,12 @@ def compute_grid_id(lat: float, lon: float):
     dx = land_e - origin_e
     dy = land_n - origin_n
 
+    # Apply tolerance for points slightly outside due to projection
+    if dx < 0 and dx > -50.0: dx = 0
+    if dy < 0 and dy > -50.0: dy = 0
+
     if dx < 0 or dy < 0:
-        raise ValueError("Point lies outside defined national grid")
+        raise ValueError(f"Point ({lat}, {lon}) lies outside defined national grid (dx={dx:.2f}, dy={dy:.2f})")
 
     grid_x = math.floor(dx / GRID_SIZE_METERS)
     grid_y = math.floor(dy / GRID_SIZE_METERS)

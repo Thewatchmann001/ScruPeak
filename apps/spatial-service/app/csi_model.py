@@ -124,6 +124,29 @@ class CompositeSpatialIdentity:
         """Register a child parcel born from this parent"""
         if child_parcel_code not in self.child_parcel_codes:
             self.child_parcel_codes.append(child_parcel_code)
+
+    def update_geometry(self, new_geometry: List[Tuple[float, float]], actor: str, reason: str):
+        """
+        Update the geometry of the parcel (e.g., shrinking due to subdivision).
+        Note: While the CSI model states geometry is immutable, the LandBiznes
+        spec requires the 'mother polygon' to shrink while retaining its ID.
+        """
+        if new_geometry[0] != new_geometry[-1]:
+            raise ValueError("Geometry must be a closed polygon")
+
+        old_geometry = self.geometry
+        self.geometry = new_geometry
+
+        self.add_history_event(
+            event_type=EventType.PARCEL_GEOMETRY_CONFIRMED,
+            actor=actor,
+            description=f"Geometry updated: {reason}",
+            metadata={
+                "previous_vertices": len(old_geometry),
+                "new_vertices": len(new_geometry),
+                "reason": reason
+            }
+        )
     
     def is_closed_polygon(self) -> bool:
         """Validate that geometry is a closed polygon"""
@@ -146,12 +169,13 @@ class ParcelEvent:
     
     # Spatial relationship detected
     subject_csi: CompositeSpatialIdentity
-    other_csis: List[CompositeSpatialIdentity] = field(default_factory=list)
     
     # Relationship type
     spatial_relationship: str  # "overlap", "containment", "coincident", "disjoint"
-    overlap_area_sqm: Optional[float] = None
     
     # Initiator
     initiated_by: str  # actor name or system
+
+    other_csis: List[CompositeSpatialIdentity] = field(default_factory=list)
+    overlap_area_sqm: Optional[float] = None
     request_metadata: Dict = field(default_factory=dict)

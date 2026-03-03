@@ -1,6 +1,6 @@
 """
-AI Advisory Router
-Non-invasive DeepSeek AI integration for land guidance and document review
+Jems AI Advisory Router
+Non-invasive Jems AI integration for land guidance and document review
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -12,11 +12,11 @@ from pydantic import BaseModel, Field
 from app.core.database import get_db
 from app.utils.auth import get_current_user
 from app.models import User
-from app.services.deepseek_ai import get_deepseek_service
+from app.services.jems_ai import get_jems_service
 import logging
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/ai", tags=["AI Advisory"])
+router = APIRouter(tags=["Jems AI Advisory"])
 
 # ============================================================================
 # SCHEMAS
@@ -61,7 +61,7 @@ async def ai_assist(
     Provides advisory guidance on land-related questions
     """
     try:
-        service = get_deepseek_service()
+        service = get_jems_service()
         
         if not service.enabled:
             raise HTTPException(
@@ -101,11 +101,11 @@ async def get_land_guidance(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get plain English land guidance for Sierra Leone context
+    Get plain English Jems AI guidance for Sierra Leone context
     Advisory only - no legal guarantees
     """
     try:
-        service = get_deepseek_service()
+        service = get_jems_service()
         
         if not service.enabled:
             raise HTTPException(
@@ -149,11 +149,11 @@ async def review_document(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Review land document and detect potential red flags
+    Review land document and detect potential red flags using Jems AI
     Advisory only - all documents must be verified by professionals
     """
     try:
-        service = get_deepseek_service()
+        service = get_jems_service()
         
         if not service.enabled:
             raise HTTPException(
@@ -194,13 +194,13 @@ async def review_document(
 async def get_ai_status(
     current_user: User = Depends(get_current_user)
 ):
-    """Get AI service status and availability"""
-    service = get_deepseek_service()
+    """Get Jems AI service status and availability"""
+    service = get_jems_service()
     
     return {
         "enabled": service.enabled,
         "model": service.model.value if service.enabled else None,
         "status": "available" if service.enabled else "disabled",
-        "message": "AI service is available" if service.enabled else "AI service is not configured",
+        "message": "Jems AI service is available" if service.enabled else "Jems AI service is not configured",
         "timestamp": datetime.utcnow().isoformat()
     }

@@ -291,6 +291,27 @@ async def approve_land(
         land.status = LandStatus.AVAILABLE
         land.approved_by = current_user.id
         land.approval_date = datetime.utcnow()
+
+        # Recalculate Trust Score upon Admin Approval
+        from app.services.trust_score import calculate_trust_score
+
+        # Check provided mandatory docs (Max 4: Survey, Deed, Consent, Photo)
+        provided_count = 0
+        if land.has_survey_plan: provided_count += 1
+        if land.has_agreement: provided_count += 1 # Deed
+        if land.has_chief_letter: provided_count += 1 # Consent proxy
+        if getattr(land, 'has_photo', False): provided_count += 1
+
+        ts_result = calculate_trust_score(
+            mandatory_docs_provided=provided_count,
+            admin_verified=True,
+            kyc_completeness=1.0 if land.owner and land.owner.kyc_verified else 0.0,
+            land_type="formal" if land.region and land.region.lower() in ["freetown", "western area"] else "traditional"
+        )
+
+        land.trust_score = ts_result["score"]
+        land.trust_rating = ts_result["rating"]
+        land.trust_factors = ts_result["factors"]
         
         await db.commit()
         await db.refresh(land)

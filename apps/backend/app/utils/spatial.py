@@ -7,10 +7,10 @@ import random
 from pyproj import Transformer
 
 # Constants from spatial-service/origin.py
-ORIGIN_LAT = 6.90
-ORIGIN_LON = -13.30
+ORIGIN_LAT = 5.00
+ORIGIN_LON = -15.00
 GRID_SIZE_METERS = 2000
-TOTAL_GRIDS_EAST = 200  # Updated to match optimized width
+TOTAL_GRIDS_EAST = 1000  # Updated to match optimized width
 
 # Transformer for WGS84 to UTM Zone 28N (Sierra Leone)
 _transformer = None
@@ -64,10 +64,10 @@ def compute_grid_id(lat: float, lon: float):
 def generate_parcel_id(grid_id: int, sequence: int) -> str:
     """
     Generate the formatted Parcel ID
-    Format: SL-{4_RANDOM}-{GRID_ID}-{SEQUENCE}
-    Example: SL-1652-00564-0023
+    Format: [4 Random]-[5 Grid]-[5 Sequence]
+    Example: 1652-00564-00023
     """
-    # Random 4-digit number (1000-9999) to simulate ULID random part
+    # 14-digit identifier: [4 Random]-[5 Grid]-[5 Sequence]
     random_part = random.randint(1000, 9999)
     
-    return f"SL-{random_part}-{grid_id:05d}-{sequence:04d}"
+    return f"{random_part}-{grid_id:05d}-{sequence:05d}"
