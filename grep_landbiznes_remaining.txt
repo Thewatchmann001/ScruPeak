@@ -1,0 +1,6 @@
+apps/backend/app/routers/payments_monime.py:                description="LandBiznes escrow payment",
+apps/backend/app/__init__.py:LandBiznes Backend Application
+apps/backend/app/__init__.py:__author__ = "LandBiznes Team"
+apps/backend/app/__init__.py:logger.info(f"LandBiznes Backend {__version__}")
+apps/backend/app/services/jems_ai.py:Fuses multiple data streams to monitor LandBiznes transactions.
+apps/backend/app/services/trust_score.py:Trust Score Engine for LandBiznes

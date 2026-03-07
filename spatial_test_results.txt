@@ -1,0 +1,64 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: /app
+plugins: asyncio-1.3.0, anyio-4.12.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 6 items
+
+apps/spatial-service/app/test_agent.py ......                            [100%]
+
+=============================== warnings summary ===============================
+apps/spatial-service/app/test_agent.py: 24 warnings
+  <string>:14: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+apps/spatial-service/app/test_agent.py: 37 warnings
+  /app/apps/spatial-service/app/csi_model.py:115: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(),
+
+apps/spatial-service/app/test_agent.py::test_basic_registration
+  /home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but apps/spatial-service/app/test_agent.py::test_basic_registration returned <class 'agent.SpatialIntelligenceAgent'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+apps/spatial-service/app/test_agent.py::test_overlap_detection
+apps/spatial-service/app/test_agent.py::test_identical_geometry
+apps/spatial-service/app/test_agent.py::test_decision_outputs
+  /app/apps/spatial-service/app/spatial_detector.py:123: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(),
+
+apps/spatial-service/app/test_agent.py::test_overlap_detection
+  /home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but apps/spatial-service/app/test_agent.py::test_overlap_detection returned <class 'decision_engine.SpatialDecision'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+apps/spatial-service/app/test_agent.py::test_identical_geometry
+  /home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but apps/spatial-service/app/test_agent.py::test_identical_geometry returned <class 'decision_engine.SpatialDecision'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+apps/spatial-service/app/test_agent.py::test_subdivision
+apps/spatial-service/app/test_agent.py::test_subdivision
+apps/spatial-service/app/test_agent.py::test_subdivision
+apps/spatial-service/app/test_agent.py::test_subdivision
+apps/spatial-service/app/test_agent.py::test_decision_outputs
+apps/spatial-service/app/test_agent.py::test_decision_outputs
+apps/spatial-service/app/test_agent.py::test_decision_outputs
+apps/spatial-service/app/test_agent.py::test_decision_outputs
+  /app/apps/spatial-service/app/registry.py:186: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow()
+
+apps/spatial-service/app/test_agent.py::test_subdivision
+  /home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but apps/spatial-service/app/test_agent.py::test_subdivision returned <class 'tuple'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+apps/spatial-service/app/test_agent.py::test_history
+  /app/apps/spatial-service/app/registry.py:278: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    metadata={"timestamp": datetime.utcnow().isoformat()}
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 6 passed, 77 warnings in 0.32s ========================

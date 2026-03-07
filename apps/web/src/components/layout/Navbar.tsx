@@ -40,7 +40,7 @@ export default function Navbar() {
               <span className="text-white font-bold text-lg">SP</span>
             </div>
             <span className="text-xl font-bold tracking-tight">
-              ScruPeak<span className="text-primary"> Digital</span>
+              ScruPeak
             </span>
           </Link>
 

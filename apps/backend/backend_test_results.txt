@@ -1,0 +1,17 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: /app/apps/backend
+configfile: pyproject.toml
+plugins: asyncio-1.3.0, anyio-4.12.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 12 items / 11 deselected / 1 selected
+
+tests/test_land.py .                                                     [100%]
+
+=============================== warnings summary ===============================
+app/routers/compliance.py:157
+  /app/apps/backend/app/routers/compliance.py:157: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    status: str = Query(..., regex="^(not_checked|compliant|non_compliant|pending_review|exception_approved|waived)$"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 1 passed, 11 deselected, 1 warning in 2.06s ==================

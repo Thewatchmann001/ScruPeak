@@ -11,10 +11,10 @@ export default function Footer() {
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
+                <span className="text-white font-bold text-lg">SP</span>
               </div>
               <span className="text-xl font-bold">
-                Land<span className="text-primary-500">Biznes</span>
+                ScruPeak
               </span>
             </Link>
             <p className="text-sm opacity-70">
@@ -63,7 +63,7 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <p className="text-sm opacity-60">
-            &copy; 2026 ScruPeak Digital Property. All rights reserved.
+            &copy; 2026 ScruPeak. All rights reserved.
           </p>
           <div className="flex flex-col items-center sm:items-end">
             <p className="text-sm opacity-80">

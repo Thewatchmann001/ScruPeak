@@ -29,7 +29,7 @@ export function ZillowHero() {
             <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
               <span className="text-white font-black text-xl">SP</span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-white">ScruPeak Digital Property</h1>
+            <h1 className="text-5xl md:text-7xl font-black text-white">ScruPeak</h1>
           </div>
           <p className="text-xl md:text-2xl text-gray-300 font-light uppercase tracking-widest">
             Digital Land MarketPlace and Verification

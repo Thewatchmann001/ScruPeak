@@ -1,5 +1,5 @@
 """
-Trust Score Engine for LandBiznes
+Trust Score Engine for ScruPeak
 Calculates a dynamic trust score for land parcels based on multiple verification factors.
 """
 from typing import Dict, Any, Optional

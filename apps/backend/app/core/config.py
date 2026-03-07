@@ -27,9 +27,9 @@ class Settings(BaseSettings):
     # Database - Main PostgreSQL (only used if DB_TYPE="postgres")
     DB_HOST: str = "localhost"
     DB_PORT: int = 5432
-    DB_NAME: str = "landbiznes"
-    DB_USER: str = "landbiznes"
-    DB_PASSWORD: str = "landbiznes"
+    DB_NAME: str = "scrupeak"
+    DB_USER: str = "scrupeak"
+    DB_PASSWORD: str = "scrupeak"
     
     # Database - Connection Pool Settings (for 20M+ users)
     DB_POOL_SIZE: int = 20  # Base connections
@@ -60,8 +60,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # JWT
-    JWT_ISSUER: str = "landbiznes"
-    JWT_AUDIENCE: str = "landbiznes-users"
+    JWT_ISSUER: str = "scrupeak"
+    JWT_AUDIENCE: str = "scrupeak-users"
     
     # CORS
     CORS_ORIGINS: list = [
@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     
     # API
     API_PREFIX: str = "/api/v1"
-    API_TITLE: str = "LandBiznes API"
+    API_TITLE: str = "ScruPeak API"
     
     # Pagination
     DEFAULT_PAGE_SIZE: int = 20

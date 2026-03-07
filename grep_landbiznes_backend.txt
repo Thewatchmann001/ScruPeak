@@ -1,0 +1,15 @@
+apps/backend/app/utils/spatial.py:Spatial utilities for LandBiznes backend
+apps/backend/app/__init__.py:LandBiznes Backend Application
+apps/backend/app/__init__.py:__author__ = "LandBiznes Team"
+apps/backend/app/__init__.py:logger.info(f"LandBiznes Backend {__version__}")
+apps/backend/app/routers/payments_monime.py:                description="LandBiznes escrow payment",
+apps/backend/app/core/config.py:Core configuration for LandBiznes backend
+apps/backend/app/core/config.py:    API_TITLE: str = "LandBiznes API"
+apps/backend/app/services/advanced_automation.py:class LandBiznesAIChatbot:
+apps/backend/app/services/advanced_automation.py:            "property_search": "How to find and search for properties on LandBiznes",
+apps/backend/app/services/advanced_automation.py:            "fraud_protection": "LandBiznes fraud detection and protection measures",
+apps/backend/app/services/jems_ai.py:Fuses multiple data streams to monitor LandBiznes transactions.
+apps/backend/app/services/trust_score.py:Trust Score Engine for LandBiznes
+apps/backend/app/services/email.py:    subject = "Verify your LandBiznes Account"
+apps/backend/app/services/email.py:            <h1>Welcome to LandBiznes!</h1>
+apps/backend/app/services/email.py:    subject = "Reset your LandBiznes Password"
