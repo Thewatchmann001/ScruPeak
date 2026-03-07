@@ -10,7 +10,7 @@ export default function LicensesPage() {
         description="Our regulatory compliance and operational licenses." 
       />
       <div className="prose max-w-none">
-        <p>LandBiznes operates in compliance with Sierra Leonean real estate and digital commerce regulations.</p>
+        <p>ScruPeak Digital Property operates in compliance with Sierra Leonean real estate and digital commerce regulations.</p>
         <p>This page will list our relevant business licenses and certifications.</p>
       </div>
     </Container>

@@ -68,7 +68,7 @@ export default function LoginPage() {
             Welcome back
           </h2>
           <p className="mt-2 text-base text-gray-500">
-            Sign in to continue your journey with LandBiznes
+            Sign in to continue your journey with ScruPeak Digital Property
           </p>
         </div>
 

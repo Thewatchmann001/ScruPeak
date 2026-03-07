@@ -1,4 +1,4 @@
-# LandBiznes - Complete Verification Checklist
+# ScruPeak Digital Property - Complete Verification Checklist
 
 ## ✅ What's Been Built
 

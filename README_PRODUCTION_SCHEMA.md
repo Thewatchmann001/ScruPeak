@@ -1,4 +1,4 @@
-# LandBiznes Production Schema - Final Summary
+# ScruPeak Digital Property Production Schema - Final Summary
 
 ## ✅ Your Requirements Met 100%
 
@@ -153,7 +153,7 @@ grid_statistics
 
 ### 1. Access SQLTools in VS Code
 ```
-Bottom-left: Click "LandBiznes" connection
+Bottom-left: Click "ScruPeak Digital Property" connection
 Set working database: "landbiznes"
 File → New File → Choose SQL dialect
 ```
@@ -241,7 +241,7 @@ VALUES (
 ## 📂 File Structure
 
 ```
-LandBiznes/
+ScruPeak Digital Property/
 ├── docker-compose.yml                    [Updated - working config]
 ├── init-scripts/
 │   ├── 01-landbiznes-schema.sql         [NEW - production schema]
@@ -342,7 +342,7 @@ SELECT * FROM land_registry.get_parcel_lineage(
 
 ## Summary
 
-Your LandBiznes land registry database is **PRODUCTION READY** with:
+Your ScruPeak Digital Property land registry database is **PRODUCTION READY** with:
 
 ✅ Immutable parcel records with collision-proof spatial identity  
 ✅ Complete lineage tracking for subdivisions and merges  

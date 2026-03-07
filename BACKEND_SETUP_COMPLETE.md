@@ -1,4 +1,4 @@
-# LandBiznes Backend - Setup Complete
+# ScruPeak Digital Property Backend - Setup Complete
 
 ## Status: ✅ FULLY FUNCTIONAL
 
@@ -28,13 +28,13 @@ FastAPI Backend:               ✅ RUNNING on 0.0.0.0:8000
 
 ### 1. Start Docker Services
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes
+cd C:\Users\HP\Desktop\ScruPeak Digital Property
 docker-compose up -d
 ```
 
 ### 2. Activate Virtual Environment
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes\apps\backend
+cd C:\Users\HP\Desktop\ScruPeak Digital Property\apps\backend
 .\venv\Scripts\Activate.ps1
 ```
 

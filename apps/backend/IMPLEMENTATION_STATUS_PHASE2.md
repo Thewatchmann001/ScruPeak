@@ -1,4 +1,4 @@
-# LandBiznes Backend - Implementation Status (January 23, 2026)
+# ScruPeak Digital Property Backend - Implementation Status (January 23, 2026)
 
 ## Phase 2 Completion Summary
 

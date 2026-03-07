@@ -55,7 +55,7 @@ const HomePage = () => {
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-black text-gray-900 mb-4">Secure Land Registration Services</h2>
+          <h2 className="text-4xl font-black text-gray-900 mb-4">Digital Land MarketPlace and Verification</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Bringing transparency and efficiency to land ownership through cutting-edge technology and legal expertise.
           </p>
@@ -125,7 +125,7 @@ const HomePage = () => {
            {[
              { step: 1, title: "Verification", desc: "Land is verified and issued a ULID." },
              { step: 2, title: "Agreement", desc: "Buyer and seller agree on transaction." },
-             { step: 3, title: "Escrow", desc: "Buyer funds are placed into LandBiznes escrow." },
+             { step: 3, title: "Escrow", desc: "Buyer funds are placed into ScruPeak Digital Property escrow." },
              { step: 4, title: "Final Checks", desc: "Final verification checks are executed." },
              { step: 5, title: "Transfer", desc: "Ownership transfer is written on-chain." },
              { step: 6, title: "Release", desc: "Funds are released to seller." }

@@ -1,8 +1,8 @@
-# LandBiznes Microservices Architecture Guide
+# ScruPeak Digital Property Microservices Architecture Guide
 
 ## Overview
 
-LandBiznes is a production-ready, national-scale land registry system built with a **microservices-first architecture**. Each service operates independently, communicates via REST APIs, and connects to a shared PostgreSQL + PostGIS database.
+ScruPeak Digital Property is a production-ready, national-scale land registry system built with a **microservices-first architecture**. Each service operates independently, communicates via REST APIs, and connects to a shared PostgreSQL + PostGIS database.
 
 ## Architecture Diagram
 
@@ -322,7 +322,7 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 ## File Structure
 
 ```
-LandBiznes/
+ScruPeak Digital Property/
 ├── frontend/                 # React Dashboard
 │   ├── src/
 │   │   ├── components/      # UI Components

@@ -1,4 +1,4 @@
-# LandBiznes Documentation Index
+# ScruPeak Digital Property Documentation Index
 
 ## 📚 Main Documentation
 
@@ -131,7 +131,7 @@ pytest tests/ -v --cov=app --cov-report=html
 ## 🗂️ Repository Structure
 
 ```
-LandBiznes/
+ScruPeak Digital Property/
 ├── apps/
 │   └── backend/
 │       ├── app/

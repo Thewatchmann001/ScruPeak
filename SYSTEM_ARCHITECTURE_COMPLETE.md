@@ -1,8 +1,8 @@
-# 🏗️ LandBiznes Complete System Architecture
+# 🏗️ ScruPeak Digital Property Complete System Architecture
 
 ## System Overview
 
-LandBiznes is a **national-grade land registry and management platform** built with modern cloud-native architecture, supporting 20M+ concurrent users with 99.9% uptime SLA.
+ScruPeak Digital Property is a **national-grade land registry and management platform** built with modern cloud-native architecture, supporting 20M+ concurrent users with 99.9% uptime SLA.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -640,7 +640,7 @@ Total outage:
 
 ## 🎓 Conclusion
 
-LandBiznes represents a **modern, scalable, enterprise-grade land registry platform** built with:
+ScruPeak Digital Property represents a **modern, scalable, enterprise-grade land registry platform** built with:
 
 - ✅ Microservices architecture
 - ✅ Cloud-native design

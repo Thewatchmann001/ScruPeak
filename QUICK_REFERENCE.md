@@ -4,7 +4,7 @@
 
 ### One-Line Start (all services)
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes && docker-compose up -d && cd apps/backend && .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+cd C:\Users\HP\Desktop\ScruPeak Digital Property && docker-compose up -d && cd apps/backend && .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### API Access Points
@@ -65,7 +65,7 @@ pip install -r requirements.txt
 
 ### Docker
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes
+cd C:\Users\HP\Desktop\ScruPeak Digital Property
 
 # Start services
 docker-compose up -d

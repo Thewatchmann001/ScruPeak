@@ -1,4 +1,4 @@
-# 📚 LandBiznes Backend Documentation Index
+# 📚 ScruPeak Digital Property Backend Documentation Index
 
 ## Quick Navigation
 
@@ -178,7 +178,7 @@ tests/
 
 ### 1. Quick Start (5 minutes)
 ```bash
-cd LandBiznes/apps/backend
+cd ScruPeak Digital Property/apps/backend
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
@@ -328,4 +328,4 @@ See [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md#troubleshooting) for common iss
 **Version**: 1.0.0
 **Status**: ✅ Production Ready
 
-🚀 **LandBiznes Backend is ready for deployment!**
+🚀 **ScruPeak Digital Property Backend is ready for deployment!**

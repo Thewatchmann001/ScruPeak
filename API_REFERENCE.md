@@ -1,7 +1,7 @@
-# LandBiznes Backend API Reference
+# ScruPeak Digital Property Backend API Reference
 
 ## Overview
-Complete REST API for the LandBiznes real estate platform. Supports 61+ endpoints across 11 routers. Built with FastAPI for high performance and scalability.
+Complete REST API for the ScruPeak Digital Property real estate platform. Supports 61+ endpoints across 11 routers. Built with FastAPI for high performance and scalability.
 
 **Base URL**: `http://localhost:8000/api/v1`
 

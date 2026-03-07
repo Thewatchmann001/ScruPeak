@@ -1,8 +1,8 @@
-# LandBiznes - Complete System Overview
+# ScruPeak Digital Property - Complete System Overview
 
-## What is LandBiznes?
+## What is ScruPeak Digital Property?
 
-**LandBiznes** is a national-grade, production-ready **land registry system** built with:
+**ScruPeak Digital Property** is a national-grade, production-ready **land registry system** built with:
 - **Database:** PostgreSQL 15 + PostGIS 3.4 (spatial data)
 - **Backend:** Microservices architecture (5 independent services)
 - **Frontend:** React dashboard with Leaflet maps
@@ -147,7 +147,7 @@ cd frontend && npm install && npm start
 ## File Structure
 
 ```
-LandBiznes/
+ScruPeak Digital Property/
 │
 ├── 📄 Database Files
 │   ├── init-scripts/01-landbiznes-schema.sql  (1050+ lines, production schema)

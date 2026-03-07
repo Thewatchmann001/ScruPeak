@@ -1,4 +1,4 @@
-# LandBiznes Frontend - Complete Implementation
+# ScruPeak Digital Property Frontend - Complete Implementation
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# LandBiznes Backend - Complete Implementation Guide
+# ScruPeak Digital Property Backend - Complete Implementation Guide
 
 ## 📚 Documentation Index
 

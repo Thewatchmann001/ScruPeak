@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
-    logger.info("[START] Starting LandBiznes Backend...")
+    logger.info("[START] Starting ScruPeak Digital Property Backend...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Database: {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
     logger.info(f"Redis: {settings.REDIS_HOST}:{settings.REDIS_PORT}")
@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    logger.info("[STOP] Shutting down LandBiznes Backend...")
+    logger.info("[STOP] Shutting down ScruPeak Digital Property Backend...")
     try:
         await close_db()
         logger.info("[OK] Shutdown complete")
@@ -77,8 +77,8 @@ def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     
     app = FastAPI(
-        title="LandBiznes Backend API",
-        description="National-grade land registry and management platform",
+        title="ScruPeak Digital Property API",
+        description="Digital Land MarketPlace and Verification",
         version="1.0.0",
         docs_url="/api/v1/docs",
         redoc_url="/api/v1/redoc",
@@ -208,7 +208,7 @@ def create_app() -> FastAPI:
     async def root():
         """API root endpoint"""
         return {
-            "name": "LandBiznes Backend API",
+            "name": "ScruPeak Digital Property API",
             "version": "1.0.0",
             "environment": settings.ENVIRONMENT,
             "docs": "/api/v1/docs",
@@ -361,10 +361,11 @@ def create_app() -> FastAPI:
         tags=["Machine Learning Services"]
     )
     
-    # NEW: AI Advisory Services (DeepSeek - advisory only)
+    # NEW: Jems AI Advisory Services (Non-invasive Advisory & Fraud Layer)
     app.include_router(
         ai.router,
-        tags=["AI Advisory"]
+        prefix="/api/v1/ai",
+        tags=["Jems AI Advisory"]
     )
     
     # NEW: Task Status

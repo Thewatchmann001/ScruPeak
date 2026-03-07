@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The admin role-based access control (RBAC) system has been **successfully implemented** for the LandBiznes platform. The system provides:
+The admin role-based access control (RBAC) system has been **successfully implemented** for the ScruPeak Digital Property platform. The system provides:
 
 ✅ **6 Complete Admin Pages** (Dashboard, Management, Documents, Agents, KYC, Land IDs)  
 ✅ **5 Admin Role Types** (Super Admin, Document Verifier, KYC Officer, Agent Verifier, Support Officer)  

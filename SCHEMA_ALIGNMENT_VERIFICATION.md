@@ -1,4 +1,4 @@
-# LandBiznes Production Schema - Complete Alignment Guide
+# ScruPeak Digital Property Production Schema - Complete Alignment Guide
 
 ## ✅ Schema Alignment Status
 
@@ -269,7 +269,7 @@ SELECT parcel_code, spatial_identity_hash, area_sqm FROM land_registry.parcels;
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  NATIONAL LAND REGISTRY SYSTEM (LandBiznes)                         │
+│  NATIONAL LAND REGISTRY SYSTEM (ScruPeak Digital Property)                         │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  spatial_grids ─────────────────┐                                 │

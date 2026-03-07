@@ -1,8 +1,8 @@
-# LandBiznes - Completion Summary
+# ScruPeak Digital Property - Completion Summary
 
 ## Project Overview
 
-LandBiznes is a **production-ready, national-scale land registry system** built with:
+ScruPeak Digital Property is a **production-ready, national-scale land registry system** built with:
 - **Database:** PostgreSQL 15 + PostGIS 3.4 (complete with 8 tables, 6 triggers, spatial indexing)
 - **Backend:** 5 independent microservices with API Gateway
 - **Frontend:** React dashboard with maps, parcels, conflicts, ownership management
@@ -535,7 +535,7 @@ shared/
 
 ## Summary
 
-**LandBiznes** is a complete, production-ready land registry system featuring:
+**ScruPeak Digital Property** is a complete, production-ready land registry system featuring:
 
 ✅ **Database:** 1050+ lines of enterprise schema with spatial indexing, immutability triggers, genealogy tracking, and audit logs
 

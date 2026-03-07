@@ -1,4 +1,4 @@
-# 🎉 LandBiznes Frontend & Microservices - Project Complete
+# 🎉 ScruPeak Digital Property Frontend & Microservices - Project Complete
 
 ## Project Summary
 
@@ -371,7 +371,7 @@ API Gateway (3000)
 
 ## Congratulations! 🎉
 
-Your LandBiznes system is **production-ready**. 
+Your ScruPeak Digital Property system is **production-ready**.
 
 **Start here:** [START_HERE.md](START_HERE.md)
 

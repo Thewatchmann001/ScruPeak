@@ -1,7 +1,7 @@
-# LandBiznes - Complete Directory Structure
+# ScruPeak Digital Property - Complete Directory Structure
 
 ```
-LandBiznes/
+ScruPeak Digital Property/
 │
 ├── 📋 ROOT DOCUMENTATION
 │   ├── README.md                                    ← Original database README

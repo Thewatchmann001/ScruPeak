@@ -1,4 +1,4 @@
-# ✅ LandBiznes Production Schema - COMPLETE & VERIFIED
+# ✅ ScruPeak Digital Property Production Schema - COMPLETE & VERIFIED
 
 ## Summary
 
@@ -135,7 +135,7 @@ Every comment includes:
 ### Step 1: Verify Connection
 
 Open VS Code, bottom-left:
-- Click "LandBiznes" connection
+- Click "ScruPeak Digital Property" connection
 - Set working database: "landbiznes"
 
 ### Step 2: Create SQL Query File
@@ -356,7 +356,7 @@ WHERE name LIKE '%Smith%';
 
 ## 🎉 Status: PRODUCTION READY
 
-Your LandBiznes land registry database is **READY FOR IMMEDIATE USE**.
+Your ScruPeak Digital Property land registry database is **READY FOR IMMEDIATE USE**.
 
 All spatial queries, event logging, conflict detection, and genealogy tracking are fully operational.
 

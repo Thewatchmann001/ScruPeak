@@ -68,7 +68,7 @@ export default function SignupPage() {
             Create an account
           </h2>
           <p className="mt-2 text-base text-gray-500">
-            Join LandBiznes to buy, sell, and verify land securely
+            Join ScruPeak Digital Property to buy, sell, and verify land securely
           </p>
         </div>
 

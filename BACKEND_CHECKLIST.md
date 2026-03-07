@@ -481,4 +481,4 @@ redis-cli info keyspace
 
 **Deployment Status**: 🟡 Ready for Testing  
 **Last Updated**: January 2024  
-**Maintainer**: LandBiznes Team
+**Maintainer**: ScruPeak Digital Property Team

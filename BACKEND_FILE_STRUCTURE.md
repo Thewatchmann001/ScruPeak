@@ -3,7 +3,7 @@
 ## Complete Directory Tree
 
 ```
-LandBiznes/
+ScruPeak Digital Property/
 ├── apps/backend/
 │   ├── app/
 │   │   ├── __init__.py                     # Package init

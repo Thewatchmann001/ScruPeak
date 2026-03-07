@@ -37,10 +37,10 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-              <MapPin className="w-5 h-5 text-primary-foreground" />
+              <span className="text-white font-bold text-lg">SP</span>
             </div>
             <span className="text-xl font-bold tracking-tight">
-              Land<span className="text-primary">Biznes</span>
+              ScruPeak<span className="text-primary"> Digital</span>
             </span>
           </Link>
 

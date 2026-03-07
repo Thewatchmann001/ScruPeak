@@ -128,7 +128,7 @@
 
 ```bash
 # Navigate to app directory
-cd c:\Users\HP\Desktop\LandBiznes\services\spatial-engine-python\app
+cd c:\Users\HP\Desktop\ScruPeak Digital Property\services\spatial-engine-python\app
 
 # Run all tests
 python test_agent.py
@@ -211,7 +211,7 @@ pyproj>=3.4
 
 ## Guiding Principle
 
-> "LandBiznes does not record land — it mathematically proves it."
+> "ScruPeak Digital Property does not record land — it mathematically proves it."
 
 ---
 
@@ -219,7 +219,7 @@ pyproj>=3.4
 
 ✅ **REFACTORING COMPLETE**
 
-All components have been implemented and tested. The spatial-engine-python service now fully aligns with the LandBiznes Spatial Intelligence Agent specification.
+All components have been implemented and tested. The spatial-engine-python service now fully aligns with the ScruPeak Digital Property Spatial Intelligence Agent specification.
 
 **Next Step:** Integration with api-gateway-node and intelligence-python service.
 
@@ -227,4 +227,4 @@ All components have been implemented and tested. The spatial-engine-python servi
 
 **Date:** January 22, 2026  
 **Version:** 1.0  
-**Author:** LandBiznes Engineering
+**Author:** ScruPeak Digital Property Engineering

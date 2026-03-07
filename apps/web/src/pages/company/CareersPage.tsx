@@ -6,7 +6,7 @@ export default function CareersPage() {
   return (
     <Container className="py-12">
       <PageHeader 
-        title="Careers at LandBiznes" 
+        title="Careers at ScruPeak Digital Property"
         description="Join us in building the future of land ownership in Sierra Leone." 
       />
       <div className="text-center py-12 text-gray-500">

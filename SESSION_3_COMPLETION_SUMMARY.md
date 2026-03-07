@@ -380,7 +380,7 @@ Ready for deployment to 20M+ users!
 
 **Session Complete!** 🎉
 
-The LandBiznes platform is now a comprehensive national-grade land marketplace system with enterprise-level title verification, fraud detection, dispute resolution, and legal compliance capabilities.
+The ScruPeak Digital Property platform is now a comprehensive national-grade land marketplace system with enterprise-level title verification, fraud detection, dispute resolution, and legal compliance capabilities.
 
 All code is production-ready, fully documented, and awaiting deployment.
 

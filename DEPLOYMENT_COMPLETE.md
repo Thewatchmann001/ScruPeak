@@ -1,4 +1,4 @@
-# LandBiznes System - Docker Deployment Complete ✅
+# ScruPeak Digital Property System - Docker Deployment Complete ✅
 
 ## System Status
 
@@ -96,7 +96,7 @@ All services are running and operational as of 2026-01-22 19:31 UTC
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    LandBiznes Frontend                       │
+│                    ScruPeak Digital Property Frontend                       │
 │                   (React + Ant Design)                      │
 │                   http://localhost:3006                     │
 └──────────────────────────┬──────────────────────────────────┘

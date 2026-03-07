@@ -1,4 +1,4 @@
-# 🚀 LandBiznes Quick Reference Guide
+# 🚀 ScruPeak Digital Property Quick Reference Guide
 
 ## Phase 3 Implementation - Quick Facts
 
@@ -84,9 +84,9 @@ data = await cache.get(key)
 **File**: `app/services/advanced_automation.py`
 ```python
 # Usage Example - Chatbot
-from app.services.advanced_automation import LandBiznesAIChatbot
+from app.services.advanced_automation import ScruPeak Digital PropertyAIChatbot
 
-chatbot = LandBiznesAIChatbot()
+chatbot = ScruPeak Digital PropertyAIChatbot()
 response = await chatbot.process_message(
     user_id="user_123",
     session_id="session_456",
@@ -154,7 +154,7 @@ apps/backend/app/
 - `CacheMonitoring` - Health monitoring
 
 ### Automation & AI
-- `LandBiznesAIChatbot` - Intent classification, NLP
+- `ScruPeak Digital PropertyAIChatbot` - Intent classification, NLP
 - `AutomatedComplianceOrchestrator` - Workflow execution
 - `WorkflowTriggerEngine` - Event-driven workflows
 - `NotificationIntelligence` - Smart notifications
@@ -309,9 +309,9 @@ print(f"Model trained: {version}, F1: {metrics.f1_score:.3f}")
 
 ### Use Chat AI
 ```python
-from app.services.advanced_automation import LandBiznesAIChatbot
+from app.services.advanced_automation import ScruPeak Digital PropertyAIChatbot
 
-chatbot = LandBiznesAIChatbot()
+chatbot = ScruPeak Digital PropertyAIChatbot()
 
 response = await chatbot.process_message(
     user_id="user_123",

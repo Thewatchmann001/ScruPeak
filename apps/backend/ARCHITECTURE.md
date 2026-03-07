@@ -1,4 +1,4 @@
-# LandBiznes Backend Architecture
+# ScruPeak Digital Property Backend Architecture
 
 ## Executive Summary
 

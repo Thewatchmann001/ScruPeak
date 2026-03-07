@@ -194,7 +194,7 @@ const KycPage = () => {
         <CardHeader>
           <CardTitle>Become a Verified Seller</CardTitle>
           <CardDescription>
-            To list lands on LandBiznes, we need to verify your identity. Please upload the required documents below.
+            To list lands on ScruPeak Digital Property, we need to verify your identity. Please upload the required documents below.
           </CardDescription>
         </CardHeader>
         <CardContent>

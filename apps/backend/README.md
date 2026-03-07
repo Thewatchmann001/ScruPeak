@@ -1,4 +1,4 @@
-# LandBiznes Backend API
+# ScruPeak Digital Property Backend API
 
 National-grade land registry and property management platform backend. Enterprise-scale FastAPI application optimized for 20M+ concurrent users.
 
@@ -481,4 +481,4 @@ For issues, questions, or contributions:
 
 **Status**: 🚀 Production Ready
 **Last Updated**: January 2024
-**Maintainer**: LandBiznes Team
+**Maintainer**: ScruPeak Digital Property Team

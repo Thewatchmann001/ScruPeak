@@ -10,7 +10,7 @@ export default function PrivacyPage() {
         description="How we collect, use, and protect your data." 
       />
       <div className="prose max-w-none">
-        <p>At LandBiznes, we take your privacy seriously.</p>
+        <p>At ScruPeak Digital Property, we take your privacy seriously.</p>
         <h3>Information We Collect</h3>
         <p>We collect information you provide directly to us, such as when you create an account, list land, or contact us.</p>
         <h3>How We Use Your Information</h3>

@@ -1,10 +1,10 @@
-# Quick Start Guide: LandBiznes Spatial Intelligence Agent
+# Quick Start Guide: ScruPeak Digital Property Spatial Intelligence Agent
 
 ## Installation
 
 ```bash
 # Navigate to the spatial engine directory
-cd c:\Users\HP\Desktop\LandBiznes\services\spatial-engine-python
+cd c:\Users\HP\Desktop\ScruPeak Digital Property\services\spatial-engine-python
 
 # Install dependencies (if needed)
 pip install shapely pyproj
@@ -24,7 +24,7 @@ python test_agent.py
 ```
 █████████████████████████████████████████████████████████████████████
 
-  LandBiznes Spatial Intelligence Agent - Test Suite
+  ScruPeak Digital Property Spatial Intelligence Agent - Test Suite
 
 █████████████████████████████████████████████████████████████████████
 
@@ -366,7 +366,7 @@ if decision.classification == DecisionClassification.CONFLICTING_CLAIM:
 
 ## Guiding Principle
 
-> **"LandBiznes does not record land — it mathematically proves it."**
+> **"ScruPeak Digital Property does not record land — it mathematically proves it."**
 
 All decisions are based on deterministic spatial tests, immutable history, and regulatory authority preservation.
 

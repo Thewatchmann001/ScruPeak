@@ -1,6 +1,6 @@
-# LandBiznes - START HERE 🚀
+# ScruPeak Digital Property - START HERE 🚀
 
-## Welcome to LandBiznes
+## Welcome to ScruPeak Digital Property
 
 A **production-ready, national-scale land registry & marketplace system** with Web3 integration.
 
@@ -192,7 +192,7 @@ curl http://localhost:3000/api/parcels/1/lineage
 ## 📁 File Organization
 
 ```
-LandBiznes/
+ScruPeak Digital Property/
 ├── 📚 Documentation (9 files) ← START HERE
 ├── 🎨 frontend/ ← React dashboard
 ├── 🚪 api-gateway/ ← Request router
@@ -397,7 +397,7 @@ Designed to handle 100M+ parcels at scale.
 
 ---
 
-**Welcome to LandBiznes! 🚀**
+**Welcome to ScruPeak Digital Property! 🚀**
 
 Start with one of the quick start guides above.
 

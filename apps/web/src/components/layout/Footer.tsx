@@ -63,7 +63,7 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <p className="text-sm opacity-60">
-            &copy; 2026 LandBiznes. All rights reserved.
+            &copy; 2026 ScruPeak Digital Property. All rights reserved.
           </p>
           <div className="flex flex-col items-center sm:items-end">
             <p className="text-sm opacity-80">

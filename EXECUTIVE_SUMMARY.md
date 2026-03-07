@@ -7,7 +7,7 @@
 
 ## What Was Accomplished
 
-I have successfully refactored the `spatial-engine-python` service to align with the **LandBiznes Spatial Intelligence Agent** governance specification. The service now implements the complete land verification and spatial integrity platform as specified.
+I have successfully refactored the `spatial-engine-python` service to align with the **ScruPeak Digital Property Spatial Intelligence Agent** governance specification. The service now implements the complete land verification and spatial integrity platform as specified.
 
 ---
 
@@ -156,7 +156,7 @@ DETAILS:
 
 ### Quick Test
 ```bash
-cd c:\Users\HP\Desktop\LandBiznes\services\spatial-engine-python\app
+cd c:\Users\HP\Desktop\ScruPeak Digital Property\services\spatial-engine-python\app
 python test_agent.py
 ```
 Expected: All 6 tests pass ✅
@@ -226,7 +226,7 @@ All documentation is in the root directory:
 
 ## Guiding Principle
 
-> **"LandBiznes does not record land — it mathematically proves it."**
+> **"ScruPeak Digital Property does not record land — it mathematically proves it."**
 
 The implementation ensures that:
 - Every parcel is provably registered through deterministic rules
@@ -240,7 +240,7 @@ The implementation ensures that:
 
 ✅ **OPTION B REFACTORING: COMPLETE**
 
-The spatial-engine-python service has been fully refactored and tested to align with the LandBiznes Spatial Intelligence Agent governance specification. All components are production-ready and documented.
+The spatial-engine-python service has been fully refactored and tested to align with the ScruPeak Digital Property Spatial Intelligence Agent governance specification. All components are production-ready and documented.
 
 **Next Steps:** Integration with api-gateway-node and intelligence-python services.
 
