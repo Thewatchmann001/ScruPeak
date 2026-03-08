@@ -1,0 +1,14 @@
+./_archived/frontend_legacy/Dockerfile
+./_archived/services_legacy/api-gateway-node/Dockerfile
+./_archived/services_legacy/parcel-service/Dockerfile
+./_archived/services_legacy/ownership-service/Dockerfile
+./_archived/services_legacy/spatial-engine-python/tests/Dockerfile
+./_archived/services_legacy/conflict-service/Dockerfile
+./_archived/services_legacy/grid-service/Dockerfile
+./_archived/services_legacy/intelligence-python/Dockerfile
+./apps/web/Dockerfile
+./apps/api-gateway/Dockerfile
+./apps/backend/Dockerfile
+./apps/spatial-service/tests/Dockerfile
+./apps/spatial-service/Dockerfile
+./apps/ai-service/Dockerfile
