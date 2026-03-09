@@ -52,7 +52,7 @@ jobs:
       - name: Detect changed services
         id: changed
         run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD)
+CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           echo "Changed files: $CHANGED"
 
           # format: "apps/folder:cloud-run-service-name"
