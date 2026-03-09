@@ -11,21 +11,18 @@ on:
     branches:
       - main
       - staging
-  workflow_dispatch:    # ← add this line
+  workflow_dispatch:
 
 env:
   GCP_PROJECT_ID: scrupeak-489600
   GCP_REGION: us-central1
   ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
   REGISTRY_REPO: scrupeak-services
-  WORKLOAD_IDENTITY_PROVIDER: projects/scrupeak-489600/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  WORKLOAD_IDENTITY_PROVIDER: projects/198638918293/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: scrupeak001@scrupeak-489600.iam.gserviceaccount.com
 
 jobs:
 
-  # ─────────────────────────────────────────────
-  # JOB 1: DETECT CHANGED SERVICES
-  # ─────────────────────────────────────────────
   detect-changes:
     name: Detect Changed Services
     runs-on: ubuntu-latest
@@ -36,12 +33,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
             echo "environment=prod" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             echo "environment=staging" >> $GITHUB_OUTPUT
@@ -52,10 +49,9 @@ jobs:
       - name: Detect changed services
         id: changed
         run: |
-CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           echo "Changed files: $CHANGED"
 
-          # format: "apps/folder:cloud-run-service-name"
           SERVICES=(
             "apps/ai-service:ai-service"
             "apps/api-gateway:api-gateway"
@@ -76,13 +72,11 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
             fi
           done
 
-          # If shared/root config changed — rebuild everything
           if echo "$CHANGED" | grep -qE "^(shared/|package\.json|turbo\.json|nx\.json|\.env\.example)"; then
             echo "Root/shared config changed — rebuilding all services"
             CHANGED_SERVICES=("${SERVICES[@]}")
           fi
 
-          # If nothing detected (first push) — build everything
           if [ ${#CHANGED_SERVICES[@]} -eq 0 ]; then
             echo "No specific changes detected — building all services"
             CHANGED_SERVICES=("${SERVICES[@]}")
@@ -93,9 +87,6 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           echo "Services to deploy: $JSON"
 
 
-  # ─────────────────────────────────────────────
-  # JOB 2: TEST
-  # ─────────────────────────────────────────────
   test:
     name: Test — ${{ matrix.service }}
     runs-on: ubuntu-latest
@@ -112,7 +103,6 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
       - name: Parse service
         id: svc
         run: |
-          echo "folder=${{ matrix.service }}" | sed 's/:.*$//' | sed 's/^/folder=/' >> $GITHUB_OUTPUT || true
           ENTRY="${{ matrix.service }}"
           echo "folder=${ENTRY%%:*}" >> $GITHUB_OUTPUT
           echo "name=${ENTRY##*:}" >> $GITHUB_OUTPUT
@@ -133,15 +123,12 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           fi
 
 
-  # ─────────────────────────────────────────────
-  # JOB 3: BUILD & PUSH
-  # ─────────────────────────────────────────────
   build-and-push:
     name: Build & Push — ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: [detect-changes, test]
     if: |
-      github.event_name == 'push' &&
+      github.event_name != 'pull_request' &&
       needs.detect-changes.outputs.services != '[]'
     strategy:
       matrix:
@@ -149,7 +136,7 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
       fail-fast: false
     permissions:
       contents: read
-      id-token: write        # required for Workload Identity Federation
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -164,7 +151,6 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           SHORT_SHA="${GITHUB_SHA::8}"
           TAG="${ENV}-${SHORT_SHA}"
           FULL_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${NAME}"
-
           echo "folder=$FOLDER" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
@@ -204,14 +190,11 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
         run: echo "✅ Pushed ${{ steps.svc.outputs.image }}"
 
 
-  # ─────────────────────────────────────────────
-  # JOB 4: DATABASE MIGRATIONS
-  # ─────────────────────────────────────────────
   migrate:
     name: Run Database Migrations
     runs-on: ubuntu-latest
     needs: [detect-changes, build-and-push]
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     environment: ${{ needs.detect-changes.outputs.environment }}
     permissions:
       contents: read
@@ -226,16 +209,11 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }} --quiet
-
       - name: Run migrations via Cloud Run Job
         run: |
           ENV="${{ needs.detect-changes.outputs.environment }}"
           SHORT_SHA="${GITHUB_SHA::8}"
           TAG="${ENV}-${SHORT_SHA}"
-
-          # Uses backend service image to run migrations
           MIGRATION_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/backend:${TAG}"
           JOB_NAME="migrate-${ENV}-${SHORT_SHA}"
 
@@ -262,14 +240,11 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           echo "✅ Migrations done"
 
 
-  # ─────────────────────────────────────────────
-  # JOB 5: DEPLOY TO CLOUD RUN
-  # ─────────────────────────────────────────────
   deploy:
     name: Deploy — ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: [detect-changes, build-and-push, migrate]
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     environment: ${{ needs.detect-changes.outputs.environment }}
     strategy:
       matrix:
@@ -290,7 +265,6 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           TAG="${ENV}-${SHORT_SHA}"
           FULL_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${NAME}:${TAG}"
           CR_NAME="${NAME}-${ENV}"
-
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "image=$FULL_IMAGE" >> $GITHUB_OUTPUT
           echo "cr_name=$CR_NAME" >> $GITHUB_OUTPUT
@@ -345,11 +319,9 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
         run: |
           URL="${{ steps.deploy.outputs.url }}"
           echo "Checking: ${URL}/health"
-
           for i in {1..5}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
               --max-time 10 "${URL}/health" || echo "000")
-
             if [[ "$STATUS" == "200" ]]; then
               echo "✅ Healthy (attempt $i)"
               exit 0
@@ -357,7 +329,6 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
             echo "⏳ Attempt $i — status $STATUS — retrying in 10s"
             sleep 10
           done
-
           echo "❌ Health check failed"
           exit 1
 
@@ -380,14 +351,11 @@ CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           echo "🌍 ${{ steps.deploy.outputs.url }}"
 
 
-  # ─────────────────────────────────────────────
-  # JOB 6: SUMMARY
-  # ─────────────────────────────────────────────
   summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
     needs: [detect-changes, deploy]
-    if: always() && github.event_name == 'push'
+    if: always() && github.event_name != 'pull_request'
     steps:
       - name: Write summary
         run: |
