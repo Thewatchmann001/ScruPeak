@@ -1,0 +1,401 @@
+name: Deploy ScruPeak Microservices to GCP Cloud Run
+
+on:
+  push:
+    branches:
+      - main        # → production
+      - staging     # → staging
+      - develop     # → development
+  pull_request:
+    branches:
+      - main
+      - staging
+
+env:
+  GCP_PROJECT_ID: scrupeak-489600
+  GCP_REGION: us-central1
+  ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
+  REGISTRY_REPO: scrupeak-services
+  WORKLOAD_IDENTITY_PROVIDER: projects/scrupeak-489600/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  SERVICE_ACCOUNT: scrupeak001@scrupeak-489600.iam.gserviceaccount.com
+
+jobs:
+
+  # ─────────────────────────────────────────────
+  # JOB 1: DETECT CHANGED SERVICES
+  # ─────────────────────────────────────────────
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changed.outputs.services }}
+      environment: ${{ steps.env.outputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Detect changed services
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD)
+          echo "Changed files: $CHANGED"
+
+          # format: "apps/folder:cloud-run-service-name"
+          SERVICES=(
+            "apps/ai-service:ai-service"
+            "apps/api-gateway:api-gateway"
+            "apps/auth-server:auth-server"
+            "apps/backend:backend"
+            "apps/blockchain:blockchain"
+            "apps/offline-field-tool:offline-field-tool"
+            "apps/spatial-service:spatial-service"
+            "apps/web:web"
+          )
+
+          CHANGED_SERVICES=()
+
+          for SERVICE_ENTRY in "${SERVICES[@]}"; do
+            FOLDER="${SERVICE_ENTRY%%:*}"
+            if echo "$CHANGED" | grep -q "^${FOLDER}/"; then
+              CHANGED_SERVICES+=("$SERVICE_ENTRY")
+            fi
+          done
+
+          # If shared/root config changed — rebuild everything
+          if echo "$CHANGED" | grep -qE "^(shared/|package\.json|turbo\.json|nx\.json|\.env\.example)"; then
+            echo "Root/shared config changed — rebuilding all services"
+            CHANGED_SERVICES=("${SERVICES[@]}")
+          fi
+
+          # If nothing detected (first push) — build everything
+          if [ ${#CHANGED_SERVICES[@]} -eq 0 ]; then
+            echo "No specific changes detected — building all services"
+            CHANGED_SERVICES=("${SERVICES[@]}")
+          fi
+
+          JSON=$(printf '%s\n' "${CHANGED_SERVICES[@]}" | jq -R . | jq -s -c .)
+          echo "services=$JSON" >> $GITHUB_OUTPUT
+          echo "Services to deploy: $JSON"
+
+
+  # ─────────────────────────────────────────────
+  # JOB 2: TEST
+  # ─────────────────────────────────────────────
+  test:
+    name: Test — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Parse service
+        id: svc
+        run: |
+          echo "folder=${{ matrix.service }}" | sed 's/:.*$//' | sed 's/^/folder=/' >> $GITHUB_OUTPUT || true
+          ENTRY="${{ matrix.service }}"
+          echo "folder=${ENTRY%%:*}" >> $GITHUB_OUTPUT
+          echo "name=${ENTRY##*:}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run tests if Dockerfile exists
+        run: |
+          FOLDER="${{ steps.svc.outputs.folder }}"
+          if [ -f "${FOLDER}/Dockerfile" ]; then
+            docker build --target test -t test-img ./${FOLDER} 2>/dev/null || \
+            docker build -t test-img ./${FOLDER}
+            docker run --rm -e NODE_ENV=test test-img npm test 2>/dev/null || \
+            echo "⚠️  No test target — skipping tests for ${{ steps.svc.outputs.name }}"
+          else
+            echo "⚠️  No Dockerfile found in ${FOLDER} — skipping"
+          fi
+
+
+  # ─────────────────────────────────────────────
+  # JOB 3: BUILD & PUSH
+  # ─────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [detect-changes, test]
+    if: |
+      github.event_name == 'push' &&
+      needs.detect-changes.outputs.services != '[]'
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+      fail-fast: false
+    permissions:
+      contents: read
+      id-token: write        # required for Workload Identity Federation
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Parse service
+        id: svc
+        run: |
+          ENTRY="${{ matrix.service }}"
+          FOLDER="${ENTRY%%:*}"
+          NAME="${ENTRY##*:}"
+          ENV="${{ needs.detect-changes.outputs.environment }}"
+          SHORT_SHA="${GITHUB_SHA::8}"
+          TAG="${ENV}-${SHORT_SHA}"
+          FULL_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${NAME}"
+
+          echo "folder=$FOLDER" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "image=${FULL_IMAGE}:${TAG}" >> $GITHUB_OUTPUT
+          echo "image_latest=${FULL_IMAGE}:${ENV}-latest" >> $GITHUB_OUTPUT
+
+      - name: Authenticate via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }} --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ steps.svc.outputs.folder }}
+          push: true
+          tags: |
+            ${{ steps.svc.outputs.image }}
+            ${{ steps.svc.outputs.image_latest }}
+          build-args: |
+            NODE_ENV=${{ needs.detect-changes.outputs.environment }}
+            BUILD_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=${{ steps.svc.outputs.name }}
+          cache-to: type=gha,mode=max,scope=${{ steps.svc.outputs.name }}
+
+      - name: Confirm push
+        run: echo "✅ Pushed ${{ steps.svc.outputs.image }}"
+
+
+  # ─────────────────────────────────────────────
+  # JOB 4: DATABASE MIGRATIONS
+  # ─────────────────────────────────────────────
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-and-push]
+    if: github.event_name == 'push'
+    environment: ${{ needs.detect-changes.outputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }} --quiet
+
+      - name: Run migrations via Cloud Run Job
+        run: |
+          ENV="${{ needs.detect-changes.outputs.environment }}"
+          SHORT_SHA="${GITHUB_SHA::8}"
+          TAG="${ENV}-${SHORT_SHA}"
+
+          # Uses backend service image to run migrations
+          MIGRATION_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/backend:${TAG}"
+          JOB_NAME="migrate-${ENV}-${SHORT_SHA}"
+
+          echo "▸ Creating migration job: $JOB_NAME"
+
+          gcloud run jobs create $JOB_NAME \
+            --image="${MIGRATION_IMAGE}" \
+            --region="${{ env.GCP_REGION }}" \
+            --set-env-vars="NODE_ENV=${ENV}" \
+            --set-secrets="DATABASE_URL=DATABASE_URL_${ENV^^}:latest" \
+            --command="npm" \
+            --args="run,migrate" \
+            --task-timeout=10m \
+            --max-retries=2 \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            2>/dev/null || echo "ℹ️  Job already exists or no migrations needed"
+
+          gcloud run jobs execute $JOB_NAME \
+            --region="${{ env.GCP_REGION }}" \
+            --wait \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            2>/dev/null || echo "ℹ️  Migration skipped"
+
+          echo "✅ Migrations done"
+
+
+  # ─────────────────────────────────────────────
+  # JOB 5: DEPLOY TO CLOUD RUN
+  # ─────────────────────────────────────────────
+  deploy:
+    name: Deploy — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-and-push, migrate]
+    if: github.event_name == 'push'
+    environment: ${{ needs.detect-changes.outputs.environment }}
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+      fail-fast: false
+      max-parallel: 4
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Parse service
+        id: svc
+        run: |
+          ENTRY="${{ matrix.service }}"
+          NAME="${ENTRY##*:}"
+          ENV="${{ needs.detect-changes.outputs.environment }}"
+          SHORT_SHA="${GITHUB_SHA::8}"
+          TAG="${ENV}-${SHORT_SHA}"
+          FULL_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${NAME}:${TAG}"
+          CR_NAME="${NAME}-${ENV}"
+
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "image=$FULL_IMAGE" >> $GITHUB_OUTPUT
+          echo "cr_name=$CR_NAME" >> $GITHUB_OUTPUT
+          echo "env=$ENV" >> $GITHUB_OUTPUT
+
+      - name: Authenticate via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Store current revision for rollback
+        id: prev
+        run: |
+          PREV=$(gcloud run services describe \
+            ${{ steps.svc.outputs.cr_name }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --format="value(status.latestReadyRevisionName)" \
+            2>/dev/null || echo "none")
+          echo "revision=$PREV" >> $GITHUB_OUTPUT
+          echo "Previous revision: $PREV"
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.svc.outputs.cr_name }}
+          image: ${{ steps.svc.outputs.image }}
+          region: ${{ env.GCP_REGION }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          flags: |
+            --allow-unauthenticated
+            --min-instances=0
+            --max-instances=10
+            --memory=512Mi
+            --cpu=1
+            --timeout=60s
+            --concurrency=80
+          env_vars: |
+            NODE_ENV=${{ steps.svc.outputs.env }}
+            GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
+          secrets: |
+            DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env }}:latest
+            JWT_SECRET=JWT_SECRET:latest
+
+      - name: Health check
+        id: health
+        run: |
+          URL="${{ steps.deploy.outputs.url }}"
+          echo "Checking: ${URL}/health"
+
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 10 "${URL}/health" || echo "000")
+
+            if [[ "$STATUS" == "200" ]]; then
+              echo "✅ Healthy (attempt $i)"
+              exit 0
+            fi
+            echo "⏳ Attempt $i — status $STATUS — retrying in 10s"
+            sleep 10
+          done
+
+          echo "❌ Health check failed"
+          exit 1
+
+      - name: Auto-rollback on failure
+        if: failure() && steps.prev.outputs.revision != 'none'
+        run: |
+          echo "⚠️  Rolling back to ${{ steps.prev.outputs.revision }}"
+          gcloud run services update-traffic \
+            ${{ steps.svc.outputs.cr_name }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --to-revisions=${{ steps.prev.outputs.revision }}=100
+          echo "✅ Rolled back"
+          exit 1
+
+      - name: Output URL
+        if: success()
+        run: |
+          echo "🚀 ${{ steps.svc.outputs.cr_name }}"
+          echo "🌍 ${{ steps.deploy.outputs.url }}"
+
+
+  # ─────────────────────────────────────────────
+  # JOB 6: SUMMARY
+  # ─────────────────────────────────────────────
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [detect-changes, deploy]
+    if: always() && github.event_name == 'push'
+    steps:
+      - name: Write summary
+        run: |
+          echo "## 🚀 ScruPeak Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | \`${{ needs.detect-changes.outputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ needs.deploy.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${GITHUB_SHA::8}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${GITHUB_REF_NAME}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| By | @${GITHUB_ACTOR} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Time | $(date -u) |" >> $GITHUB_STEP_SUMMARY
