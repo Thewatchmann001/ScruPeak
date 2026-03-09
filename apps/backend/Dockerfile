@@ -21,7 +21,7 @@ COPY pyproject.toml poetry.lock* ./
 RUN pip install --upgrade pip setuptools wheel && \
     pip install poetry && \
     poetry config virtualenvs.in-project true && \
-    poetry install --no-dev --no-interaction --no-ansi
+    poetry install --only main --no-interaction --no-ansi
 
 # ============================================================================
 # STAGE 2: RUNTIME
