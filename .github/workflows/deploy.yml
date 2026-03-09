@@ -3,13 +3,14 @@ name: Deploy ScruPeak Microservices to GCP Cloud Run
 on:
   push:
     branches:
-      - main        # → production
-      - staging     # → staging
-      - develop     # → development
+      - main
+      - staging
+      - develop
   pull_request:
     branches:
       - main
       - staging
+  workflow_dispatch:    # ← add this line
 
 env:
   GCP_PROJECT_ID: scrupeak-489600
