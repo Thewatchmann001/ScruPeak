@@ -55,10 +55,7 @@ jobs:
           SERVICES=(
             "apps/ai-service:ai-service"
             "apps/api-gateway:api-gateway"
-            "apps/auth-server:auth-server"
             "apps/backend:backend"
-            "apps/blockchain:blockchain"
-            "apps/offline-field-tool:offline-field-tool"
             "apps/spatial-service:spatial-service"
             "apps/web:web"
           )
