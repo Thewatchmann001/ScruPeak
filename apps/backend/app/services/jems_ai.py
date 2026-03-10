@@ -224,6 +224,44 @@ class JemsAIService:
             "disclaimer": "AI review is advisory only. All documents must be verified by qualified professionals.",
             "timestamp": datetime.utcnow().isoformat()
         }
+
+    async def extract_land_data(
+        self,
+        document_text: str,
+        document_type: str = "land_document"
+    ) -> Dict[str, Any]:
+        """
+        Extract structured land data from document text.
+        Includes owner names, polygon coordinates, and history.
+        """
+        prompt = self._build_extraction_prompt(document_text, document_type)
+
+        messages = [
+            {
+                "role": "system",
+                "content": prompt["system"]
+            },
+            {
+                "role": "user",
+                "content": prompt["user"]
+            }
+        ]
+
+        # Low temperature for high precision extraction
+        response = await self._make_request(messages, temperature=0.1)
+
+        if not response:
+            return {
+                "success": False,
+                "error": "AI extraction failed",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        return {
+            "success": True,
+            "data": response,
+            "timestamp": datetime.utcnow().isoformat()
+        }
     
     def _build_land_guidance_prompt(
         self,
@@ -266,6 +304,49 @@ Respond in JSON format with:
 {context_block}
         
 Provide guidance on this land-related question for Sierra Leone. Be specific, helpful, and always include appropriate cautions."""
+
+        return {
+            "system": system_prompt,
+            "user": user_prompt
+        }
+
+    def _build_extraction_prompt(
+        self,
+        document_text: str,
+        document_type: str
+    ) -> Dict[str, str]:
+        """Build prompt for structured data extraction"""
+
+        system_prompt = """You are a specialized document extraction agent for Sierra Leone land registry.
+Extract structured data from the provided land document text.
+
+Rules:
+1. Coordinates: Extract as a list of [latitude, longitude] pairs representing the property boundary polygon.
+2. Ownership History: Extract as a list of objects with 'event', 'date', 'from_party', 'to_party'.
+3. Owner: Extract current primary owner's full name.
+4. Identifiers: Extract any Plot Numbers, Parcel IDs, or Registration numbers.
+
+Respond ONLY in JSON format:
+{
+  "owner_name": "string",
+  "coordinates": [[lat, lon], [lat, lon], ...],
+  "ownership_history": [
+    {"event": "string", "date": "string", "from_party": "string", "to_party": "string"}
+  ],
+  "identifiers": {
+    "parcel_id": "string",
+    "plot_number": "string",
+    "registration_number": "string"
+  },
+  "metadata": {
+    "document_date": "string",
+    "document_type_detected": "string"
+  }
+}"""
+
+        user_prompt = f"""Extract details from this {document_type}:
+
+{document_text[:5000]}"""
 
         return {
             "system": system_prompt,

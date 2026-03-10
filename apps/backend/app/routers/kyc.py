@@ -101,6 +101,28 @@ async def submit_kyc(
     photo_left_path = await save_kyc_file(photo_left, current_user.id, "photo_left")
     photo_right_path = await save_kyc_file(photo_right, current_user.id, "photo_right")
     
+    # AI Extraction for Automated Verification
+    from app.services.document_extractor import DocumentExtractor
+    extraction_result = await DocumentExtractor.extract_details(id_path, "id_document")
+
+    risk_rating = "low"
+    aml_checked = True
+    notes = ""
+
+    if extraction_result["success"]:
+        ext_data = extraction_result["data"]
+        extracted_name = ext_data.get("owner_name", "") # Reusing 'owner_name' field for ID name
+
+        if extracted_name and current_user.name.lower() not in extracted_name.lower():
+            logger.warning(f"KYC Name Mismatch: ID says '{extracted_name}', Profile is '{current_user.name}'")
+            risk_rating = "medium"
+            notes = f"Name mismatch on ID: {extracted_name}"
+
+        # Add extracted details to metadata
+        documents_data_meta = ext_data.get("identifiers", {})
+    else:
+        documents_data_meta = {}
+
     documents_data = {
         "id_document": id_path,
         "proof_of_address": address_path,
@@ -112,8 +134,8 @@ async def submit_kyc(
     # AML Check (Stub)
     # In production, call an external API like SumSub or Onfido here
     # For now, we simulate a basic check
-    risk_rating = "low"
-    aml_checked = True
+    # risk_rating = "low" # Handled by AI extraction above
+    # aml_checked = True
     
     if existing_submission:
         existing_submission.documents = documents_data
@@ -122,6 +144,7 @@ async def submit_kyc(
         existing_submission.rejection_reason = None
         existing_submission.risk_rating = risk_rating
         existing_submission.aml_checked = aml_checked
+        existing_submission.notes = notes
         submission = existing_submission
     else:
         submission = KycSubmission(
@@ -130,7 +153,8 @@ async def submit_kyc(
             documents=documents_data,
             risk_rating=risk_rating,
             aml_checked=aml_checked,
-            aml_check_date=datetime.utcnow()
+            aml_check_date=datetime.utcnow(),
+            notes=notes
         )
         db.add(submission)
     
