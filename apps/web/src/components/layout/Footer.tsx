@@ -10,11 +10,11 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg border border-white/10">
+                <img src="/logo.jpg" alt="ScruPeak" className="w-full h-full object-cover" />
               </div>
-              <span className="text-xl font-bold">
-                Land<span className="text-primary-500">Biznes</span>
+              <span className="text-xl font-bold tracking-tight">
+                Scru<span className="text-primary-500">Peak</span>
               </span>
             </Link>
             <p className="text-sm opacity-70">
@@ -63,7 +63,7 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <p className="text-sm opacity-60">
-            &copy; 2026 LandBiznes. All rights reserved.
+            &copy; 2026 ScruPeak. All rights reserved.
           </p>
           <div className="flex flex-col items-center sm:items-end">
             <p className="text-sm opacity-80">

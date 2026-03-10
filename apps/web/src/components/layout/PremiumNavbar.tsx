@@ -14,11 +14,15 @@ export function PremiumNavbar() {
       <nav className="fixed top-0 left-0 right-0 z-50 hidden md:block bg-white border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/landing" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6600] to-[#FF8533] flex items-center justify-center shadow-soft">
-              <span className="text-white font-bold text-lg">LB</span>
+          <Link to="/landing" className="flex items-center space-x-3 group">
+            <div className="w-10 h-10 rounded-lg overflow-hidden shadow-soft group-hover:scale-105 transition-transform duration-300">
+              <img
+                src="/src/assets/logo.jpg"
+                alt="ScruPeak Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <span className="text-xl font-bold text-neutral-900 hidden sm:inline">LandBiznes</span>
+            <span className="text-xl font-bold text-neutral-900 hidden sm:inline">ScruPeak</span>
           </Link>
 
           {/* Navigation Links */}

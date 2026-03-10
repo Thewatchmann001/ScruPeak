@@ -123,6 +123,11 @@ async def submit_kyc(
     else:
         documents_data_meta = {}
 
+    extracted_payload = {
+        "metadata": documents_data_meta,
+        "extracted_name": extraction_result.get("data", {}).get("owner_name", "") if extraction_result["success"] else ""
+    }
+
     documents_data = {
         "id_document": id_path,
         "proof_of_address": address_path,
@@ -139,6 +144,7 @@ async def submit_kyc(
     
     if existing_submission:
         existing_submission.documents = documents_data
+        existing_submission.extracted_data = extracted_payload
         existing_submission.status = KycStatus.PENDING
         existing_submission.updated_at = datetime.utcnow()
         existing_submission.rejection_reason = None
@@ -151,6 +157,7 @@ async def submit_kyc(
             user_id=current_user.id,
             status=KycStatus.PENDING,
             documents=documents_data,
+            extracted_data=extracted_payload,
             risk_rating=risk_rating,
             aml_checked=aml_checked,
             aml_check_date=datetime.utcnow(),

@@ -458,6 +458,7 @@ class KycSubmission(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     status = Column(Enum(KycStatus), default=KycStatus.PENDING, nullable=False, index=True)
     documents = Column(JSON)
+    extracted_data = Column(JSON, default={})  # NEW: AI extracted data from documents
     notes = Column(Text)
     
     # Risk & AML

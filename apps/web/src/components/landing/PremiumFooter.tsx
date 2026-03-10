@@ -8,10 +8,10 @@ export function PremiumFooter() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center font-black text-white">
-                LB
+              <div className="w-10 h-10 rounded-lg overflow-hidden border border-orange-500/30">
+                <img src="/src/assets/logo.jpg" alt="ScruPeak" className="w-full h-full object-cover" />
               </div>
-              <span className="text-xl font-black">LandBiznes</span>
+              <span className="text-xl font-black">ScruPeak</span>
             </div>
             <p className="text-gray-400 text-sm">
               Trust-first land marketplace and intelligence platform for Sierra Leone and beyond.
@@ -103,7 +103,7 @@ export function PremiumFooter() {
         {/* Divider */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm">
-            &copy; 2026 LandBiznes. All rights reserved. Sierra Leone • Expanding Globally.
+            &copy; 2026 ScruPeak. All rights reserved. Sierra Leone • Expanding Globally.
           </p>
 
           {/* Social Links */}

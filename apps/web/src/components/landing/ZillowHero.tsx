@@ -26,13 +26,13 @@ export function ZillowHero() {
         {/* Logo & Tagline */}
         <div className="text-center mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <div className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-xl">LB</span>
+            <div className="w-16 h-16 rounded-lg overflow-hidden shadow-lg border-2 border-orange-500/30">
+              <img src="/src/assets/logo.jpg" alt="ScruPeak" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-white">LandBiznes</h1>
+            <h1 className="text-5xl md:text-7xl font-black text-white">ScruPeak</h1>
           </div>
           <p className="text-xl md:text-2xl text-gray-300 font-light">
-            Zillow for Land — Discover, Verify, Invest
+            National Digital Property Portal — Discover, Verify, Invest
           </p>
         </div>
 
