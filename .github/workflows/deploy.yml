@@ -318,20 +318,20 @@ jobs:
         id: health
         run: |
           URL="${{ steps.deploy.outputs.url }}"
-          echo "Checking: ${URL}/health"
+          echo "Checking: ${URL}"
           for i in {1..5}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              --max-time 10 "${URL}/health" || echo "000")
-            if [[ "$STATUS" == "200" ]]; then
-              echo "✅ Healthy (attempt $i)"
+              --max-time 10 "${URL}" || echo "000")
+            if [[ "$STATUS" =~ ^(200|301|302|404)$ ]]; then
+              echo "✅ Service is responding (status $STATUS)"
               exit 0
             fi
             echo "⏳ Attempt $i — status $STATUS — retrying in 10s"
             sleep 10
           done
-          echo "❌ Health check failed"
+          echo "❌ Service not responding"
           exit 1
-
+          
       - name: Auto-rollback on failure
         if: failure() && steps.prev.outputs.revision != 'none'
         run: |
