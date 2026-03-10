@@ -9,8 +9,9 @@ import re
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import PyPDF2
+from app.services.jems_ai import get_jems_service
 
 logger = logging.getLogger(__name__)
 
@@ -154,38 +155,48 @@ class DocumentExtractor:
         return None
 
     @staticmethod
-    def extract_details(file_path: str) -> Dict[str, Any]:
+    async def extract_details(file_path: str, document_type: str = "land_document") -> Dict[str, Any]:
         """
-        Main entry point. Extracts text and parses details.
+        Main entry point. Extracts text and parses details using AI-fused strategy.
         """
         text = DocumentExtractor._get_text_content(file_path)
         
-        # Parse Details
+        # 1. Use Jems AI for high-fidelity extraction
+        jems = get_jems_service()
+        ai_result = await jems.extract_land_data(text, document_type)
+
+        if ai_result["success"]:
+            data = ai_result["data"]
+            return {
+                "success": True,
+                "extraction_method": "Jems AI (Fused)",
+                "data": {
+                    "owner_name": data.get("owner_name"),
+                    "coordinates": data.get("coordinates"), # List of [lat, lon]
+                    "ownership_history": data.get("ownership_history"),
+                    "identifiers": data.get("identifiers"),
+                    "metadata": data.get("metadata")
+                }
+            }
+
+        # 2. Fallback to Regex-based extraction if AI fails
         coords = DocumentExtractor.parse_coordinates(text)
         owner = DocumentExtractor.parse_owner_name(text)
         
-        # Mock/Heuristic History
         history = []
         history_keywords = ["Transfer", "Conveyance", "Assigned", "Inherited"]
         for line in text.split('\n'):
             if any(k in line for k in history_keywords):
-                history.append(line.strip())
-
-        # MVP Simulation Fallback
-        if not coords:
-            coords = {"latitude": 8.484, "longitude": -13.234}
-        
-        if not owner:
-            owner = "Unknown (Manual Verification Required)"
+                history.append({"event": line.strip()})
 
         return {
             "success": True,
-            "extraction_method": "AWS Textract" if DocumentExtractor.aws_extractor.client and text else "Local PDF",
+            "extraction_method": "Fallback Regex",
             "extracted_text_preview": text[:200] + "...",
             "data": {
-                "owner_name": owner,
-                "coordinates": coords,
+                "owner_name": owner or "Unknown",
+                "coordinates": [[coords["latitude"], coords["longitude"]]] if coords else [],
                 "ownership_history": history,
-                "document_type": "Title Deed (Detected)" if "Deed" in text else "Land Document"
+                "document_type": "Detected" if "Deed" in text else "Land Document"
             }
         }

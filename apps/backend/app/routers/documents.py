@@ -172,7 +172,7 @@ async def extract_document_details(
             f.write(contents)
         
         # Run Extraction
-        result = DocumentExtractor.extract_details(str(temp_path))
+        result = await DocumentExtractor.extract_details(str(temp_path))
         
         return result
     except Exception as e:

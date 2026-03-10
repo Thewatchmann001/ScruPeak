@@ -162,7 +162,47 @@ async def create_land(
     
     logger.info(f"New land listed (Pending): {new_land.id} by {current_user.id}")
     
-    # 5. Calculate Initial Trust Score
+    # 5. AI Extraction from Documents (Owner, Boundary, History)
+    from app.services.document_extractor import DocumentExtractor
+    from app.models import OwnershipHistory
+
+    # Extract from Survey Plan (Highest accuracy for coordinates/boundary)
+    extraction_result = await DocumentExtractor.extract_details(survey_plan_url, "survey_plan")
+
+    if extraction_result["success"]:
+        ext_data = extraction_result["data"]
+
+        # Update Boundary if polygon found
+        coords = ext_data.get("coordinates")
+        if coords and len(coords) >= 3:
+            # Construct WKT Polygon: POLYGON((lon lat, lon lat, ...))
+            # Note: GeoAlchemy2/PostGIS expects (lon lat)
+            polygon_pts = ", ".join([f"{p[1]} {p[0]}" for p in coords])
+            # Ensure it's closed
+            if coords[0] != coords[-1]:
+                polygon_pts += f", {coords[0][1]} {coords[0][0]}"
+
+            new_land.boundary = f"SRID=4326;POLYGON(({polygon_pts}))"
+            logger.info(f"Land {new_land.id} boundary extracted from document")
+
+        # Record Ownership History
+        history = ext_data.get("ownership_history", [])
+        for item in history:
+            oh = OwnershipHistory(
+                land_id=new_land.id,
+                public_summary=f"{item.get('event')} - {item.get('date', 'Unknown Date')}",
+                # Placeholder for historical mapping if we had historical user IDs
+            )
+            db.add(oh)
+
+        # Verify Owner Name Consistency
+        extracted_owner = ext_data.get("owner_name", "")
+        if extracted_owner and current_user.name.lower() not in extracted_owner.lower():
+            logger.warning(f"Owner Name Mismatch: Document says '{extracted_owner}', User is '{current_user.name}'")
+            # We could flag this for admin or lower trust score
+            new_land.rejection_reason = f"Name mismatch: Document mentions {extracted_owner}"
+
+    # 6. Calculate Initial Trust Score
     from app.services.trust_score import calculate_trust_score
 
     # Check provided mandatory docs (Max 4: Survey, Deed, Consent, Photo)
@@ -184,7 +224,7 @@ async def create_land(
     await db.commit()
     await db.refresh(new_land)
 
-    # 6. Trigger Background Tasks
+    # 7. Trigger Background Tasks
     from app.tasks import sync_land_to_search
     
     land_dict = {
