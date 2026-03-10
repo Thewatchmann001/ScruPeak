@@ -333,7 +333,7 @@ jobs:
           exit 1
           
       - name: Auto-rollback on failure
-        if: failure() && steps.prev.outputs.revision != 'none'
+        if: failure() && steps.prev.outputs.revision != 'none' && steps.prev.outputs.revision != ''
         run: |
           echo "⚠️  Rolling back to ${{ steps.prev.outputs.revision }}"
           gcloud run services update-traffic \
