@@ -221,8 +221,8 @@ jobs:
             --region="${{ env.GCP_REGION }}" \
             --set-env-vars="NODE_ENV=${ENV}" \
             --set-secrets="DATABASE_URL=DATABASE_URL_${ENV^^}:latest" \
-            --command="npm" \
-            --args="run,migrate" \
+            --command="python" \
+            --args="-m,alembic,upgrade,head" \
             --task-timeout=10m \
             --max-retries=2 \
             --project="${{ env.GCP_PROJECT_ID }}" \
@@ -267,6 +267,15 @@ jobs:
           echo "cr_name=$CR_NAME" >> $GITHUB_OUTPUT
           echo "env=$ENV" >> $GITHUB_OUTPUT
 
+          # Set port based on service
+          if [[ "$NAME" == "api-gateway" ]]; then
+            echo "port=3000" >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "web" ]]; then
+            echo "port=80" >> $GITHUB_OUTPUT
+          else
+            echo "port=8000" >> $GITHUB_OUTPUT
+          fi
+
       - name: Authenticate via Workload Identity Federation
         uses: google-github-actions/auth@v2
         with:
@@ -304,6 +313,7 @@ jobs:
             --cpu=1
             --timeout=60s
             --concurrency=80
+            --port=${{ steps.svc.outputs.port }}
           env_vars: |
             NODE_ENV=${{ steps.svc.outputs.env }}
             GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
@@ -328,7 +338,7 @@ jobs:
           done
           echo "❌ Service not responding"
           exit 1
-          
+
       - name: Auto-rollback on failure
         if: failure() && steps.prev.outputs.revision != 'none' && steps.prev.outputs.revision != ''
         run: |
