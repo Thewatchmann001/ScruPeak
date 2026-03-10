@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import Database from "better-sqlite3";
+import { Pool } from "pg";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
@@ -16,13 +16,15 @@ const transporter = nodemailer.createTransport({
 });
 
 export const auth = betterAuth({
-    database: new Database("auth.db"),
-    emailAndPassword: {  
+    database: new Pool({
+        connectionString: process.env.DATABASE_URL,
+    }),
+    emailAndPassword: {
         enabled: true,
         requireEmailVerification: false,
         async sendResetPassword(user, url) {
             await transporter.sendMail({
-                from: process.env.SMTP_FROM || '"LandBiznes Support" <noreply@landbiznes.com>',
+                from: process.env.SMTP_FROM || '"ScruPeak Support" <noreply@scrupeak.com>',
                 to: user.email,
                 subject: "Reset your password",
                 html: `<p>Click the link below to reset your password:</p><a href="${url}">${url}</a>`
@@ -46,9 +48,15 @@ export const auth = betterAuth({
     },
     advanced: {
         defaultCookieAttributes: {
-            sameSite: "lax", 
-            secure: false // Allow cookies on http://localhost
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production"
         }
     },
-    trustedOrigins: ["http://localhost:3000", "http://localhost:5173", "http://localhost:3004", "http://127.0.0.1:3000"]
+    trustedOrigins: [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:3004",
+        "http://127.0.0.1:3000",
+        "https://web-prod-198638918293.us-central1.run.app"
+    ]
 });
