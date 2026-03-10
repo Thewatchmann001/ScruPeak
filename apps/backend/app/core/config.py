@@ -1,5 +1,5 @@
 """
-Core configuration for LandBiznes backend
+Core configuration for ScruPeak backend
 Handles environment variables, database config, security settings
 """
 from functools import lru_cache
@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     # MeiliSearch (Search Engine)
     MEILI_HOST: str = "http://localhost:7700"
     MEILI_MASTER_KEY: str = "masterKey"
+    MEILI_INDEX: str = "scrupeak_land"
 
     # Celery (Background Tasks)
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"

@@ -39,6 +39,7 @@ class LandStatus(str, enum.Enum):
 class DocumentType(str, enum.Enum):
     """Types of documents"""
     TITLE_DEED = "title_deed"
+    HISTORICAL_DEED = "historical_deed"  # For 3-gen tracing
     SURVEY_REPORT = "survey_report"
     TAX_CERTIFICATE = "tax_certificate"
     GOVERNMENT_ID = "government_id"
@@ -118,6 +119,7 @@ class Land(Base):
     size_sqm = Column(Numeric(15, 2), nullable=False)  # Square meters
     price = Column(Numeric(18, 2))  # Price in currency
     status = Column(Enum(LandStatus), default=LandStatus.AVAILABLE, nullable=False, index=True)
+    is_public = Column(Boolean, default=True, index=True)  # Public vs Private listing
     
     # Geographic data (optimized for spatial queries)
     location = Column(Geometry('POINT', srid=4326), nullable=False, index=True)  # Main location
@@ -132,6 +134,7 @@ class Land(Base):
     has_survey_plan = Column(Boolean, default=False)
     has_chief_letter = Column(Boolean, default=False)
     has_agreement = Column(Boolean, default=False)
+    document_chain_depth = Column(Integer, default=1)  # Spec: 2 clean ownership generations = premium
     has_photo = Column(Boolean, default=False)  # NEW: Land photo requirement
     spousal_consent = Column(Boolean, default=False)  # NEW: Spousal consent flag
     surveyor_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)  # NEW: Licensed surveyor

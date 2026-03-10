@@ -1,0 +1,267 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: /app/apps/backend
+configfile: pyproject.toml
+plugins: asyncio-1.3.0, anyio-4.12.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 12 items
+
+tests/test_land.py ..FFFFFF.FFF                                          [100%]
+
+=================================== FAILURES ===================================
+__________________ TestPropertyCRUD.test_get_property_success __________________
+
+self = <test_land.TestPropertyCRUD object at 0x7fdac5a430e0>
+client = <httpx.AsyncClient object at 0x7fdac435f470>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_get_property_success(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test retrieving property details"""
+        # Register user and create property
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token = register_response.json()["access_token"]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:99: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:42.094256", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:42.100895", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:42.101232", "level": "INFO", "logger": "app.main", "message": "[a0b21558-cfb5-42e4-8756-f3a583a463bf] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:42.101758", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+_________________ TestPropertyCRUD.test_get_property_not_found _________________
+
+self = <test_land.TestPropertyCRUD object at 0x7fdac5a43410>
+client = <httpx.AsyncClient object at 0x7fdac4719c40>
+
+    async def test_get_property_not_found(self, client: AsyncClient):
+        """Test retrieving non-existent property"""
+        fake_id = "00000000-0000-0000-0000-000000000000"
+
+        response = await client.get(f"/api/v1/land/{fake_id}")
+
+        assert response.status_code == 404
+>       assert "not found" in response.json()["detail"]
+E       AssertionError: assert 'not found' in 'Not Found'
+
+tests/test_land.py:130: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:42.712848", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:42.716822", "level": "INFO", "logger": "app.main", "message": "[9880779c-5689-47a7-9ae7-7fd2816fd520] GET /api/v1/land/00000000-0000-0000-0000-000000000000 - Status: 404 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:42.717289", "level": "INFO", "logger": "httpx", "message": "HTTP Request: GET http://test/api/v1/land/00000000-0000-0000-0000-000000000000 \"HTTP/1.1 404 Not Found\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: GET http://test/api/v1/land/00000000-0000-0000-0000-000000000000 "HTTP/1.1 404 Not Found"
+________________ TestPropertyCRUD.test_update_property_success _________________
+
+self = <test_land.TestPropertyCRUD object at 0x7fdac5a438f0>
+client = <httpx.AsyncClient object at 0x7fdac4f98da0>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_update_property_success(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test updating property listing"""
+        # Register and create property
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token = register_response.json()["access_token"]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:139: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:43.013782", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:43.020005", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:43.020458", "level": "INFO", "logger": "app.main", "message": "[2c81f537-5f90-4082-89a1-881e1dd25a25] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:43.020984", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+______________ TestPropertyCRUD.test_update_property_unauthorized ______________
+
+self = <test_land.TestPropertyCRUD object at 0x7fdac5a43d10>
+client = <httpx.AsyncClient object at 0x7fdac40f7170>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_update_property_unauthorized(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test updating property as non-owner"""
+        # Create property with user 1
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token1 = register_response.json()["access_token"]
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:174: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:43.318964", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:43.325520", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:43.325864", "level": "INFO", "logger": "app.main", "message": "[61f8031a-b361-4d6e-8eb0-340089e1f0e8] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:43.326348", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+________________ TestPropertyCRUD.test_delete_property_success _________________
+
+self = <test_land.TestPropertyCRUD object at 0x7fdac5a70170>
+client = <httpx.AsyncClient object at 0x7fdac4f99e50>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_delete_property_success(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test deleting property listing"""
+        # Register and create property
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token = register_response.json()["access_token"]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:216: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:43.844946", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:43.851187", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:43.851600", "level": "INFO", "logger": "app.main", "message": "[a54743d0-fcde-43d0-bf22-a00f35e7cc7e] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:43.852073", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+______________ TestPropertyCRUD.test_delete_property_unauthorized ______________
+
+self = <test_land.TestPropertyCRUD object at 0x7fdac5a70590>
+client = <httpx.AsyncClient object at 0x7fdac4144aa0>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_delete_property_unauthorized(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test deleting property as non-owner"""
+        # Create property
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token = register_response.json()["access_token"]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:245: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:44.150160", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:44.156353", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:44.156719", "level": "INFO", "logger": "app.main", "message": "[53bd7349-9b68-4354-8908-03b9e0578912] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:44.157164", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+___________ TestPropertySearch.test_search_properties_by_price_range ___________
+
+self = <test_land.TestPropertySearch object at 0x7fdac5a70ef0>
+client = <httpx.AsyncClient object at 0x7fdac4316120>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_search_properties_by_price_range(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test searching properties by price range"""
+        # Create properties
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token = register_response.json()["access_token"]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:299: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:44.990098", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:44.997620", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:44.997926", "level": "INFO", "logger": "app.main", "message": "[431d242a-44c3-4da8-bf62-c4741c6f75c0] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:44.998416", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+_____________ TestPropertySearch.test_search_properties_pagination _____________
+
+self = <test_land.TestPropertySearch object at 0x7fdac5a43a40>
+client = <httpx.AsyncClient object at 0x7fdac47bcaa0>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_search_properties_pagination(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test pagination in property search"""
+        # Create multiple properties
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token = register_response.json()["access_token"]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:324: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:45.291547", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:45.297717", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:45.298031", "level": "INFO", "logger": "app.main", "message": "[de48adb9-9f81-4e9b-9d97-8665ecc075b0] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:45.298551", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+_____________ TestPropertySearch.test_search_properties_by_status ______________
+
+self = <test_land.TestPropertySearch object at 0x7fdac5a42f30>
+client = <httpx.AsyncClient object at 0x7fdac44b2e10>
+test_user_data = {'email': 'test@example.com', 'name': 'Test User', 'password': 'TestPassword123!', 'phone': '+234 701 234 5678', ...}
+test_property_data = {'area': 5000, 'description': 'A pristine land with excellent soil quality', 'location': 'Lagos, Nigeria', 'price': 5000000.0, ...}
+
+    async def test_search_properties_by_status(self, client: AsyncClient, test_user_data, test_property_data):
+        """Test searching properties by status"""
+        # Create property
+        register_response = await client.post(
+            "/api/v1/auth/register",
+            json=test_user_data
+        )
+>       access_token = register_response.json()["access_token"]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'access_token'
+
+tests/test_land.py:350: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"timestamp": "2026-03-09T10:52:45.591662", "level": "INFO", "logger": "app.main", "message": "[OK] All routers registered", "module": "main", "function": "create_app", "line": 387}
+----------------------------- Captured stdout call -----------------------------
+{"timestamp": "2026-03-09T10:52:45.597907", "level": "WARNING", "logger": "app.routers.auth", "message": "Registration attempt with existing email: test@example.com", "module": "auth", "function": "register", "line": 55}
+{"timestamp": "2026-03-09T10:52:45.598279", "level": "INFO", "logger": "app.main", "message": "[db9e6f5f-d818-48d6-8acb-d46e857f62f9] POST /api/v1/auth/register - Status: 409 - Time: 0.00s", "module": "main", "function": "add_request_id_and_timing", "line": 131}
+{"timestamp": "2026-03-09T10:52:45.598755", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://test/api/v1/auth/register \"HTTP/1.1 409 Conflict\"", "module": "_client", "function": "_send_single_request", "line": 1740}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1740 HTTP Request: POST http://test/api/v1/auth/register "HTTP/1.1 409 Conflict"
+=============================== warnings summary ===============================
+app/routers/compliance.py:157
+  /app/apps/backend/app/routers/compliance.py:157: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    status: str = Query(..., regex="^(not_checked|compliant|non_compliant|pending_review|exception_approved|waived)$"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_land.py::TestPropertyCRUD::test_get_property_success - KeyE...
+FAILED tests/test_land.py::TestPropertyCRUD::test_get_property_not_found - As...
+FAILED tests/test_land.py::TestPropertyCRUD::test_update_property_success - K...
+FAILED tests/test_land.py::TestPropertyCRUD::test_update_property_unauthorized
+FAILED tests/test_land.py::TestPropertyCRUD::test_delete_property_success - K...
+FAILED tests/test_land.py::TestPropertyCRUD::test_delete_property_unauthorized
+FAILED tests/test_land.py::TestPropertySearch::test_search_properties_by_price_range
+FAILED tests/test_land.py::TestPropertySearch::test_search_properties_pagination
+FAILED tests/test_land.py::TestPropertySearch::test_search_properties_by_status
+==================== 9 failed, 3 passed, 1 warning in 5.99s ====================

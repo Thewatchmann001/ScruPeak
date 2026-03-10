@@ -1,5 +1,5 @@
 """
-LandBiznes Spatial Intelligence Engine (Exact Spec)
+ScruPeak Spatial Intelligence Engine (Exact Spec)
 
 Core operations:
 1. Register parcels (deterministic code + SIH dedup)
@@ -18,7 +18,7 @@ from grid_new import determine_reference_grid
 
 class SpatialEngine:
     """
-    LandBiznes Spatial Intelligence Engine.
+    ScruPeak Spatial Intelligence Engine.
     
     Core principle: Geometry is truth.
     If you change the geometry, you changed the land.

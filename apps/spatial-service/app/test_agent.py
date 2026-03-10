@@ -1,5 +1,5 @@
 """
-Test and Demonstration: LandBiznes Spatial Intelligence Agent
+Test and Demonstration: ScruPeak Spatial Intelligence Agent
 
 Demonstrates:
 1. Parcel registration with CSI

@@ -1,0 +1,8 @@
+apps/backend/app/core/database.py:            "application_name": "landbiznes_backend",
+apps/backend/app/core/celery_app.py:    "landbiznes_tasks",
+apps/spatial-service/app/engine.py:    print("LandBiznes Spatial Intelligence - Quick Test")
+apps/spatial-service/app/test_agent.py:    print("█" + "  LandBiznes Spatial Intelligence Agent - Test Suite".center(68) + "█")
+apps/spatial-service/app/engine_v2.py:    print("LandBiznes Spatial Intelligence Engine - Test")
+apps/spatial-service/app/agent.py:LandBiznes Spatial Intelligence Agent
+apps/web/src/pages/company/ContactPage.tsx:            <p><strong>Email:</strong> support@landbiznes.sl</p>
+apps/web/src/pages/admin/AdminUsersPage.tsx:        { id: '1', name: 'Admin User', email: 'admin@landbiznes.com', role: 'admin', kyc_verified: true, created_at: '2024-01-01' },

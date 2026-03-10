@@ -1,5 +1,5 @@
 """
-LandBiznes Spatial Intelligence Agent Orchestrator
+ScruPeak Spatial Intelligence Agent Orchestrator
 
 Main entry point for spatial operations:
 - Register parcels and create CSIs

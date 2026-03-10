@@ -40,6 +40,8 @@ export interface Land {
     coordinates: [number, number][][];
   };
   status: "available" | "pending" | "sold" | "disputed";
+  is_public: boolean;
+  document_chain_depth: number;
   price?: number;
   documents: Document[];
   blockchain_hash?: string;

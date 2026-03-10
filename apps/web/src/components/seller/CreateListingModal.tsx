@@ -25,6 +25,8 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
     district: '',
     latitude: '',
     longitude: '',
+    is_public: true,
+    document_chain_depth: 1,
     spousal_consent: false,
     surveyor_id: '',
   });
@@ -32,10 +34,12 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
   const [files, setFiles] = useState<{
     survey_plan: File | null;
     title_deed: File | null;
+    historical_deeds: File[] | null;
     spousal_consent_doc: File | null;
   }>({
     survey_plan: null,
     title_deed: null,
+    historical_deeds: null,
     spousal_consent_doc: null
   });
 
@@ -51,8 +55,12 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof typeof files) => {
-    if (e.target.files && e.target.files[0]) {
-        setFiles(prev => ({ ...prev, [fieldName]: e.target.files![0] }));
+    if (e.target.files) {
+        if (fieldName === 'historical_deeds') {
+            setFiles(prev => ({ ...prev, [fieldName]: Array.from(e.target.files!) }));
+        } else if (e.target.files[0]) {
+            setFiles(prev => ({ ...prev, [fieldName]: e.target.files![0] }));
+        }
     }
   };
 
@@ -71,6 +79,8 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
       formPayload.append('district', formData.district);
       formPayload.append('latitude', formData.latitude);
       formPayload.append('longitude', formData.longitude);
+      formPayload.append('is_public', formData.is_public.toString());
+      formPayload.append('document_chain_depth', formData.document_chain_depth.toString());
       formPayload.append('spousal_consent', formData.spousal_consent.toString());
       if (formData.surveyor_id) formPayload.append('surveyor_id', formData.surveyor_id);
 
@@ -80,6 +90,12 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
       
       if (!files.title_deed) throw new Error("Title Deed is required");
       formPayload.append('title_deed', files.title_deed);
+
+      if (files.historical_deeds) {
+          files.historical_deeds.forEach((file, index) => {
+              formPayload.append(`historical_deeds`, file);
+          });
+      }
 
       if (formData.spousal_consent && files.spousal_consent_doc) {
           formPayload.append('spousal_consent_doc', files.spousal_consent_doc);
@@ -234,8 +250,40 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
               </div>
             </div>
 
-            {/* Compliance Section */}
+            {/* Visibility & Compliance Section */}
             <div className="pt-4 border-t border-gray-100 space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                    <input
+                        type="checkbox"
+                        name="is_public"
+                        id="is_public"
+                        checked={formData.is_public}
+                        onChange={handleChange}
+                        className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                    />
+                    <div>
+                        <label htmlFor="is_public" className="text-sm font-bold text-gray-900">
+                            Public Marketplace Listing
+                        </label>
+                        <p className="text-xs text-gray-500">If unchecked, your land will be registered but not visible to buyers on the marketplace.</p>
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="block text-sm font-bold text-gray-900">Ownership Chain Depth</label>
+                    <select
+                        name="document_chain_depth"
+                        value={formData.document_chain_depth}
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                        <option value={1}>1 Generation (Current Owner Only)</option>
+                        <option value={2}>2 Generations (Tracing back to previous owner)</option>
+                        <option value={3}>3+ Generations (Historical chain - Premium Score)</option>
+                    </select>
+                    <p className="text-xs text-gray-500">Specifying a deeper ownership chain (at least 2 generations) significantly boosts your Trust Score.</p>
+                </div>
+
                 <h3 className="font-semibold text-gray-900">Compliance Documents</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -244,9 +292,15 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                         <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'survey_plan')} required className="text-sm" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title Deed (Required)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Current Title Deed (Required)</label>
                         <input type="file" accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'title_deed')} required className="text-sm" />
                     </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Historical Deeds (Tracing generations)</label>
+                    <input type="file" multiple accept=".pdf,.jpg,.png" onChange={(e) => handleFileChange(e, 'historical_deeds')} className="text-sm" />
+                    <p className="text-[10px] text-gray-400 mt-1 italic">Uploading previous owner documents boosts Trust Score and accelerates verification.</p>
                 </div>
 
                 <div className="space-y-2">

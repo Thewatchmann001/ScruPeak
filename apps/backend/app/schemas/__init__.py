@@ -39,6 +39,8 @@ class PaginatedResponse(BaseModel):
     has_next: bool = Field(description="Has next page")
     has_prev: bool = Field(description="Has previous page")
 
+    class Config:
+        from_attributes = True
 
 # ============================================================================
 # USER SCHEMAS
@@ -133,8 +135,10 @@ class LandBase(BaseModel):
     has_survey_plan: bool = False
     has_chief_letter: bool = False
     has_agreement: bool = False
+    document_chain_depth: int = 1
     spousal_consent: bool = False  # NEW
     surveyor_id: Optional[UUID] = None  # NEW
+    is_public: bool = True
 
 
 class LandCreate(LandBase):
@@ -171,6 +175,8 @@ class LandResponse(LandBase):
     grid_id: Optional[str] = None
     owner_id: UUID
     status: LandStatus
+    is_public: bool
+    document_chain_depth: int
     blockchain_verified: bool
     blockchain_hash: Optional[str]
 
@@ -195,6 +201,9 @@ class LandDetailResponse(LandResponse):
     """Detailed land response with relationships"""
     documents: Optional[List['DocumentResponse']] = []
     ownership_history: Optional[List['OwnershipHistoryResponse']] = []
+
+class LandPaginatedResponse(PaginatedResponse):
+    items: List[LandResponse]
 
 
 # ============================================================================
@@ -266,6 +275,7 @@ class EscrowResponse(BaseModel):
 class ChatMessageCreate(BaseModel):
     """Chat message creation schema"""
     chat_id: str = Field(..., min_length=1, max_length=100)
+    land_ulid: Optional[str] = Field(None, min_length=26, max_length=26)
     message: str = Field(..., min_length=1, max_length=5000)
     attachments: Optional[List[str]] = []
 

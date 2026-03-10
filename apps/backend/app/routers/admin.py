@@ -305,6 +305,7 @@ async def approve_land(
         ts_result = calculate_trust_score(
             mandatory_docs_provided=provided_count,
             admin_verified=True,
+            document_chain_depth=getattr(land, 'document_chain_depth', 1),
             kyc_completeness=1.0 if land.owner and land.owner.kyc_verified else 0.0,
             land_type="formal" if land.region and land.region.lower() in ["freetown", "western area"] else "traditional"
         )

@@ -8,7 +8,7 @@ from uuid import UUID
 import logging
 
 from app.core.database import get_db
-from app.models import Escrow, Land, User
+from app.models import Escrow, User, Land, EscrowStatus, LandStatus
 from app.schemas import EscrowCreate, EscrowUpdate, EscrowResponse
 from app.utils.auth import get_current_user
 
@@ -48,6 +48,25 @@ async def create_escrow(
     )
     
     db.add(new_escrow)
+
+    # Anchor Escrow to Solana Blockchain for protection
+    from app.services.blockchain import BlockchainService
+    try:
+        escrow_data = {
+            "type": "ESCROW_ACTIVATION",
+            "escrow_id": str(new_escrow.id),
+            "land_id": str(land.id),
+            "buyer_id": str(current_user.id),
+            "amount": float(new_escrow.amount),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        tx_sig = BlockchainService.simulate_transaction(BlockchainService.generate_hash(escrow_data))
+        new_escrow.transaction_signature = tx_sig
+        new_escrow.status = EscrowStatus.ACTIVE
+    except Exception as e:
+        logger.error(f"Blockchain anchoring failed for escrow {new_escrow.id}: {e}")
+        # In production we might still proceed but flag it
+
     await db.commit()
     await db.refresh(new_escrow)
     

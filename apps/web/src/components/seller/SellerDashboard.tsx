@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Filter, MoreHorizontal, Eye, MessageSquare, ShieldCheck } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, Eye, MessageSquare, ShieldCheck, Globe, Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
@@ -144,6 +144,7 @@ export default function SellerDashboard() {
               <thead className="bg-neutral-50 border-b border-neutral-200">
                 <tr>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Property</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Visibility</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Size</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Price</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Status</th>
@@ -179,6 +180,39 @@ export default function SellerDashboard() {
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge status={listing.status} />
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={async () => {
+                            try {
+                              await api.patch(`/land/${listing.id}/visibility`, null, {
+                                params: { is_public: !listing.is_public }
+                              });
+                              fetchListings();
+                            } catch (error) {
+                              console.error("Failed to toggle visibility", error);
+                              alert("Failed to update visibility");
+                            }
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 ${
+                            listing.is_public
+                              ? "bg-green-50 text-green-700 border-green-100 hover:bg-green-100"
+                              : "bg-neutral-100 text-neutral-600 border-neutral-200 hover:bg-neutral-200"
+                          }`}
+                          title={listing.is_public ? "Make Private" : "Make Public"}
+                        >
+                          {listing.is_public ? (
+                            <>
+                              <Globe className="w-3.5 h-3.5" />
+                              <span className="text-xs font-bold uppercase tracking-wider">Public</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3.5 h-3.5" />
+                              <span className="text-xs font-bold uppercase tracking-wider">Private</span>
+                            </>
+                          )}
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         {listing.blockchain_hash ? (

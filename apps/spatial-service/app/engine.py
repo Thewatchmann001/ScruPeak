@@ -1,5 +1,5 @@
 """
-LandBiznes Spatial Intelligence Orchestrator
+ScruPeak Spatial Intelligence Orchestrator
 
 Core operations:
 1. Register parcels (deterministic ID + spatial hash)

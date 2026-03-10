@@ -6,7 +6,7 @@ from sqlalchemy.orm import defer
 from uuid import UUID
 import logging
 import time
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timedelta
 
 from app.core.database import get_db
@@ -14,7 +14,8 @@ from app.models import Land, User, LandStatus, UserRole
 from app.models.dispute_resolution import Dispute, DisputeType, DisputeStatus
 from app.schemas import (
     LandCreate, LandUpdate, LandResponse, LandDetailResponse,
-    LandSearchFilters, PaginatedResponse, MarketInsightsResponse
+    LandSearchFilters, PaginatedResponse, MarketInsightsResponse,
+    PaginationParams, LandPaginatedResponse
 )
 from app.utils.auth import get_current_user
 
@@ -36,6 +37,8 @@ async def create_land(
     district: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
+    is_public: bool = Form(True),
+    document_chain_depth: int = Form(1),
     spousal_consent: bool = Form(False),
     surveyor_id: Optional[UUID] = Form(None),
     
@@ -44,6 +47,7 @@ async def create_land(
     title_deed: UploadFile = File(...),
     land_photo: Optional[UploadFile] = File(None), # NEW
     spousal_consent_doc: Optional[UploadFile] = File(None),
+    historical_deeds: Optional[List[UploadFile]] = File(None),
     
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -85,9 +89,15 @@ async def create_land(
         # For now, we allow it but flag it for admin review
         pass
 
+    historical_urls = []
+    if historical_deeds:
+        for deed in historical_deeds:
+            h_url = await save_upload_file(deed, "historical_deeds")
+            historical_urls.append(h_url)
+
     # 3. Create Land Record - SPATIAL-FIRST REGISTRATION
     from app.utils.spatial import compute_grid_id, generate_parcel_id
-    
+
     # Deterministic Parcel ID from Grid + Sequence
     try:
         grid_id, grid_x, grid_y = compute_grid_id(latitude, longitude)
@@ -112,6 +122,8 @@ async def create_land(
         latitude=latitude,
         longitude=longitude,
         status=LandStatus.PENDING_APPROVAL,
+        is_public=is_public,
+        document_chain_depth=document_chain_depth,
         
         # Validation Flags
         has_survey_plan=True,
@@ -156,6 +168,15 @@ async def create_land(
             verification_notes="Spousal Consent"
         )
         db.add(doc_consent)
+
+    for h_url in historical_urls:
+        doc_hist = Document(
+            land_id=new_land.id,
+            document_type=DocumentType.HISTORICAL_DEED,
+            file_url=h_url,
+            verification_notes="Ownership Tracing"
+        )
+        db.add(doc_hist)
         
     await db.commit()
     await db.refresh(new_land)
@@ -173,6 +194,7 @@ async def create_land(
     ts_result = calculate_trust_score(
         mandatory_docs_provided=provided_count,
         admin_verified=False,
+        document_chain_depth=document_chain_depth,
         kyc_completeness=1.0 if current_user.kyc_verified else 0.0,
         land_type="formal" if region.lower() in ["freetown", "western area"] else "traditional"
     )
@@ -198,3 +220,101 @@ async def create_land(
     sync_land_to_search.delay(land_dict)
     
     return new_land
+
+@router.patch("/{land_id}/visibility", response_model=LandResponse)
+async def toggle_land_visibility(
+    land_id: UUID,
+    is_public: bool,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Toggle land visibility (Public vs Private)"""
+    query = select(Land).where(Land.id == land_id)
+    result = await db.execute(query)
+    land = result.scalar_one_or_none()
+
+    if not land:
+        raise HTTPException(status_code=404, detail="Land not found")
+
+    if land.owner_id != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this listing")
+
+    land.is_public = is_public
+    await db.commit()
+    await db.refresh(land)
+
+    # Sync search index
+    from app.tasks import sync_land_to_search
+    land_dict = {
+        "id": str(land.id),
+        "title": land.title,
+        "price": float(land.price) if land.price else 0,
+        "status": land.status,
+        "region": land.region,
+        "district": land.district,
+        "is_public": land.is_public
+    }
+    sync_land_to_search.delay(land_dict)
+
+    return land
+
+@router.get("", response_model=LandPaginatedResponse)
+async def get_lands(
+    filters: LandSearchFilters = Depends(),
+    pagination: PaginationParams = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    """List public land properties with filters"""
+    query = select(Land).where(Land.is_public == True)
+
+    if filters.status:
+        query = query.where(Land.status == filters.status)
+    else:
+        # Default to available only for public marketplace
+        query = query.where(Land.status == LandStatus.AVAILABLE)
+
+    if filters.region:
+        query = query.where(Land.region == filters.region)
+    if filters.district:
+        query = query.where(Land.district == filters.district)
+
+    # Pagination
+    total_query = select(func.count()).select_from(query.subquery())
+    total = await db.execute(total_query)
+    total_count = total.scalar_one()
+
+    query = query.offset((pagination.page - 1) * pagination.page_size).limit(pagination.page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    total_pages = (total_count + pagination.page_size - 1) // pagination.page_size
+
+    return {
+        "total": total_count,
+        "page": pagination.page,
+        "page_size": pagination.page_size,
+        "total_pages": total_pages,
+        "items": items,
+        "has_next": pagination.page < total_pages,
+        "has_prev": pagination.page > 1
+    }
+
+@router.get("/my-listings", response_model=LandPaginatedResponse)
+async def get_my_listings(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """List all listings (public and private) for current user"""
+    query = select(Land).where(Land.owner_id == current_user.id).order_by(desc(Land.created_at))
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    return {
+        "total": len(items),
+        "page": 1,
+        "page_size": len(items),
+        "total_pages": 1,
+        "items": items,
+        "has_next": False,
+        "has_prev": False
+    }

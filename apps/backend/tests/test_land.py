@@ -2,6 +2,7 @@
 Tests for land property CRUD operations
 """
 import pytest
+import time
 from httpx import AsyncClient
 from uuid import UUID
 
@@ -358,3 +359,56 @@ class TestPropertySearch:
         assert response.status_code == 200
         data = response.json()
         assert data["total"] > 0
+
+@pytest.mark.asyncio
+async def test_land_visibility_logic(client: AsyncClient, test_user_data, test_property_data):
+    """Test public/private visibility logic"""
+    # 1. Register with unique email
+    unique_user = test_user_data.copy()
+    unique_user["email"] = f"visibility_{int(time.time())}@example.com"
+
+    register_response = await client.post("/api/v1/auth/register", json=unique_user)
+    access_token = register_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    # 2. Create Private Land
+    from io import BytesIO
+    files = {
+        "survey_plan": ("survey.jpg", BytesIO(b"dummy"), "image/jpeg"),
+        "title_deed": ("deed.jpg", BytesIO(b"dummy"), "image/jpeg"),
+    }
+
+    form_data = {
+        "title": "Private Land",
+        "description": "Hidden",
+        "price": "1000",
+        "size_sqm": "100",
+        "region": "Western",
+        "district": "Freetown",
+        "latitude": "8.0",
+        "longitude": "-13.0",
+        "is_public": "false"
+    }
+
+    create_res = await client.post("/api/v1/land", data=form_data, files=files, headers=headers)
+    assert create_res.status_code == 201
+    land_id = create_res.json()["id"]
+    assert create_res.json()["is_public"] is False
+
+    # 3. Verify NOT in public marketplace
+    market_res = await client.get("/api/v1/land")
+    items = market_res.json()["items"]
+    assert not any(item["id"] == land_id for item in items)
+
+    # 4. Toggle to Public
+    toggle_res = await client.patch(f"/api/v1/land/{land_id}/visibility?is_public=true", headers=headers)
+    assert toggle_res.status_code == 200
+    assert toggle_res.json()["is_public"] is True
+
+    # 5. Verify IS in public marketplace (Note: Might need to be status=available)
+    # The endpoint might return PENDING_APPROVAL lands if filters aren't strict,
+    # but the logic is filtered by is_public first.
+    market_res_after = await client.get("/api/v1/land?status=pending_approval")
+    assert market_res_after.status_code == 200
+    items_after = market_res_after.json()["items"]
+    assert any(str(item["id"]) == str(land_id) for item in items_after)
