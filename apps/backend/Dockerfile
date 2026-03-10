@@ -1,39 +1,20 @@
-# ============================================================================
-# STAGE 1: BUILDER
-# ============================================================================
-FROM python:3.11-slim as builder
-
-WORKDIR /build
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY pyproject.toml poetry.lock* ./
-
-RUN pip install --upgrade pip && \
-    pip install poetry==1.8.3 && \
-    poetry config virtualenvs.in-project true && \
-    poetry install --only main --no-interaction --no-ansi && \
-    ls -la /build/.venv/bin/
-
-# ============================================================================
-# STAGE 2: RUNTIME
-# ============================================================================
 FROM python:3.11-slim
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
     postgresql-client \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy venv first
-COPY --from=builder /build/.venv /app/.venv
+COPY pyproject.toml poetry.lock* ./
 
-# Then copy app code
+RUN pip install --upgrade pip && \
+    pip install poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --only main --no-interaction --no-ansi
+
 COPY . /app/
 
 RUN useradd -m -u 1000 appuser && \
@@ -41,7 +22,6 @@ RUN useradd -m -u 1000 appuser && \
 
 USER appuser
 
-ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app"
 ENV PYTHONUNBUFFERED=1
 
