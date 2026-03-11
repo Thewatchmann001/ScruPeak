@@ -17,6 +17,8 @@ const transporter = nodemailer.createTransport({
 
 export const auth = betterAuth({
     database: new Database("auth.db"),
+    secret: process.env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4005",
     emailAndPassword: {  
         enabled: true,
         requireEmailVerification: false,

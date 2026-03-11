@@ -9,7 +9,7 @@ export function PremiumFooter() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center font-black text-white">
-                LB
+                SP
               </div>
               <span className="text-xl font-black">ScruPeak</span>
             </div>
