@@ -3,7 +3,7 @@
 ║                                                                            ║
 ║                    🎉 FRONTEND COMPLETE! 🎉                               ║
 ║                                                                            ║
-║              Your LandBiznes Frontend is Ready for Development             ║
+║              Your ScruPeak Frontend is Ready for Development             ║
 ║                                                                            ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
@@ -24,7 +24,7 @@
 ════════════════════════════════════════════════════════════════════════════
 
 📍 Location:
-   c:\Users\HP\Desktop\LandBiznes\apps\frontend
+   c:\Users\HP\Desktop\ScruPeak\apps\frontend
 
 
 🎯 START DEVELOPMENT IN 3 STEPS
@@ -32,7 +32,7 @@
 
 1️⃣  Install Dependencies
     ──────────────────────────────────────────────────────────────────
-    cd c:\Users\HP\Desktop\LandBiznes\apps\frontend
+    cd c:\Users\HP\Desktop\ScruPeak\apps\frontend
     npm install
 
 2️⃣  Setup Environment
@@ -330,6 +330,6 @@ What You Can Do:
 Built with ❤️ using:
 Next.js 14 • TypeScript • Tailwind CSS • Modern Best Practices
 
-Your LandBiznes Frontend is Ready! 🎉
+Your ScruPeak Frontend is Ready! 🎉
 
 ═══════════════════════════════════════════════════════════════════════════════

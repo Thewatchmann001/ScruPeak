@@ -89,7 +89,7 @@
 
 ### 2. **Test Database**
 - Requirement: PostgreSQL test database must exist
-- Command: `CREATE DATABASE landbiznes_test;`
+- Command: `CREATE DATABASE scrupeak_test;`
 - Note: CI/CD will handle this automatically
 
 ## 📋 Pending Features (Priority Order)
@@ -196,7 +196,7 @@
    - Impact: Prevents test execution on Windows CMD
 
 3. **Test Database Setup** (Configuration)
-   - Required: Manual creation of `landbiznes_test` database
+   - Required: Manual creation of `scrupeak_test` database
    - Fix: Add automatic database creation script
    - Impact: Tests can't run without setup
 
@@ -217,23 +217,23 @@
 ### Database Preparation
 ```sql
 -- Create test database
-CREATE DATABASE landbiznes_test;
+CREATE DATABASE scrupeak_test;
 
 -- Verify production database
-\c landbiznes
+\c scrupeak
 \dt  -- Show all tables
 ```
 
 ### Environment Variables Required
 ```
 ENVIRONMENT=production
-DATABASE_URL=postgresql+asyncpg://user:password@host:5432/landbiznes
+DATABASE_URL=postgresql+asyncpg://user:password@host:5432/scrupeak
 REDIS_URL=redis://host:6379
 SECRET_KEY=<strong-random-key>
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
-ALLOWED_HOSTS=landbiznes.com,www.landbiznes.com
+ALLOWED_HOSTS=scrupeak.com,www.scrupeak.com
 ```
 
 ## 📝 Documentation Files Created
@@ -266,13 +266,13 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ### Database Management
 ```bash
 # Create test database
-psql -U landbiznes -h localhost -c "CREATE DATABASE landbiznes_test;"
+psql -U scrupeak -h localhost -c "CREATE DATABASE scrupeak_test;"
 
 # Initialize database
 python init_db.py
 
 # View tables
-psql -U landbiznes -h localhost -d landbiznes -c "\dt"
+psql -U scrupeak -h localhost -d scrupeak -c "\dt"
 ```
 
 ## ⚠️ Known Issues & Limitations

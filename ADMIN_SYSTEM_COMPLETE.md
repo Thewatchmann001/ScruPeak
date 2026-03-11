@@ -239,7 +239,7 @@ can access:                  cannot access:
   {
     "id": 2,
     "name": "Amara Conteh",
-    "email": "amara.conteh@landbiznes.com",
+    "email": "amara.conteh@scrupeak.com",
     "role": "document-verifier",
     "status": "active",
     "joinedDate": "January 10, 2026",
@@ -248,7 +248,7 @@ can access:                  cannot access:
   {
     "id": 3,
     "name": "Mohamed Hassan",
-    "email": "mohamed.hassan@landbiznes.com",
+    "email": "mohamed.hassan@scrupeak.com",
     "role": "kyc-officer",
     "status": "active",
     "joinedDate": "January 15, 2026",

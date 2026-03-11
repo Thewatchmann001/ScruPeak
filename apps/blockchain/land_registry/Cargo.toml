@@ -1,7 +1,7 @@
 [package]
 name = "land-registry"
 version = "0.1.0"
-description = "Solana Smart Contract for LandBiznes Registry"
+description = "Solana Smart Contract for ScruPeak Registry"
 edition = "2021"
 
 [lib]

@@ -1,4 +1,4 @@
-# LandBiznes Frontend - Feature Navigation Guide
+# ScruPeak Frontend - Feature Navigation Guide
 
 ## 📍 Quick Navigation
 
@@ -562,6 +562,6 @@ python -m uvicorn app.main:app --reload
 
 ---
 
-**Ready to explore LandBiznes? Start at `http://localhost:3000`!** 🚀
+**Ready to explore ScruPeak? Start at `http://localhost:3000`!** 🚀
 
 **Happy coding!** 💻

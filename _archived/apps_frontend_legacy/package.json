@@ -1,7 +1,7 @@
 {
-  "name": "landbiznes-frontend",
+  "name": "scrupeak-frontend",
   "version": "1.0.0",
-  "description": "Modern Next.js 14 frontend for LandBiznes",
+  "description": "Modern Next.js 14 frontend for ScruPeak",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,11 +1,11 @@
-# LandBiznes - Complete Verification Checklist
+# ScruPeak - Complete Verification Checklist
 
 ## ✅ What's Been Built
 
 ### Phase 1: Database Foundation (COMPLETE) ✅
 
 - [x] PostgreSQL 15 + PostGIS 3.4 running on localhost:5432
-- [x] Production schema (1050+ lines) in `init-scripts/01-landbiznes-schema.sql`
+- [x] Production schema (1050+ lines) in `init-scripts/01-scrupeak-schema.sql`
 
 #### Database Tables (8 total)
 - [x] `spatial_grids` - Hierarchical zones with geometry
@@ -198,7 +198,7 @@
 
 #### Docker Features
 - [x] Health checks on all services
-- [x] Networking (landbiznes-network)
+- [x] Networking (scrupeak-network)
 - [x] Volume persistence (postgres_data)
 - [x] Environment variables
 - [x] Service dependencies
@@ -415,7 +415,7 @@ ls -la *.md | wc -l
 
 ### Test 1: Database Connection
 ```bash
-psql -h localhost -U landbiznes -d landbiznes -c "SELECT count(*) FROM parcels;"
+psql -h localhost -U scrupeak -d scrupeak -c "SELECT count(*) FROM parcels;"
 # Should return: count
 ```
 

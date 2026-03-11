@@ -1,7 +1,7 @@
 """
 Jems AI Service
 Non-invasive intelligence layer for advisory guidance and fraud detection.
-Fuses multiple data streams to monitor LandBiznes transactions.
+Fuses multiple data streams to monitor ScruPeak transactions.
 """
 
 import httpx

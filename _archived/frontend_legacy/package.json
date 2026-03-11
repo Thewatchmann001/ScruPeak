@@ -1,7 +1,7 @@
 {
-  "name": "landbiznes-frontend",
+  "name": "scrupeak-frontend",
   "version": "1.0.0",
-  "description": "LandBiznes Land Registry Frontend - Microservices Architecture",
+  "description": "ScruPeak Land Registry Frontend - Microservices Architecture",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",

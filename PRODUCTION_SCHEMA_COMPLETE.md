@@ -1,4 +1,4 @@
-# ✅ LandBiznes Production Schema - COMPLETE & VERIFIED
+# ✅ ScruPeak Production Schema - COMPLETE & VERIFIED
 
 ## Summary
 
@@ -135,12 +135,12 @@ Every comment includes:
 ### Step 1: Verify Connection
 
 Open VS Code, bottom-left:
-- Click "LandBiznes" connection
-- Set working database: "landbiznes"
+- Click "ScruPeak" connection
+- Set working database: "scrupeak"
 
 ### Step 2: Create SQL Query File
 
-File → New File → "landbiznes_queries.sql"
+File → New File → "scrupeak_queries.sql"
 
 ### Step 3: Run Sample Query
 
@@ -165,7 +165,7 @@ Expected result: 8 tables listed
 | [SCHEMA_ALIGNMENT_VERIFICATION.md](SCHEMA_ALIGNMENT_VERIFICATION.md) | Detailed alignment proof |
 | [SQLTOOLS_REFERENCE.sql](SQLTOOLS_REFERENCE.sql) | 100+ copy-paste queries |
 | [DATABASE_SETUP.md](DATABASE_SETUP.md) | Connection & backup guides |
-| [init-scripts/01-landbiznes-schema.sql](init-scripts/01-landbiznes-schema.sql) | Complete schema SQL |
+| [init-scripts/01-scrupeak-schema.sql](init-scripts/01-scrupeak-schema.sql) | Complete schema SQL |
 
 ---
 
@@ -343,7 +343,7 @@ WHERE name LIKE '%Smith%';
 **Files to Reference:**
 1. [SQLTOOLS_REFERENCE.sql](SQLTOOLS_REFERENCE.sql) - Copy-paste queries
 2. [SCHEMA_ALIGNMENT_VERIFICATION.md](SCHEMA_ALIGNMENT_VERIFICATION.md) - Detailed docs
-3. [init-scripts/01-landbiznes-schema.sql](init-scripts/01-landbiznes-schema.sql) - Full schema
+3. [init-scripts/01-scrupeak-schema.sql](init-scripts/01-scrupeak-schema.sql) - Full schema
 
 **Next Steps:**
 1. ✅ Schema installed (DONE)
@@ -356,7 +356,7 @@ WHERE name LIKE '%Smith%';
 
 ## 🎉 Status: PRODUCTION READY
 
-Your LandBiznes land registry database is **READY FOR IMMEDIATE USE**.
+Your ScruPeak land registry database is **READY FOR IMMEDIATE USE**.
 
 All spatial queries, event logging, conflict detection, and genealogy tracking are fully operational.
 

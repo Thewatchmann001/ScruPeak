@@ -1,4 +1,4 @@
-# LandBiznes Backend - Complete Implementation Guide
+# ScruPeak Backend - Complete Implementation Guide
 
 ## 📚 Documentation Index
 
@@ -314,7 +314,7 @@ pytest tests/ --durations=10
 ```env
 ENVIRONMENT=development
 DEBUG=true
-DATABASE_URL=postgresql+asyncpg://landbiznes:landbiznes@localhost:5432/landbiznes
+DATABASE_URL=postgresql+asyncpg://scrupeak:scrupeak@localhost:5432/scrupeak
 REDIS_URL=redis://localhost:6379
 SECRET_KEY=dev-secret-key-change-in-production
 ```
@@ -323,7 +323,7 @@ SECRET_KEY=dev-secret-key-change-in-production
 ```env
 ENVIRONMENT=test
 DEBUG=true
-DATABASE_URL=postgresql+asyncpg://landbiznes:landbiznes@localhost:5432/landbiznes_test
+DATABASE_URL=postgresql+asyncpg://scrupeak:scrupeak@localhost:5432/scrupeak_test
 REDIS_URL=redis://localhost:6379
 ```
 
@@ -331,10 +331,10 @@ REDIS_URL=redis://localhost:6379
 ```env
 ENVIRONMENT=production
 DEBUG=false
-DATABASE_URL=postgresql+asyncpg://user:password@prod-db:5432/landbiznes
+DATABASE_URL=postgresql+asyncpg://user:password@prod-db:5432/scrupeak
 REDIS_URL=redis://prod-redis:6379
 SECRET_KEY=<generate-with-openssl>
-ALLOWED_HOSTS=landbiznes.com,www.landbiznes.com
+ALLOWED_HOSTS=scrupeak.com,www.scrupeak.com
 ```
 
 ---
@@ -345,8 +345,8 @@ ALLOWED_HOSTS=landbiznes.com,www.landbiznes.com
 
 ```bash
 cd apps/backend
-docker build -t landbiznes/backend:latest .
-docker push landbiznes/backend:latest
+docker build -t scrupeak/backend:latest .
+docker push scrupeak/backend:latest
 ```
 
 ### Docker Run
@@ -355,7 +355,7 @@ docker push landbiznes/backend:latest
 docker run -p 8000:8000 \
   -e DATABASE_URL=postgresql+asyncpg://... \
   -e REDIS_URL=redis://... \
-  landbiznes/backend:latest
+  scrupeak/backend:latest
 ```
 
 ### Docker Compose
@@ -403,10 +403,10 @@ grep -c INFO logs/app.log
 **Production**:
 ```bash
 # Docker logs
-docker logs -f landbiznes-backend
+docker logs -f scrupeak-backend
 
 # Kubernetes logs
-kubectl logs -f deployment/landbiznes-backend
+kubectl logs -f deployment/scrupeak-backend
 ```
 
 ---
@@ -429,7 +429,7 @@ grep DATABASE_URL .env
 
 **Test connection**:
 ```bash
-psql -U landbiznes -h localhost -c "SELECT 1"
+psql -U scrupeak -h localhost -c "SELECT 1"
 ```
 
 ### Redis Connection Failed
@@ -583,7 +583,7 @@ pytest tests/test_auth.py::TestAuthentication::test_register_success -vv -s
 
 - **API Docs**: http://localhost:8000/docs
 - **GitHub Actions**: `.github/workflows/test.yml`
-- **Database**: `landbiznes` (prod), `landbiznes_test` (test)
+- **Database**: `scrupeak` (prod), `scrupeak_test` (test)
 - **Redis**: localhost:6379
 - **Logs**: `logs/app.log`
 

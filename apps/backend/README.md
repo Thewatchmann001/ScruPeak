@@ -1,4 +1,4 @@
-# LandBiznes Backend API
+# ScruPeak Backend API
 
 National-grade land registry and property management platform backend. Enterprise-scale FastAPI application optimized for 20M+ concurrent users.
 
@@ -121,7 +121,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 1. **Build image**
 ```bash
-docker build -t landbiznes-backend:latest .
+docker build -t scrupeak-backend:latest .
 ```
 
 2. **Run with docker-compose**
@@ -448,7 +448,7 @@ Recommended setup:
 ### Database Connection Issues
 ```bash
 # Check PostgreSQL
-psql -h localhost -U postgres -d landbiznes_db
+psql -h localhost -U postgres -d scrupeak_db
 
 # Check Redis
 redis-cli ping
@@ -481,4 +481,4 @@ For issues, questions, or contributions:
 
 **Status**: 🚀 Production Ready
 **Last Updated**: January 2024
-**Maintainer**: LandBiznes Team
+**Maintainer**: ScruPeak Team

@@ -1,4 +1,4 @@
-# LandBiznes - Complete Platform Implementation Summary
+# ScruPeak - Complete Platform Implementation Summary
 
 ## 🎉 Project Status: PRODUCTION READY ✅
 
@@ -8,9 +8,9 @@ A comprehensive **Zillow-like land transaction platform** with AI-powered docume
 
 ## 📊 Platform Overview
 
-### What is LandBiznes?
+### What is ScruPeak?
 
-LandBiznes is an enterprise-grade land transaction platform that streamlines property discovery, sales, and fund management for land buyers and sellers. It combines:
+ScruPeak is an enterprise-grade land transaction platform that streamlines property discovery, sales, and fund management for land buyers and sellers. It combines:
 
 - **Property Management** - Admin dashboard for property entry and tracking
 - **AI Intelligence** - Automatic property data extraction from documents
@@ -401,7 +401,7 @@ NEXT_PUBLIC_AI_API_KEY=sk-...  # OpenAI API key
 
 **Backend** (`.env`):
 ```env
-DATABASE_URL=postgresql://user:pass@localhost/landbiznes
+DATABASE_URL=postgresql://user:pass@localhost/scrupeak
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key
 STRIPE_KEY=sk_test_...
@@ -641,7 +641,7 @@ Frontend
 
 ## ✨ Highlights
 
-### What Makes LandBiznes Special
+### What Makes ScruPeak Special
 
 1. **AI-Powered** - Automatically extract property data from documents
 2. **Real-Time** - WebSocket-based instant communication
@@ -689,7 +689,7 @@ For issues, questions, or feature requests:
 
 ## 🏁 Conclusion
 
-**LandBiznes** is a complete, production-ready platform for land transactions with:
+**ScruPeak** is a complete, production-ready platform for land transactions with:
 
 ✅ **Backend**: 61+ endpoints, full API documentation
 ✅ **Frontend**: 7+ pages with modern UI

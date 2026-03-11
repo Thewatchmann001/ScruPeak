@@ -1,9 +1,9 @@
-# LandBiznes - Modern Architecture Restructuring Guide
+# ScruPeak - Modern Architecture Restructuring Guide
 
 ## 📁 New Project Structure
 
 ```
-LandBiznes/
+ScruPeak/
 │
 ├── apps/
 │   │

@@ -15,7 +15,7 @@ export default function ContactPage() {
           <h3 className="text-xl font-semibold mb-4">Get in Touch</h3>
           <p className="mb-4">Have questions about buying or selling land? Need support with our platform?</p>
           <div className="space-y-2">
-            <p><strong>Email:</strong> support@landbiznes.sl</p>
+            <p><strong>Email:</strong> support@scrupeak.sl</p>
             <p><strong>Phone:</strong> +232 77 000 000</p>
             <p><strong>Address:</strong> Freetown, Sierra Leone</p>
           </div>

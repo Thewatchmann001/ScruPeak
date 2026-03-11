@@ -6,7 +6,7 @@ export default function BlogPage() {
   return (
     <Container className="py-12">
       <PageHeader 
-        title="LandBiznes Blog" 
+        title="ScruPeak Blog"
         description="Insights, news, and updates from the Sierra Leone real estate market." 
       />
       <div className="text-center py-12 text-gray-500">

@@ -1,5 +1,5 @@
 """
-LandBiznes Backend - Main FastAPI Application
+ScruPeak Backend - Main FastAPI Application
 Consolidates all microservices into a single FastAPI backend
 """
 
@@ -29,7 +29,7 @@ ROUTERS = [
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
-    print("🚀 Starting LandBiznes Backend...")
+    print("🚀 Starting ScruPeak Backend...")
     await init_db()
     print("✅ Database initialized")
     yield
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="LandBiznes API",
+    title="ScruPeak API",
     description="Land Registry & Marketplace Platform with AI & Blockchain",
     version="1.0.0",
     lifespan=lifespan,
@@ -65,7 +65,7 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "service": "landbiznes-api",
+        "service": "scrupeak-api",
         "version": "1.0.0"
     }
 
@@ -73,7 +73,7 @@ async def health_check():
 async def root():
     """Root endpoint with API info"""
     return {
-        "name": "LandBiznes API",
+        "name": "ScruPeak API",
         "version": "1.0.0",
         "docs": "/docs",
         "redoc": "/redoc",

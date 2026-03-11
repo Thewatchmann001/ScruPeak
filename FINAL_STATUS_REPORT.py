@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LandBiznes Platform - Final Status Dashboard
+ScruPeak Platform - Final Status Dashboard
 Shows complete implementation status
 """
 
@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 STATUS_REPORT = {
-    "project": "LandBiznes - National Land Marketplace",
+    "project": "ScruPeak - National Land Marketplace",
     "completion_date": "January 2024",
     "overall_status": "✅ PRODUCTION-READY",
     "completion_percentage": 100,

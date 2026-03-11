@@ -79,7 +79,7 @@ const RoleApplicationPage = () => {
   return (
     <div className="container mx-auto py-12 px-4 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">Become a Partner</h1>
-      <p className="text-gray-600 mb-8">Join the LandBiznes ecosystem as a Seller or Real Estate Agent.</p>
+      <p className="text-gray-600 mb-8">Join the ScruPeak ecosystem as a Seller or Real Estate Agent.</p>
 
       {error && <Alert variant="destructive" className="mb-6">{error}</Alert>}
       {success && <Alert className="mb-6 bg-green-50 text-green-900 border-green-200">{success}</Alert>}

@@ -64,7 +64,7 @@ alembic upgrade --sql head  # Preview changes (don't execute yet)
 
 ```bash
 # Backup production database
-pg_dump -h localhost -U landbiznes_user -d landbiznes > backup_$(date +%Y%m%d).sql
+pg_dump -h localhost -U scrupeak_user -d scrupeak > backup_$(date +%Y%m%d).sql
 
 # Verify backup
 file backup_*.sql
@@ -150,17 +150,17 @@ pip freeze > requirements.txt
 
 ```bash
 # Build backend image with new code
-docker build -t landbiznes-backend:v2.0.0 -f apps/backend/Dockerfile apps/backend/
+docker build -t scrupeak-backend:v2.0.0 -f apps/backend/Dockerfile apps/backend/
 
 # Tag for registry
-docker tag landbiznes-backend:v2.0.0 your-registry/landbiznes-backend:v2.0.0
+docker tag scrupeak-backend:v2.0.0 your-registry/scrupeak-backend:v2.0.0
 
 # Push to registry
-docker push your-registry/landbiznes-backend:v2.0.0
+docker push your-registry/scrupeak-backend:v2.0.0
 
 # Verify image
-docker images | grep landbiznes-backend
-docker inspect your-registry/landbiznes-backend:v2.0.0
+docker images | grep scrupeak-backend
+docker inspect your-registry/scrupeak-backend:v2.0.0
 ```
 
 ---
@@ -197,19 +197,19 @@ asyncio.run(test())
 
 ```bash
 # Test digital signatures endpoint
-curl -X GET http://staging-api.landbiznes.com/api/v1/signatures/templates \
+curl -X GET http://staging-api.scrupeak.com/api/v1/signatures/templates \
   -H "Authorization: Bearer $TEST_TOKEN"
 
 # Test blockchain endpoint
-curl -X GET http://staging-api.landbiznes.com/api/v1/blockchain/contracts \
+curl -X GET http://staging-api.scrupeak.com/api/v1/blockchain/contracts \
   -H "Authorization: Bearer $TEST_TOKEN"
 
 # Test stakeholder roles endpoint
-curl -X GET http://staging-api.landbiznes.com/api/v1/stakeholders/directory \
+curl -X GET http://staging-api.scrupeak.com/api/v1/stakeholders/directory \
   -H "Authorization: Bearer $TEST_TOKEN"
 
 # Test ML services endpoint
-curl -X GET http://staging-api.landbiznes.com/api/v1/ml/models \
+curl -X GET http://staging-api.scrupeak.com/api/v1/ml/models \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
@@ -233,7 +233,7 @@ pytest tests/integration/test_ml_services.py -v
 
 ```bash
 # Start load test server
-locust -f load_test_suite.py --host=http://staging-api.landbiznes.com
+locust -f load_test_suite.py --host=http://staging-api.scrupeak.com
 
 # Access UI at http://localhost:8089
 # - Spawn rate: 100 users/second
@@ -252,14 +252,14 @@ locust -f load_test_suite.py --host=http://staging-api.landbiznes.com
 docker-compose logs backend | grep -i error
 
 # Monitor database
-psql -h localhost -U landbiznes_user -d landbiznes
+psql -h localhost -U scrupeak_user -d scrupeak
 SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name;
 SELECT COUNT(*) FROM document_signature_requests;
 SELECT COUNT(*) FROM smart_contract_deployments;
 SELECT COUNT(*) FROM stakeholder_profiles;
 
 # Check API health
-curl http://staging-api.landbiznes.com/health
+curl http://staging-api.scrupeak.com/health
 ```
 
 ---
@@ -270,18 +270,18 @@ curl http://staging-api.landbiznes.com/health
 
 ```bash
 # Create production backup
-pg_dump -h prod-db.landbiznes.com -U landbiznes_user -d landbiznes \
+pg_dump -h prod-db.scrupeak.com -U scrupeak_user -d scrupeak \
   > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # Verify backup size
 ls -lh backup_*.sql
 
 # Test restore on copy
-createdb landbiznes_test
-psql -d landbiznes_test < backup_*.sql
+createdb scrupeak_test
+psql -d scrupeak_test < backup_*.sql
 
 # Drop test database
-dropdb landbiznes_test
+dropdb scrupeak_test
 ```
 
 ### 6.2 Deploy Using Blue-Green Strategy
@@ -295,16 +295,16 @@ docker-compose -f docker-compose.prod-green.yml up -d
 sleep 60
 
 # Step 3: Run smoke tests on green
-./scripts/smoke_test.sh http://green-api.landbiznes.com
+./scripts/smoke_test.sh http://green-api.scrupeak.com
 
 # Step 4: Switch load balancer to green
-aws elb set-instance-health --load-balancer-name landbiznes-lb \
+aws elb set-instance-health --load-balancer-name scrupeak-lb \
   --instances i-blue-1 i-blue-2 --state OutOfService
 aws elb register-instances-with-load-balancer \
-  --load-balancer-name landbiznes-lb --instances i-green-1 i-green-2
+  --load-balancer-name scrupeak-lb --instances i-green-1 i-green-2
 
 # Step 5: Monitor traffic
-watch -n 5 'curl -s http://api.landbiznes.com/health'
+watch -n 5 'curl -s http://api.scrupeak.com/health'
 
 # Step 6: Keep blue ready for rollback
 # Keep blue-1, blue-2 running for 30 minutes before terminating
@@ -315,7 +315,7 @@ watch -n 5 'curl -s http://api.landbiznes.com/health'
 ```bash
 # Execute migrations during low-traffic window (e.g., 2am UTC)
 # Set maintenance mode
-curl -X POST http://api.landbiznes.com/admin/maintenance \
+curl -X POST http://api.scrupeak.com/admin/maintenance \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{"enabled": true, "message": "System maintenance in progress"}'
 
@@ -323,7 +323,7 @@ curl -X POST http://api.landbiznes.com/admin/maintenance \
 alembic upgrade head
 
 # Verify tables
-psql -h prod-db.landbiznes.com -U landbiznes_user -c "\dt public.*"
+psql -h prod-db.scrupeak.com -U scrupeak_user -c "\dt public.*"
 
 # Verify data integrity
 SELECT COUNT(*) FROM document_signature_requests;
@@ -331,7 +331,7 @@ SELECT COUNT(*) FROM smart_contract_deployments;
 SELECT COUNT(*) FROM stakeholder_profiles;
 
 # Disable maintenance mode
-curl -X POST http://api.landbiznes.com/admin/maintenance \
+curl -X POST http://api.scrupeak.com/admin/maintenance \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{"enabled": false}'
 ```
@@ -343,10 +343,10 @@ curl -X POST http://api.landbiznes.com/admin/maintenance \
 docker-compose logs -f --tail=100 backend
 
 # Monitor error rates (should be <0.1%)
-curl http://api.landbiznes.com/api/v1/admin/metrics/errors
+curl http://api.scrupeak.com/api/v1/admin/metrics/errors
 
 # Check response times (p95 should be <1000ms)
-curl http://api.landbiznes.com/api/v1/admin/metrics/performance
+curl http://api.scrupeak.com/api/v1/admin/metrics/performance
 
 # Verify all endpoints
 ./scripts/endpoint_validation.sh
@@ -370,17 +370,17 @@ If issues occur during deployment:
 ```bash
 # Immediate rollback (first 30 minutes)
 docker-compose -f docker-compose.prod-blue.yml up -d
-aws elb set-instance-health --load-balancer-name landbiznes-lb \
+aws elb set-instance-health --load-balancer-name scrupeak-lb \
   --instances i-green-1 i-green-2 --state OutOfService
 
 # Database rollback (if needed)
-psql -h prod-db.landbiznes.com -U landbiznes_user -d landbiznes < backup_YYYYMMDD.sql
+psql -h prod-db.scrupeak.com -U scrupeak_user -d scrupeak < backup_YYYYMMDD.sql
 
 # Verify rollback
-curl http://api.landbiznes.com/health
+curl http://api.scrupeak.com/health
 
 # Check error logs
-tail -f /var/log/landbiznes/backend.log
+tail -f /var/log/scrupeak/backend.log
 ```
 
 ---

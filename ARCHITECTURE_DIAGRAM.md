@@ -1,8 +1,8 @@
-# Architecture Diagram: LandBiznes Spatial Intelligence Agent
+# Architecture Diagram: ScruPeak Spatial Intelligence Agent
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                   LandBiznes Spatial Intelligence Agent                  │
+│                   ScruPeak Spatial Intelligence Agent                  │
 │                                                                           │
 │                    ┌──────────────────────────────┐                      │
 │                    │   SpatialIntelligenceAgent   │                      │
@@ -173,7 +173,7 @@
 │  ✓ Verification decisions recorded in history                          │
 │  ✓ No override possible; all actions logged                            │
 │                                                                        │
-│  Principle: "LandBiznes does not record land —                         │
+│  Principle: "ScruPeak does not record land —                         │
 │              it mathematically proves it."                             │
 │                                                                        │
 └────────────────────────────────────────────────────────────────────────┘

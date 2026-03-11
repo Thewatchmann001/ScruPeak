@@ -36,7 +36,7 @@ engine = create_async_engine(
     connect_args={
         "timeout": 30,
         **({"server_settings": {
-            "application_name": "landbiznes_backend",
+            "application_name": "scrupeak_backend",
             "jit": "off",
         }} if settings.DB_TYPE == "postgres" else {"check_same_thread": False} if settings.DB_TYPE == "sqlite" else {})
     }

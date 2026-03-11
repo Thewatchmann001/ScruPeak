@@ -6,22 +6,22 @@ version: '3.8'
 services:
   db:
     image: postgis/postgis:15-3.4
-    container_name: landbiznes_db
+    container_name: scrupeak_db
     environment:
-      POSTGRES_DB: landbiznes
-      POSTGRES_USER: landbiznes
-      POSTGRES_PASSWORD: landbiznes
+      POSTGRES_DB: scrupeak
+      POSTGRES_USER: scrupeak
+      POSTGRES_PASSWORD: scrupeak
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U landbiznes"]
+      test: ["CMD-SHELL", "pg_isready -U scrupeak"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - landbiznes-network
+      - scrupeak-network
     restart: unless-stopped
 
 volumes:
@@ -29,8 +29,8 @@ volumes:
     driver: local
 
 networks:
-  landbiznes-network:
+  scrupeak-network:
     driver: bridge
 
 # After starting container with: docker-compose up -d db
-# Apply schema with: docker exec -i landbiznes_db psql -U landbiznes -d landbiznes < init-scripts/01-schema.sql
+# Apply schema with: docker exec -i scrupeak_db psql -U scrupeak -d scrupeak < init-scripts/01-schema.sql

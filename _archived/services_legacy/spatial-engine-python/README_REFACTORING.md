@@ -1,10 +1,10 @@
-# LandBiznes Spatial Intelligence Agent
+# ScruPeak Spatial Intelligence Agent
 
 ## Overview
 
 The Spatial Intelligence Agent is a land governance and regulatory interpretation engine that sits above geometric calculations to enforce OARG (land registry authority) rules and maintain spatial integrity.
 
-**Guiding Principle:** "LandBiznes does not record land — it mathematically proves it."
+**Guiding Principle:** "ScruPeak does not record land — it mathematically proves it."
 
 ---
 
@@ -319,7 +319,7 @@ agent.verify_parcel_oarg(
 ## Running Tests
 
 ```bash
-cd c:\Users\HP\Desktop\LandBiznes\services\spatial-engine-python\app
+cd c:\Users\HP\Desktop\ScruPeak\services\spatial-engine-python\app
 python test_agent.py
 ```
 
@@ -409,7 +409,7 @@ if decision:
 
 ## Contact & References
 
-- **Project:** LandBiznes Spatial Verification Platform
+- **Project:** ScruPeak Spatial Verification Platform
 - **Service:** spatial-engine-python
 - **Date:** January 22, 2026
-- **Guiding Principle:** "LandBiznes does not record land — it mathematically proves it."
+- **Guiding Principle:** "ScruPeak does not record land — it mathematically proves it."

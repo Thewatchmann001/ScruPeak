@@ -1,5 +1,5 @@
 """
-LandBiznes Spatial Intelligence Orchestrator
+ScruPeak Spatial Intelligence Orchestrator
 
 Core operations:
 1. Register parcels (deterministic ID + spatial hash)
@@ -235,7 +235,7 @@ class SpatialIntelligence:
 
 if __name__ == "__main__":
     print("\n" + "="*70)
-    print("LandBiznes Spatial Intelligence - Quick Test")
+    print("ScruPeak Spatial Intelligence - Quick Test")
     print("="*70)
     
     si = SpatialIntelligence()

@@ -1,8 +1,8 @@
-# LandBiznes - Implementation Roadmap & Quick Reference
+# ScruPeak - Implementation Roadmap & Quick Reference
 
 ## 🎯 Project Overview
 
-Transform your LandBiznes system from 5 separate microservices into a modern, scalable architecture with:
+Transform your ScruPeak system from 5 separate microservices into a modern, scalable architecture with:
 - **Next.js 14** frontend (replacing React)
 - **FastAPI** unified backend (consolidating 5 microservices)
 - **Solana Smart Contracts** for blockchain integration
@@ -65,10 +65,10 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql://user:pass@localhost/landbiznes"
+    DATABASE_URL: str = "postgresql://user:pass@localhost/scrupeak"
     
     # API
-    API_TITLE: str = "LandBiznes API"
+    API_TITLE: str = "ScruPeak API"
     API_VERSION: str = "1.0.0"
     DEBUG: bool = False
     
@@ -431,7 +431,7 @@ import { Providers } from './providers'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'LandBiznes - Land Registry & Marketplace',
+  title: 'ScruPeak - Land Registry & Marketplace',
   description: 'Secure land registry with AI verification and blockchain ownership',
 }
 
@@ -490,7 +490,7 @@ from fastapi import FastAPI
 from app.routers import fraud, valuation, chatbot
 
 app = FastAPI(
-    title="LandBiznes AI Service",
+    title="ScruPeak AI Service",
     version="1.0.0"
 )
 
@@ -586,7 +586,7 @@ pub struct AssetRecord {
 
 ```
 # Backend
-DATABASE_URL=postgresql://user:password@localhost:5432/landbiznes
+DATABASE_URL=postgresql://user:password@localhost:5432/scrupeak
 SECRET_KEY=your-super-secret-key-min-32-chars
 DEBUG=false
 

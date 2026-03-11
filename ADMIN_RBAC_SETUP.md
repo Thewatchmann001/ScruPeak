@@ -1,7 +1,7 @@
 # Admin Role-Based Access Control Setup
 
 ## Overview
-This guide explains how the admin role-based access control (RBAC) system works in LandBiznes.
+This guide explains how the admin role-based access control (RBAC) system works in ScruPeak.
 
 ## Key Components
 

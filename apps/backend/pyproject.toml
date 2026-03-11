@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "landbiznes-backend"
+name = "scrupeak-backend"
 version = "1.0.0"
-description = "Enterprise-grade FastAPI backend for LandBiznes"
-authors = ["LandBiznes Team"]
+description = "Enterprise-grade FastAPI backend for ScruPeak"
+authors = ["ScruPeak Team"]
 readme = "README.md"
 packages = [{include = "app"}]
 package-mode = false

@@ -61,7 +61,7 @@ All admin pages are protected with AdminLayout wrapper:
 2. Go to: /admin
 3. Click: "Manage Admins" card
 4. Add new admin:
-   - Email: admin@landbiznes.com
+   - Email: admin@scrupeak.com
    - Name: John Doe
    - Role: Document Verifier
 5. Click: "Create Admin"
@@ -361,13 +361,13 @@ Steps:
    Joined: January 1, 2025
 
 2. Amara Conteh
-   Email: amara.conteh@landbiznes.com
+   Email: amara.conteh@scrupeak.com
    Role: Document Verifier
    Status: Active
    Joined: January 10, 2026
 
 3. Mohamed Hassan
-   Email: mohamed.hassan@landbiznes.com
+   Email: mohamed.hassan@scrupeak.com
    Role: KYC Officer
    Status: Active
    Joined: January 15, 2026

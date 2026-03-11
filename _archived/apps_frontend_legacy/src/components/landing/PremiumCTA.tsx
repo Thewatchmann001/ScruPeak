@@ -12,7 +12,7 @@ export function PremiumCTA() {
           Start exploring <br /> trusted land today
         </h2>
         <p className="text-xl text-orange-100 mb-8">
-          Join thousands of buyers and sellers verified through LandBiznes
+          Join thousands of buyers and sellers verified through ScruPeak
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button

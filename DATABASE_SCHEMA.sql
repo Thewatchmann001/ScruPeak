@@ -1,4 +1,4 @@
--- LandBiznes Database Schema (PostgreSQL 15 + PostGIS)
+-- ScruPeak Database Schema (PostgreSQL 15 + PostGIS)
 -- Complete schema for land registry marketplace with blockchain integration
 
 CREATE EXTENSION IF NOT EXISTS postgis;
@@ -383,7 +383,7 @@ CREATE INDEX idx_land_location_btree ON land(id) WHERE location IS NOT NULL;
 -- Insert default admin (password hash for 'admin123')
 INSERT INTO users (email, name, password_hash, role, is_verified)
 VALUES (
-    'admin@landbiznes.com',
+    'admin@scrupeak.com',
     'System Administrator',
     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5pmPH/3aKPPRm',
     'admin',

@@ -22,11 +22,11 @@ ENVIRONMENT=production
 DEBUG=false
 
 # Database
-DATABASE_URL=postgresql+asyncpg://landbiznes:password@db-host:5432/landbiznes
+DATABASE_URL=postgresql+asyncpg://scrupeak:password@db-host:5432/scrupeak
 DB_HOST=db-host
 DB_PORT=5432
-DB_NAME=landbiznes
-DB_USER=landbiznes
+DB_NAME=scrupeak
+DB_USER=scrupeak
 DB_PASSWORD=<secure-password>
 
 # Redis
@@ -41,7 +41,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # CORS
-ALLOWED_HOSTS=landbiznes.com,www.landbiznes.com,api.landbiznes.com
+ALLOWED_HOSTS=scrupeak.com,www.scrupeak.com,api.scrupeak.com
 
 # Logging
 LOG_LEVEL=INFO
@@ -76,15 +76,15 @@ services:
   postgres:
     image: postgis/postgis:15-3.3
     environment:
-      POSTGRES_USER: landbiznes
+      POSTGRES_USER: scrupeak
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: landbiznes
+      POSTGRES_DB: scrupeak
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U landbiznes"]
+      test: ["CMD-SHELL", "pg_isready -U scrupeak"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -142,7 +142,7 @@ docker-compose -f docker-compose.prod.yml up -d
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: landbiznes-backend
+  name: scrupeak-backend
 spec:
   replicas: 3
   selector:
@@ -155,24 +155,24 @@ spec:
     spec:
       containers:
       - name: backend
-        image: landbiznes/backend:latest
+        image: scrupeak/backend:latest
         ports:
         - containerPort: 8000
         env:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: landbiznes-secrets
+              name: scrupeak-secrets
               key: database-url
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
-              name: landbiznes-secrets
+              name: scrupeak-secrets
               key: redis-url
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: landbiznes-secrets
+              name: scrupeak-secrets
               key: secret-key
         resources:
           requests:
@@ -202,7 +202,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: landbiznes-backend
+  name: scrupeak-backend
 spec:
   selector:
     app: backend
@@ -217,7 +217,7 @@ spec:
 ```bash
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml
-kubectl get svc landbiznes-backend
+kubectl get svc scrupeak-backend
 ```
 
 ---
@@ -279,24 +279,24 @@ redis-cli DBSIZE
 
 **Full backup**:
 ```bash
-pg_dump -U landbiznes -h localhost landbiznes > backup.sql
+pg_dump -U scrupeak -h localhost scrupeak > backup.sql
 ```
 
 **Compressed backup**:
 ```bash
-pg_dump -U landbiznes -h localhost landbiznes | gzip > backup.sql.gz
+pg_dump -U scrupeak -h localhost scrupeak | gzip > backup.sql.gz
 ```
 
 **Automated daily backup (cron)**:
 ```bash
 # Add to crontab: crontab -e
-0 2 * * * pg_dump -U landbiznes -h localhost landbiznes | gzip > /backups/landbiznes_$(date +\%Y\%m\%d).sql.gz
+0 2 * * * pg_dump -U scrupeak -h localhost scrupeak | gzip > /backups/scrupeak_$(date +\%Y\%m\%d).sql.gz
 ```
 
 ### Restore from Backup
 
 ```bash
-gunzip < backup.sql.gz | psql -U landbiznes -h localhost landbiznes
+gunzip < backup.sql.gz | psql -U scrupeak -h localhost scrupeak
 ```
 
 ---
@@ -307,17 +307,17 @@ gunzip < backup.sql.gz | psql -U landbiznes -h localhost landbiznes
 
 **Using Let's Encrypt with Certbot**:
 ```bash
-certbot certonly --standalone -d landbiznes.com -d www.landbiznes.com
+certbot certonly --standalone -d scrupeak.com -d www.scrupeak.com
 ```
 
 **Configure Nginx proxy**:
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name landbiznes.com www.landbiznes.com;
+    server_name scrupeak.com www.scrupeak.com;
     
-    ssl_certificate /etc/letsencrypt/live/landbiznes.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/landbiznes.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/scrupeak.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/scrupeak.com/privkey.pem;
     
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -333,7 +333,7 @@ server {
 
 server {
     listen 80;
-    server_name landbiznes.com www.landbiznes.com;
+    server_name scrupeak.com www.scrupeak.com;
     return 301 https://$server_name$request_uri;
 }
 ```
@@ -431,12 +431,12 @@ engine = create_async_engine(
 
 **Check PostgreSQL is running**:
 ```bash
-pg_isready -h localhost -U landbiznes
+pg_isready -h localhost -U scrupeak
 ```
 
 **Verify credentials**:
 ```bash
-psql -U landbiznes -h localhost -c "SELECT version();"
+psql -U scrupeak -h localhost -c "SELECT version();"
 ```
 
 ### Redis Connection Issues
@@ -455,9 +455,9 @@ redis-cli -h localhost ping
 
 **Check logs**:
 ```bash
-docker logs landbiznes-backend
+docker logs scrupeak-backend
 # or
-tail -f /var/log/landbiznes/backend.log
+tail -f /var/log/scrupeak/backend.log
 ```
 
 **Test endpoint**:
@@ -469,7 +469,7 @@ curl -v http://localhost:8000/health
 
 **Check backend memory usage**:
 ```bash
-docker stats landbiznes-backend
+docker stats scrupeak-backend
 ```
 
 **Adjust limits** in docker-compose.yml:
@@ -513,14 +513,14 @@ deploy:
 **Roll back to previous version**:
 ```bash
 docker-compose down
-docker pull landbiznes/backend:previous
+docker pull scrupeak/backend:previous
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
 **Or with Kubernetes**:
 ```bash
-kubectl rollout undo deployment/landbiznes-backend
-kubectl rollout history deployment/landbiznes-backend
+kubectl rollout undo deployment/scrupeak-backend
+kubectl rollout history deployment/scrupeak-backend
 ```
 
 ### Database Rollback
@@ -528,7 +528,7 @@ kubectl rollout history deployment/landbiznes-backend
 **If data migration fails**:
 ```bash
 # Restore from backup
-gunzip < backup.sql.gz | psql -U landbiznes landbiznes
+gunzip < backup.sql.gz | psql -U scrupeak scrupeak
 ```
 
 ---

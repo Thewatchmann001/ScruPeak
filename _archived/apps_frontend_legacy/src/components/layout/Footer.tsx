@@ -63,7 +63,7 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm opacity-70">
-            2026 LandBiznes. All rights reserved.
+            2026 ScruPeak. All rights reserved.
           </p>
           <p className="text-sm opacity-70">
             Made with trust for Sierra Leone

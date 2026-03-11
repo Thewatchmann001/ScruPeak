@@ -2,7 +2,7 @@
 
 ## Admin Role-Based Access Control System
 
-**Project**: LandBiznes  
+**Project**: ScruPeak
 **Feature**: Admin RBAC System  
 **Status**: ✅ COMPLETE  
 **Date**: January 2025  

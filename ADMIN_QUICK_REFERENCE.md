@@ -103,8 +103,8 @@ Verifier    Officer   Verifier
 | Name | Email | Role | Status |
 |------|-------|------|--------|
 | Joseph Emsamah | josephemsamah@gmail.com | Super Admin | Active |
-| Amara Conteh | amara.conteh@landbiznes.com | Document Verifier | Active |
-| Mohamed Hassan | mohamed.hassan@landbiznes.com | KYC Officer | Active |
+| Amara Conteh | amara.conteh@scrupeak.com | Document Verifier | Active |
+| Mohamed Hassan | mohamed.hassan@scrupeak.com | KYC Officer | Active |
 
 ## 🔗 File Structure
 

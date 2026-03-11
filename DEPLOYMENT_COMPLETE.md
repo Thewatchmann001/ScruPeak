@@ -1,4 +1,4 @@
-# LandBiznes System - Docker Deployment Complete ✅
+# ScruPeak System - Docker Deployment Complete ✅
 
 ## System Status
 
@@ -9,12 +9,12 @@ All services are running and operational as of 2026-01-22 19:31 UTC
 | Service | Port | Status | Image |
 |---------|------|--------|-------|
 | PostgreSQL + PostGIS | 5432 | ✅ Running | postgis/postgis:15-3.4 |
-| API Gateway | 3000 | ✅ Running | landbiznes-api-gateway:latest |
-| Parcel Service | 3001 | ✅ Running | landbiznes-parcel-service:latest |
-| Grid Service | 3002 | ✅ Running | landbiznes-grid-service:latest |
-| Conflict Service | 3003 | ✅ Running | landbiznes-conflict-service:latest |
-| Ownership Service | 3004 | ✅ Running | landbiznes-ownership-service:latest |
-| Frontend (React + Nginx) | 3006 | ✅ Running | landbiznes-frontend:latest |
+| API Gateway | 3000 | ✅ Running | scrupeak-api-gateway:latest |
+| Parcel Service | 3001 | ✅ Running | scrupeak-parcel-service:latest |
+| Grid Service | 3002 | ✅ Running | scrupeak-grid-service:latest |
+| Conflict Service | 3003 | ✅ Running | scrupeak-conflict-service:latest |
+| Ownership Service | 3004 | ✅ Running | scrupeak-ownership-service:latest |
+| Frontend (React + Nginx) | 3006 | ✅ Running | scrupeak-frontend:latest |
 
 ## Access Points
 
@@ -37,8 +37,8 @@ All services are running and operational as of 2026-01-22 19:31 UTC
 ### Database
 - **Host**: localhost
 - **Port**: 5432
-- **Database**: landbiznes
-- **User**: landbiznes
+- **Database**: scrupeak
+- **User**: scrupeak
 - **Type**: PostgreSQL 15 with PostGIS 3.4
 
 ## Issues Resolved
@@ -96,7 +96,7 @@ All services are running and operational as of 2026-01-22 19:31 UTC
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    LandBiznes Frontend                       │
+│                    ScruPeak Frontend                       │
 │                   (React + Ant Design)                      │
 │                   http://localhost:3006                     │
 └──────────────────────────┬──────────────────────────────────┘
@@ -120,7 +120,7 @@ All services are running and operational as of 2026-01-22 19:31 UTC
          │         ▼       ▼         ▼       ▼
          └────────►┌──────────────────────────────┐
                    │    PostgreSQL 15 + PostGIS   │
-                   │  (landbiznes database)       │
+                   │  (scrupeak database)       │
                    │   http://localhost:5432      │
                    └──────────────────────────────┘
 ```
@@ -167,24 +167,24 @@ All services are running and operational as of 2026-01-22 19:31 UTC
 
 ### View Container Logs
 ```bash
-docker logs landbiznes_api_gateway
-docker logs landbiznes_frontend
-docker logs landbiznes_db
+docker logs scrupeak_api_gateway
+docker logs scrupeak_frontend
+docker logs scrupeak_db
 ```
 
 ### Stop All Services
 ```bash
-docker stop landbiznes_db landbiznes_api_gateway landbiznes_parcel_service landbiznes_grid_service landbiznes_conflict_service landbiznes_ownership_service landbiznes_frontend
+docker stop scrupeak_db scrupeak_api_gateway scrupeak_parcel_service scrupeak_grid_service scrupeak_conflict_service scrupeak_ownership_service scrupeak_frontend
 ```
 
 ### Start All Services
 ```bash
-docker start landbiznes_db landbiznes_api_gateway landbiznes_parcel_service landbiznes_grid_service landbiznes_conflict_service landbiznes_ownership_service landbiznes_frontend
+docker start scrupeak_db scrupeak_api_gateway scrupeak_parcel_service scrupeak_grid_service scrupeak_conflict_service scrupeak_ownership_service scrupeak_frontend
 ```
 
 ### Remove All Containers
 ```bash
-docker rm landbiznes_db landbiznes_api_gateway landbiznes_parcel_service landbiznes_grid_service landbiznes_conflict_service landbiznes_ownership_service landbiznes_frontend
+docker rm scrupeak_db scrupeak_api_gateway scrupeak_parcel_service scrupeak_grid_service scrupeak_conflict_service scrupeak_ownership_service scrupeak_frontend
 ```
 
 ## Performance Metrics

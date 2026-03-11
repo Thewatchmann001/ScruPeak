@@ -2,7 +2,7 @@
 
 ## What You Have Now
 
-A **complete, production-ready Next.js 14 frontend** for LandBiznes with:
+A **complete, production-ready Next.js 14 frontend** for ScruPeak with:
 
 ### 📊 Stats
 - **36 files** created

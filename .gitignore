@@ -28,4 +28,6 @@ yarn-error.log*
 
 # Database
 postgres_data/
+*.db
+*.db-journal
 node_modules

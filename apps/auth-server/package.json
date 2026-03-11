@@ -1,5 +1,5 @@
 {
-  "name": "landbiznes-auth-server",
+  "name": "scrupeak-auth-server",
   "version": "0.0.1",
   "type": "module",
   "scripts": {
@@ -10,12 +10,14 @@
     "migrate": "npx @better-auth/cli migrate"
   },
   "dependencies": {
-    "@hono/node-server": "^1.8.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/nodemailer": "^7.0.9",
     "better-auth": "^1.1.0",
     "better-sqlite3": "^12.6.2",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
-    "hono": "^4.1.0",
+    "express": "^4.22.1",
     "nodemailer": "^8.0.1",
     "pg": "^8.11.3"
   },

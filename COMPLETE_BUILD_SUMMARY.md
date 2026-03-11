@@ -259,7 +259,7 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8000
 NEXT_PUBLIC_AI_API_KEY=your-key-here
 
 # Backend (.env)
-DATABASE_URL=postgresql://user:pass@localhost/landbiznes
+DATABASE_URL=postgresql://user:pass@localhost/scrupeak
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret
 ```
@@ -643,7 +643,7 @@ Total Project
 
 ## 🎉 Conclusion
 
-**LandBiznes is now a complete, production-ready platform!**
+**ScruPeak is now a complete, production-ready platform!**
 
 You have everything needed to:
 - ✅ Deploy to production

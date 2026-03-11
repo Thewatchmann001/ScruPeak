@@ -276,7 +276,7 @@ app/
 ## Running the Code
 
 ```bash
-cd c:\Users\HP\Desktop\LandBiznes\services\spatial-engine-python\app
+cd c:\Users\HP\Desktop\ScruPeak\services\spatial-engine-python\app
 
 # Quick test
 python engine.py
@@ -326,7 +326,7 @@ python engine.py
 
 ## Guiding Principle (Reaffirmed)
 
-> **"LandBiznes does not record land — it mathematically proves it."**
+> **"ScruPeak does not record land — it mathematically proves it."**
 
 **Geometry is truth.** Every parcel derives its identity from immutable polygon coordinates.  
 **Lineage is law.** Parent-child relationships are permanent and bidirectional.  

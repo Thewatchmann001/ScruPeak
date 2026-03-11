@@ -2,20 +2,20 @@ services:
   # PostgreSQL Database
   postgis_db:
     image: postgis/postgis:15-3.4
-    container_name: landbiznes_db
+    container_name: scrupeak_db
     environment:
-      POSTGRES_USER: landbiznes
-      POSTGRES_PASSWORD: landbiznes
-      POSTGRES_DB: landbiznes
+      POSTGRES_USER: scrupeak
+      POSTGRES_PASSWORD: scrupeak
+      POSTGRES_DB: scrupeak
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
-      - landbiznes-network
+      - scrupeak-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U landbiznes"]
+      test: ["CMD-SHELL", "pg_isready -U scrupeak"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +25,7 @@ services:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
-    container_name: landbiznes_api_gateway
+    container_name: scrupeak_api_gateway
     environment:
       PORT: 3000
       NODE_ENV: production
@@ -36,16 +36,16 @@ services:
       OWNER_SERVICE_URL: http://owner-service:3005
       DB_HOST: postgis_db
       DB_PORT: 5432
-      DB_USER: landbiznes
-      DB_PASSWORD: landbiznes
-      DB_NAME: landbiznes
+      DB_USER: scrupeak
+      DB_PASSWORD: scrupeak
+      DB_NAME: scrupeak
     ports:
       - "3000:3000"
     depends_on:
       postgis_db:
         condition: service_healthy
     networks:
-      - landbiznes-network
+      - scrupeak-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
@@ -57,21 +57,21 @@ services:
     build:
       context: ./services/parcel-service
       dockerfile: Dockerfile
-    container_name: landbiznes_parcel_service
+    container_name: scrupeak_parcel_service
     environment:
       PORT: 3001
       DB_HOST: postgis_db
       DB_PORT: 5432
-      DB_USER: landbiznes
-      DB_PASSWORD: landbiznes
-      DB_NAME: landbiznes
+      DB_USER: scrupeak
+      DB_PASSWORD: scrupeak
+      DB_NAME: scrupeak
     ports:
       - "3001:3001"
     depends_on:
       postgis_db:
         condition: service_healthy
     networks:
-      - landbiznes-network
+      - scrupeak-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -83,21 +83,21 @@ services:
     build:
       context: ./services/grid-service
       dockerfile: Dockerfile
-    container_name: landbiznes_grid_service
+    container_name: scrupeak_grid_service
     environment:
       PORT: 3002
       DB_HOST: postgis_db
       DB_PORT: 5432
-      DB_USER: landbiznes
-      DB_PASSWORD: landbiznes
-      DB_NAME: landbiznes
+      DB_USER: scrupeak
+      DB_PASSWORD: scrupeak
+      DB_NAME: scrupeak
     ports:
       - "3002:3002"
     depends_on:
       postgis_db:
         condition: service_healthy
     networks:
-      - landbiznes-network
+      - scrupeak-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
       interval: 30s
@@ -109,21 +109,21 @@ services:
     build:
       context: ./services/conflict-service
       dockerfile: Dockerfile
-    container_name: landbiznes_conflict_service
+    container_name: scrupeak_conflict_service
     environment:
       PORT: 3003
       DB_HOST: postgis_db
       DB_PORT: 5432
-      DB_USER: landbiznes
-      DB_PASSWORD: landbiznes
-      DB_NAME: landbiznes
+      DB_USER: scrupeak
+      DB_PASSWORD: scrupeak
+      DB_NAME: scrupeak
     ports:
       - "3003:3003"
     depends_on:
       postgis_db:
         condition: service_healthy
     networks:
-      - landbiznes-network
+      - scrupeak-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
       interval: 30s
@@ -135,21 +135,21 @@ services:
     build:
       context: ./services/ownership-service
       dockerfile: Dockerfile
-    container_name: landbiznes_ownership_service
+    container_name: scrupeak_ownership_service
     environment:
       PORT: 3004
       DB_HOST: postgis_db
       DB_PORT: 5432
-      DB_USER: landbiznes
-      DB_PASSWORD: landbiznes
-      DB_NAME: landbiznes
+      DB_USER: scrupeak
+      DB_PASSWORD: scrupeak
+      DB_NAME: scrupeak
     ports:
       - "3004:3004"
     depends_on:
       postgis_db:
         condition: service_healthy
     networks:
-      - landbiznes-network
+      - scrupeak-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
       interval: 30s
@@ -161,7 +161,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: landbiznes_frontend
+    container_name: scrupeak_frontend
     environment:
       REACT_APP_API_URL: http://localhost:3000/api
     ports:
@@ -169,10 +169,10 @@ services:
     depends_on:
       - api-gateway
     networks:
-      - landbiznes-network
+      - scrupeak-network
 
 networks:
-  landbiznes-network:
+  scrupeak-network:
     driver: bridge
 
 volumes:

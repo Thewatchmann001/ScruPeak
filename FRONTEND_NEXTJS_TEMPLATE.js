@@ -1,5 +1,5 @@
 """
-LandBiznes Frontend - Next.js 14 Project Setup
+ScruPeak Frontend - Next.js 14 Project Setup
 Modern React with TypeScript, Tailwind, and Maps
 """
 
@@ -102,7 +102,7 @@ export default config
 
 # package.json example dependencies
 {
-  "name": "landbiznes-frontend",
+  "name": "scrupeak-frontend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -165,7 +165,7 @@ NEXT_PUBLIC_AI_SERVICE_URL=http://localhost:8001
 # App Layout Structure
 # src/app/layout.tsx
 export const metadata = {
-  title: 'LandBiznes - Land Registry & Marketplace',
+  title: 'ScruPeak - Land Registry & Marketplace',
   description: 'A secure land registry platform with AI verification and blockchain ownership records.',
 }
 

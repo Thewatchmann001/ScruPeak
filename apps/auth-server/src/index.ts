@@ -1,68 +1,34 @@
-console.log("Starting Auth Server...");
-import { serve } from '@hono/node-server';
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { auth } from './auth.js';
+import express from "express";
+import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./auth.js";
+import dotenv from "dotenv";
 
-const app = new Hono();
+dotenv.config();
 
-app.use('/*', cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://127.0.0.1:3000'],
-    credentials: true,
-    allowMethods: ['POST', 'GET', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+const app = express();
+
+app.use(cors({
+    origin: true, // Allow all origins for debugging
+    credentials: true
 }));
 
-app.get('/', (c) => {
-    return c.json({ 
-        status: "OK", 
-        service: "LandBiznes Auth Server", 
-        documentation: "/api/auth/reference" 
-    });
+// Add a simple logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
 });
 
-app.on(['POST', 'GET'], '/api/auth/**', async (c) => {
-    console.log(`[Auth] Request: ${c.req.method} ${c.req.url}`);
-    try {
-        const response = await auth.handler(c.req.raw);
-        console.log(`[Auth] Response status: ${response.status}`);
-        
-        // If better-auth returns an internal error, log the body
-        if (response.status === 500) {
-            const body = await response.clone().text();
-            console.error("[Auth] 500 Error Body:", body);
-        }
-        
-        const origin = c.req.header('origin') || '*';
-        const headers = new Headers(response.headers);
-        headers.set('Access-Control-Allow-Origin', origin);
-        headers.set('Access-Control-Allow-Credentials', 'true');
-        return new Response(response.body, { status: response.status, headers });
-    } catch (e) {
-        console.error("[Auth] Handler Error:", e);
-        // Log full error details including stack trace
-        if (e instanceof Error) {
-            console.error(e.stack);
-        }
-        return c.json({ error: "Internal Server Error", details: String(e) }, 500);
-    }
+app.get("/health", (req, res) => {
+    res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-const port = 4005;
-console.log(`Attempting to start server on port ${port}...`);
-
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
+// Better Auth handler
+app.all("/api/auth/*", (req, res) => {
+    return toNodeHandler(auth)(req, res);
 });
 
-try {
-    serve({
-      fetch: app.fetch,
-      port,
-      hostname: '0.0.0.0'
-    }, (info) => {
-        console.log(`Server is running on http://${info.address}:${info.port}`);
-    });
-} catch (e) {
-    console.error("Failed to start server:", e);
-}
+const port = process.env.PORT || 4005;
+app.listen(port, () => {
+    console.log(`Auth server running on http://localhost:${port}`);
+});

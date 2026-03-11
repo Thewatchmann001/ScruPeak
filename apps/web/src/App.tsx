@@ -125,7 +125,7 @@ const HomePage = () => {
            {[
              { step: 1, title: "Verification", desc: "Land is verified and issued a ULID." },
              { step: 2, title: "Agreement", desc: "Buyer and seller agree on transaction." },
-             { step: 3, title: "Escrow", desc: "Buyer funds are placed into LandBiznes escrow." },
+             { step: 3, title: "Escrow", desc: "Buyer funds are placed into ScruPeak escrow." },
              { step: 4, title: "Final Checks", desc: "Final verification checks are executed." },
              { step: 5, title: "Transfer", desc: "Ownership transfer is written on-chain." },
              { step: 6, title: "Release", desc: "Funds are released to seller." }

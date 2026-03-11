@@ -1,4 +1,4 @@
-# LandBiznes Documentation Index
+# ScruPeak Documentation Index
 
 ## 📚 Main Documentation
 
@@ -131,7 +131,7 @@ pytest tests/ -v --cov=app --cov-report=html
 ## 🗂️ Repository Structure
 
 ```
-LandBiznes/
+ScruPeak/
 ├── apps/
 │   └── backend/
 │       ├── app/
@@ -324,8 +324,8 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### Docker
 ```bash
-docker build -t landbiznes/backend:latest .
-docker run -p 8000:8000 landbiznes/backend:latest
+docker build -t scrupeak/backend:latest .
+docker run -p 8000:8000 scrupeak/backend:latest
 ```
 
 ### Docker Compose
@@ -368,7 +368,7 @@ See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed instructions.
 
 ### API Errors
 1. Check health: `curl http://localhost:8000/health`
-2. View logs: `docker logs landbiznes-backend`
+2. View logs: `docker logs scrupeak-backend`
 3. Check endpoints: `curl http://localhost:8000/docs`
 
 See [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) for more troubleshooting.

@@ -1,7 +1,7 @@
 {
   "name": "api-gateway",
   "version": "1.0.0",
-  "description": "LandBiznes API Gateway - Service Orchestration",
+  "description": "ScruPeak API Gateway - Service Orchestration",
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",

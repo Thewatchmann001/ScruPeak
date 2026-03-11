@@ -152,7 +152,7 @@
 │ │                                               │  │
 │ │  ┌────────────────────────────────────────┐  │  │
 │ │  │ Amara Conteh                            │  │  │
-│ │  │ amara.conteh@landbiznes.com            │  │  │
+│ │  │ amara.conteh@scrupeak.com            │  │  │
 │ │  │ Document Verifier [BADGE]              │  │  │
 │ │  │ Joined: January 10, 2026               │  │  │
 │ │  │ Permissions: ✓ 4 (Verify docs, etc)   │  │  │

@@ -6,22 +6,22 @@
 ## Connection Details
 - **Host**: localhost
 - **Port**: 5432
-- **Database**: landbiznes
-- **Username**: landbiznes
-- **Password**: landbiznes
-- **Connection String**: `postgresql://landbiznes:landbiznes@localhost:5432/landbiznes`
+- **Database**: scrupeak
+- **Username**: scrupeak
+- **Password**: scrupeak
+- **Connection String**: `postgresql://scrupeak:scrupeak@localhost:5432/scrupeak`
 
 ## Next Steps
 
 ### 1. Verify Schema is Applied
 ```bash
-docker exec landbiznes_db psql -U landbiznes -d landbiznes \
+docker exec scrupeak_db psql -U scrupeak -d scrupeak \
   -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='land_registry';"
 ```
 
 ### 2. Connect with psql
 ```bash
-psql -h localhost -U landbiznes -d landbiznes
+psql -h localhost -U scrupeak -d scrupeak
 ```
 
 ### 3. Query Sample Data
@@ -64,12 +64,12 @@ WHERE ST_DWithin(geometry, ST_GeomFromText('POINT(40.7128 -74.0060)', 4326), 0.1
 
 ### Backup
 ```bash
-docker exec landbiznes_db pg_dump -U landbiznes landbiznes > backup_$(date +%Y%m%d).sql
+docker exec scrupeak_db pg_dump -U scrupeak scrupeak > backup_$(date +%Y%m%d).sql
 ```
 
 ### Restore
 ```bash
-docker exec -i landbiznes_db psql -U landbiznes landbiznes < backup.sql
+docker exec -i scrupeak_db psql -U scrupeak scrupeak < backup.sql
 ```
 
 ## Stop/Start Container
@@ -78,14 +78,14 @@ docker exec -i landbiznes_db psql -U landbiznes landbiznes < backup.sql
 ```bash
 docker-compose down
 # or
-docker stop landbiznes_db
+docker stop scrupeak_db
 ```
 
 ### Start
 ```bash
 docker-compose up -d db
 # or
-docker start landbiznes_db
+docker start scrupeak_db
 ```
 
 ### Remove Everything (Fresh Start)
@@ -93,7 +93,7 @@ docker start landbiznes_db
 docker-compose down -v
 docker-compose up -d db
 # Then reapply schema:
-docker exec -i landbiznes_db psql -U landbiznes -d landbiznes < init-scripts/01-schema.sql
+docker exec -i scrupeak_db psql -U scrupeak -d scrupeak < init-scripts/01-schema.sql
 ```
 
 ## Connect from Applications
@@ -102,8 +102,8 @@ docker exec -i landbiznes_db psql -U landbiznes -d landbiznes < init-scripts/01-
 ```python
 import psycopg2
 conn = psycopg2.connect(
-    host="localhost", database="landbiznes", 
-    user="landbiznes", password="landbiznes"
+    host="localhost", database="scrupeak",
+    user="scrupeak", password="scrupeak"
 )
 ```
 
@@ -111,13 +111,13 @@ conn = psycopg2.connect(
 ```javascript
 const { Client } = require('pg');
 const client = new Client({
-  connectionString: 'postgresql://landbiznes:landbiznes@localhost:5432/landbiznes'
+  connectionString: 'postgresql://scrupeak:scrupeak@localhost:5432/scrupeak'
 });
 ```
 
 ### Go
 ```go
-connStr := "user=landbiznes password=landbiznes dbname=landbiznes sslmode=disable"
+connStr := "user=scrupeak password=scrupeak dbname=scrupeak sslmode=disable"
 db, _ := sql.Open("postgres", connStr)
 ```
 
@@ -125,23 +125,23 @@ db, _ := sql.Open("postgres", connStr)
 
 ### Check if container is running
 ```bash
-docker ps | grep landbiznes_db
+docker ps | grep scrupeak_db
 ```
 
 ### View container logs
 ```bash
-docker logs landbiznes_db
+docker logs scrupeak_db
 ```
 
 ### Test connection with pg_isready
 ```bash
-docker exec landbiznes_db pg_isready -U landbiznes
+docker exec scrupeak_db pg_isready -U scrupeak
 ```
 
 ### Check database size
 ```bash
-docker exec landbiznes_db psql -U landbiznes -d landbiznes \
-  -c "SELECT pg_size_pretty(pg_database_size('landbiznes'));"
+docker exec scrupeak_db psql -U scrupeak -d scrupeak \
+  -c "SELECT pg_size_pretty(pg_database_size('scrupeak'));"
 ```
 
 ### Increase security in production

@@ -40,7 +40,7 @@ export default function Navbar() {
               <MapPin className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold tracking-tight">
-              Land<span className="text-primary">Biznes</span>
+              Scru<span className="text-primary">Peak</span>
             </span>
           </Link>
 

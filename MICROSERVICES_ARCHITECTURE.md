@@ -1,8 +1,8 @@
-# LandBiznes Microservices Architecture Guide
+# ScruPeak Microservices Architecture Guide
 
 ## Overview
 
-LandBiznes is a production-ready, national-scale land registry system built with a **microservices-first architecture**. Each service operates independently, communicates via REST APIs, and connects to a shared PostgreSQL + PostGIS database.
+ScruPeak is a production-ready, national-scale land registry system built with a **microservices-first architecture**. Each service operates independently, communicates via REST APIs, and connects to a shared PostgreSQL + PostGIS database.
 
 ## Architecture Diagram
 
@@ -160,8 +160,8 @@ GET    /owners/:id/portfolio       → Get owner's parcel portfolio
 
 ```bash
 # Terminal 1 - Database
-docker run --name landbiznes_db -e POSTGRES_PASSWORD=landbiznes \
-  -e POSTGRES_USER=landbiznes -e POSTGRES_DB=landbiznes \
+docker run --name scrupeak_db -e POSTGRES_PASSWORD=scrupeak \
+  -e POSTGRES_USER=scrupeak -e POSTGRES_DB=scrupeak \
   -p 5432:5432 postgis/postgis:15-3.4
 
 # Terminal 2 - API Gateway
@@ -226,7 +226,7 @@ app.use('/api/parcels', proxy('http://localhost:3001'));
 const pool = new Pool({
   host: 'localhost',
   port: 5432,
-  database: 'landbiznes',
+  database: 'scrupeak',
   // ...
 });
 ```
@@ -252,15 +252,15 @@ OWNERSHIP_SERVICE_URL=http://localhost:3004
 OWNER_SERVICE_URL=http://localhost:3005
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=landbiznes
-DB_PASSWORD=landbiznes
-DB_NAME=landbiznes
+DB_USER=scrupeak
+DB_PASSWORD=scrupeak
+DB_NAME=scrupeak
 JWT_SECRET=change-this-in-production
 ```
 
 ## Database Integration
 
-All services connect to **single PostgreSQL database** at `postgresql://landbiznes:landbiznes@localhost:5432/landbiznes`
+All services connect to **single PostgreSQL database** at `postgresql://scrupeak:scrupeak@localhost:5432/scrupeak`
 
 ### Schema Overview
 - **8 Tables:** spatial_grids, parcels, parcel_lineage, parcel_events, parcel_conflicts, grid_sequences, owners, parcel_ownership
@@ -313,7 +313,7 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 5. Update frontend API client
 
 ### Adding New Database Table
-1. Modify `01-landbiznes-schema.sql`
+1. Modify `01-scrupeak-schema.sql`
 2. Add triggers if immutability needed
 3. Add GIST index for geometry columns
 4. Update service CRUD operations
@@ -322,7 +322,7 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 ## File Structure
 
 ```
-LandBiznes/
+ScruPeak/
 ├── frontend/                 # React Dashboard
 │   ├── src/
 │   │   ├── components/      # UI Components
@@ -345,7 +345,7 @@ LandBiznes/
 │   ├── logger.js           # Structured logging
 │   └── middleware.js       # Express middleware
 ├── init-scripts/
-│   └── 01-landbiznes-schema.sql
+│   └── 01-scrupeak-schema.sql
 ├── docker-compose.yml      # Existing (DB only)
 ├── docker-compose.full.yml # Complete stack
 └── package.json
@@ -365,7 +365,7 @@ LandBiznes/
 ### Services won't connect to database
 - Verify PostgreSQL is running on localhost:5432
 - Check DB credentials in .env files
-- Ensure database `landbiznes` exists
+- Ensure database `scrupeak` exists
 
 ### Frontend can't reach API Gateway
 - Verify API Gateway running on port 3000
