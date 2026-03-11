@@ -36,11 +36,13 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-              <MapPin className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img
+              src="/logo.jpg"
+              alt="ScruPeak Logo"
+              className="w-10 h-10 rounded-xl object-cover transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300"
+            />
             <span className="text-xl font-bold tracking-tight">
-              Scru<span className="text-primary">Peak</span>
+              ScruPeak
             </span>
           </Link>
 

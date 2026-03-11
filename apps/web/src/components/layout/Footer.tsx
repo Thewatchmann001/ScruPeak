@@ -10,11 +10,13 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
+              <img
+                src="/logo.jpg"
+                alt="ScruPeak Logo"
+                className="w-10 h-10 rounded-xl object-cover"
+              />
               <span className="text-xl font-bold">
-                Scru<span className="text-primary-500">Peak</span>
+                ScruPeak
               </span>
             </Link>
             <p className="text-sm opacity-70">
