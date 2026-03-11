@@ -21,7 +21,7 @@ export default function AdminUsersPage() {
       console.error('Failed to fetch users', error);
       // Mock data if endpoint fails
       setUsers([
-        { id: '1', name: 'Admin User', email: 'admin@landbiznes.com', role: 'admin', kyc_verified: true, created_at: '2024-01-01' },
+        { id: '1', name: 'Admin User', email: 'admin@scrupeak.com', role: 'admin', kyc_verified: true, created_at: '2024-01-01' },
         { id: '2', name: 'John Doe', email: 'john@example.com', role: 'buyer', kyc_verified: false, created_at: '2024-02-15' },
         { id: '3', name: 'Jane Smith', email: 'jane@example.com', role: 'owner', kyc_verified: true, created_at: '2024-03-10' },
       ] as any);

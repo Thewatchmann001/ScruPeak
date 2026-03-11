@@ -83,7 +83,7 @@ const currentAdmins = [
   {
     id: 2,
     name: "Amara Conteh",
-    email: "amara.conteh@landbiznes.com",
+    email: "amara.conteh@scrupeak.com",
     role: "document-verifier",
     joinedDate: "January 10, 2026",
     status: "active",
@@ -92,7 +92,7 @@ const currentAdmins = [
   {
     id: 3,
     name: "Mohamed Hassan",
-    email: "mohamed.hassan@landbiznes.com",
+    email: "mohamed.hassan@scrupeak.com",
     role: "kyc-officer",
     joinedDate: "January 15, 2026",
     status: "active",
@@ -217,7 +217,7 @@ export default function AdminManagementPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    placeholder="admin@landbiznes.com"
+                    placeholder="admin@scrupeak.com"
                     required
                   />
                 </div>

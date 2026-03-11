@@ -1,5 +1,5 @@
 """
-LandBiznes Spatial Intelligence Agent Orchestrator
+ScruPeak Spatial Intelligence Agent Orchestrator
 
 Main entry point for spatial operations:
 - Register parcels and create CSIs
@@ -232,7 +232,7 @@ class SpatialIntelligenceAgent:
     def summary_report(self) -> str:
         """Generate a brief report of registry state"""
         return f"""
-LandBiznes Spatial Intelligence Agent
+ScruPeak Spatial Intelligence Agent
 =====================================
 Registered Parcels: {len(self.registry._parcels)}
 Total Events: {len(self.registry._events)}

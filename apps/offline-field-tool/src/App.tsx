@@ -94,7 +94,7 @@ function App() {
     <div className="flex flex-col h-screen bg-slate-100">
       {/* Header */}
       <header className="bg-white p-4 shadow-sm flex justify-between items-center z-20">
-        <h1 className="text-xl font-bold text-slate-800">LandBiznes Field Tool</h1>
+        <h1 className="text-xl font-bold text-slate-800">ScruPeak Field Tool</h1>
         <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${isOnline ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
           {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
           {isOnline ? 'Online' : 'Offline Mode'}

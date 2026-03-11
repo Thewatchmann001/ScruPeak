@@ -10,7 +10,7 @@
 
 📍 LOCATION
 ═══════════════════════════════════════════════════════════════════════════════
-c:\Users\HP\Desktop\LandBiznes\apps\frontend
+c:\Users\HP\Desktop\ScruPeak\apps\frontend
 
 
 📊 WHAT'S BEEN CREATED
@@ -406,7 +406,7 @@ Included Files:
 
 STEP 1: Install Dependencies
 ───────────────────────────────
-cd c:\Users\HP\Desktop\LandBiznes\apps\frontend
+cd c:\Users\HP\Desktop\ScruPeak\apps\frontend
 npm install
 
 STEP 2: Setup Environment

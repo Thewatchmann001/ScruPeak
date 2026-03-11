@@ -49,7 +49,7 @@ def generate_title_document(land_id: str, owner_name: str):
     time.sleep(5)
     
     # Simulate success
-    document_url = f"https://landbiznes-storage.s3.amazonaws.com/titles/{land_id}.pdf"
+    document_url = f"https://scrupeak-storage.s3.amazonaws.com/titles/{land_id}.pdf"
     logger.info(f"PDF generated: {document_url}")
     
     return {"status": "completed", "url": document_url}

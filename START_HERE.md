@@ -1,6 +1,6 @@
-# LandBiznes - START HERE 🚀
+# ScruPeak - START HERE 🚀
 
-## Welcome to LandBiznes
+## Welcome to ScruPeak
 
 A **production-ready, national-scale land registry & marketplace system** with Web3 integration.
 
@@ -192,7 +192,7 @@ curl http://localhost:3000/api/parcels/1/lineage
 ## 📁 File Organization
 
 ```
-LandBiznes/
+ScruPeak/
 ├── 📚 Documentation (9 files) ← START HERE
 ├── 🎨 frontend/ ← React dashboard
 ├── 🚪 api-gateway/ ← Request router
@@ -276,7 +276,7 @@ curl http://localhost:3000/api/health
 ### Database connection errors?
 1. Verify PostgreSQL container: `docker ps`
 2. Check credentials in .env files
-3. Test connection: `psql -h localhost -U landbiznes -d landbiznes`
+3. Test connection: `psql -h localhost -U scrupeak -d scrupeak`
 
 See [MICROSERVICES_QUICK_START.md](MICROSERVICES_QUICK_START.md#troubleshooting) for more help.
 
@@ -397,7 +397,7 @@ Designed to handle 100M+ parcels at scale.
 
 ---
 
-**Welcome to LandBiznes! 🚀**
+**Welcome to ScruPeak! 🚀**
 
 Start with one of the quick start guides above.
 

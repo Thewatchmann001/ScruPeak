@@ -1,7 +1,7 @@
 import psycopg2
 from psycopg2 import sql
 
-DB_URL = "postgres://landbiznes:landbiznes@localhost:5432/landbiznes"
+DB_URL = "postgres://scrupeak:scrupeak@localhost:5432/scrupeak"
 
 try:
     conn = psycopg2.connect(DB_URL)

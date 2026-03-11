@@ -35,7 +35,7 @@ async def lanstimate_value(land_data: dict):
         "messages": [
             {
                 "role": "system",
-                "content": "You are the Lanstimate™ AI Valuation Engine for LandBiznes. Estimate land market value in Sierra Leone Leones (SLE) based on the provided data."
+                "content": "You are the Lanstimate™ AI Valuation Engine for ScruPeak. Estimate land market value in Sierra Leone Leones (SLE) based on the provided data."
             },
             {
                 "role": "user",

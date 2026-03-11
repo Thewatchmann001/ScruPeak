@@ -1,5 +1,5 @@
 """
-Test and Demonstration: LandBiznes Spatial Intelligence Agent
+Test and Demonstration: ScruPeak Spatial Intelligence Agent
 
 Demonstrates:
 1. Parcel registration with CSI
@@ -335,7 +335,7 @@ def main():
     print("\n")
     print("█" * 70)
     print("█" + " " * 68 + "█")
-    print("█" + "  LandBiznes Spatial Intelligence Agent - Test Suite".center(68) + "█")
+    print("█" + "  ScruPeak Spatial Intelligence Agent - Test Suite".center(68) + "█")
     print("█" + " " * 68 + "█")
     print("█" * 70)
     

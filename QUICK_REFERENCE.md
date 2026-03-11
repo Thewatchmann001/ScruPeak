@@ -4,7 +4,7 @@
 
 ### One-Line Start (all services)
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes && docker-compose up -d && cd apps/backend && .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+cd C:\Users\HP\Desktop\ScruPeak && docker-compose up -d && cd apps/backend && .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### API Access Points
@@ -19,7 +19,7 @@ cd C:\Users\HP\Desktop\LandBiznes && docker-compose up -d && cd apps/backend && 
 
 ### Databases (Docker)
 ```
-PostgreSQL: localhost:5432 (landbiznes/landbiznes)
+PostgreSQL: localhost:5432 (scrupeak/scrupeak)
 Redis:      localhost:6379
 ```
 
@@ -42,7 +42,7 @@ cd apps/backend
 python init_db.py
 
 # Connect to PostgreSQL
-psql -h localhost -U landbiznes -d landbiznes
+psql -h localhost -U scrupeak -d scrupeak
 
 # Connect to Redis
 redis-cli
@@ -65,7 +65,7 @@ pip install -r requirements.txt
 
 ### Docker
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes
+cd C:\Users\HP\Desktop\ScruPeak
 
 # Start services
 docker-compose up -d
@@ -179,7 +179,7 @@ POST /api/v1/auth/logout      # Logout (blacklist token)
 
 ### "Connection refused" on PostgreSQL
 ```
-→ Check: docker ps | find landbiznes_db
+→ Check: docker ps | find scrupeak_db
 → Fix: docker-compose up -d db
 ```
 
@@ -191,7 +191,7 @@ POST /api/v1/auth/logout      # Logout (blacklist token)
 
 ### Database schema mismatch
 ```
-→ Clear DB: docker volume rm landbiznes_postgres_data
+→ Clear DB: docker volume rm scrupeak_postgres_data
 → Restart: docker-compose up -d
 → Seed: python init_db.py
 ```
@@ -249,7 +249,7 @@ POST /api/v1/auth/logout      # Logout (blacklist token)
 ### Database Inspection
 ```powershell
 # Connect to PostgreSQL
-psql -h localhost -U landbiznes -d landbiznes
+psql -h localhost -U scrupeak -d scrupeak
 
 # List tables
 \dt

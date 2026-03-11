@@ -22,16 +22,16 @@
 ### Database Setup
 - [ ] Install PostgreSQL 15 locally
 - [ ] Install PostGIS extension
-- [ ] Create database: `landbiznes_db`
+- [ ] Create database: `scrupeak_db`
 - [ ] Update `.env` with database credentials
   ```
   DB_HOST=localhost
   DB_PORT=5432
-  DB_NAME=landbiznes_db
+  DB_NAME=scrupeak_db
   DB_USER=postgres
   DB_PASSWORD=your_password
   ```
-- [ ] Test connection: `psql -h localhost -U postgres -d landbiznes_db`
+- [ ] Test connection: `psql -h localhost -U postgres -d scrupeak_db`
 
 ### Redis Setup
 - [ ] Install Redis 7+ locally
@@ -63,17 +63,17 @@
   ```
 - [ ] Verify tables created
   ```bash
-  psql -h localhost -U postgres -d landbiznes_db -c "\dt"
+  psql -h localhost -U postgres -d scrupeak_db -c "\dt"
   ```
 - [ ] Check indexes
   ```bash
-  psql -h localhost -U postgres -d landbiznes_db -c "\di"
+  psql -h localhost -U postgres -d scrupeak_db -c "\di"
   ```
 
 ### Enable PostGIS
 - [ ] Connect to database
   ```bash
-  psql -h localhost -U postgres -d landbiznes_db
+  psql -h localhost -U postgres -d scrupeak_db
   ```
 - [ ] Enable PostGIS extension
   ```sql
@@ -151,11 +151,11 @@
 ### Docker Build
 - [ ] Build Docker image
   ```bash
-  docker build -t landbiznes-backend:latest ./apps/backend
+  docker build -t scrupeak-backend:latest ./apps/backend
   ```
 - [ ] Verify image
   ```bash
-  docker images | grep landbiznes
+  docker images | grep scrupeak
   ```
 
 ### Docker Compose Local
@@ -179,15 +179,15 @@
 ### Container Testing
 - [ ] Backend container healthy
   ```bash
-  docker ps | grep landbiznes-backend
+  docker ps | grep scrupeak-backend
   ```
 - [ ] Database container healthy
   ```bash
-  docker ps | grep landbiznes-postgres
+  docker ps | grep scrupeak-postgres
   ```
 - [ ] Redis container healthy
   ```bash
-  docker ps | grep landbiznes-redis
+  docker ps | grep scrupeak-redis
   ```
 
 ## ✅ Phase 5: Integration with Frontend
@@ -313,7 +313,7 @@
 ### Deployment
 - [ ] Create Kubernetes namespaces
   ```bash
-  kubectl create namespace landbiznes
+  kubectl create namespace scrupeak
   ```
 - [ ] Deploy PostgreSQL StatefulSet
 - [ ] Deploy Redis StatefulSet
@@ -324,11 +324,11 @@
 ### Verification
 - [ ] All pods running
   ```bash
-  kubectl get pods -n landbiznes
+  kubectl get pods -n scrupeak
   ```
 - [ ] All services healthy
   ```bash
-  kubectl get svc -n landbiznes
+  kubectl get svc -n scrupeak
   ```
 - [ ] Health checks passing
 - [ ] API responding
@@ -376,7 +376,7 @@
 sudo systemctl status postgresql
 
 # Check connection
-psql -h localhost -U postgres -d landbiznes_db
+psql -h localhost -U postgres -d scrupeak_db
 
 # Check firewall
 sudo ufw status
@@ -481,4 +481,4 @@ redis-cli info keyspace
 
 **Deployment Status**: 🟡 Ready for Testing  
 **Last Updated**: January 2024  
-**Maintainer**: LandBiznes Team
+**Maintainer**: ScruPeak Team

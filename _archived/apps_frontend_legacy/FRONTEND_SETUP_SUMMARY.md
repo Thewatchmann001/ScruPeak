@@ -2,7 +2,7 @@
 
 ## ✅ What's Been Created
 
-A **production-ready, fully-featured Next.js 14 frontend** with excellent UI/UX for LandBiznes.
+A **production-ready, fully-featured Next.js 14 frontend** with excellent UI/UX for ScruPeak.
 
 ### 📊 By The Numbers
 - **35+ files** created
@@ -357,4 +357,4 @@ A **production-ready, professional frontend** that:
 
 ---
 
-**Your LandBiznes frontend is ready to go! 🚀**
+**Your ScruPeak frontend is ready to go! 🚀**

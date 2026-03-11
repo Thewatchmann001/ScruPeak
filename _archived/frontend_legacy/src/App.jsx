@@ -56,7 +56,7 @@ function App() {
           onCollapse={(collapsed) => console.log(collapsed)}
         >
           <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }}>
-            <h2 style={{ color: 'white', margin: 0, textAlign: 'center' }}>LandBiznes</h2>
+            <h2 style={{ color: 'white', margin: 0, textAlign: 'center' }}>ScruPeak</h2>
           </div>
           <Menu theme="dark" mode="inline" items={menuItems} />
         </Sider>

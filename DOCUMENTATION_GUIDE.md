@@ -1,4 +1,4 @@
-# 📚 LandBiznes Documentation Index
+# 📚 ScruPeak Documentation Index
 
 ## Quick Links to Everything
 
@@ -102,7 +102,7 @@ Then explore: [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md)
 ## 🗂️ File Organization
 
 ```
-LandBiznes/
+ScruPeak/
 │
 ├── 📄 COMPLETE_BUILD_SUMMARY.md ⭐ START HERE
 │   └── Full project overview

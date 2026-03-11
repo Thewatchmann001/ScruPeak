@@ -1,4 +1,4 @@
-# LandBiznes Frontend - Complete Implementation
+# ScruPeak Frontend - Complete Implementation
 
 ## Overview
 
@@ -654,8 +654,8 @@ npm start
 
 ### Environment Variables
 ```env
-NEXT_PUBLIC_API_URL=https://api.landbiznes.com
-NEXT_PUBLIC_WS_URL=wss://api.landbiznes.com
+NEXT_PUBLIC_API_URL=https://api.scrupeak.com
+NEXT_PUBLIC_WS_URL=wss://api.scrupeak.com
 NEXT_PUBLIC_AI_API_KEY=<OpenAI or provider key>
 ```
 

@@ -3,7 +3,7 @@
 ## Complete Directory Tree
 
 ```
-LandBiznes/
+ScruPeak/
 ├── apps/backend/
 │   ├── app/
 │   │   ├── __init__.py                     # Package init
@@ -367,8 +367,8 @@ uvicorn app.main:app --reload --port 8000
 
 ### Docker
 ```bash
-docker build -t landbiznes-backend:latest ./apps/backend
-docker run -p 8000:8000 landbiznes-backend:latest
+docker build -t scrupeak-backend:latest ./apps/backend
+docker run -p 8000:8000 scrupeak-backend:latest
 ```
 
 ### Docker Compose

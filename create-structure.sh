@@ -1,10 +1,10 @@
 #!/bin/bash
-# LandBiznes: Create New Architecture Structure
+# ScruPeak: Create New Architecture Structure
 # This script creates the directory structure for the modernized system
 
 set -e
 
-echo "🏗️  Creating LandBiznes Modern Architecture..."
+echo "🏗️  Creating ScruPeak Modern Architecture..."
 echo ""
 
 # Create apps directory structure

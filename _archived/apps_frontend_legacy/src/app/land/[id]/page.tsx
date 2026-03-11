@@ -421,7 +421,7 @@ export default function LandDetailsPage({ params }: { params: { id: string } }) 
                 <div>
                   <p className="font-medium text-sm">Security Notice</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Never complete transactions outside LandBiznes. Always use our secure escrow system for protection.
+                    Never complete transactions outside ScruPeak. Always use our secure escrow system for protection.
                   </p>
                 </div>
               </div>

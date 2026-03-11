@@ -60,7 +60,7 @@ class ConversationContext:
         return self.context_data.get(key)
 
 
-class LandBiznesAIChatbot:
+class ScruPeakAIChatbot:
     """AI-powered conversational assistant"""
     
     def __init__(self):
@@ -249,9 +249,9 @@ class LandBiznesAIChatbot:
     def _load_knowledge_base(self) -> Dict:
         """Load knowledge base for Q&A"""
         return {
-            "property_search": "How to find and search for properties on LandBiznes",
+            "property_search": "How to find and search for properties on ScruPeak",
             "title_verification": "Understanding property title verification and ownership",
-            "fraud_protection": "LandBiznes fraud detection and protection measures",
+            "fraud_protection": "ScruPeak fraud detection and protection measures",
             "dispute_resolution": "How to resolve property disputes",
             "regulations": "Local and national property regulations",
             "pricing": "How property valuation and pricing works"

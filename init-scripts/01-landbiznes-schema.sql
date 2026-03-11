@@ -1,5 +1,5 @@
 -- ============================================================================
--- LandBiznes: National-Grade Land Registry System
+-- ScruPeak: National-Grade Land Registry System
 -- Production-Ready Spatial Schema with PostGIS
 -- ============================================================================
 

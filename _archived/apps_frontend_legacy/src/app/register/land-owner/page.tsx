@@ -187,7 +187,7 @@ export default function LandOwnerRegistration() {
             <div className="mb-6">
               <h1 className="text-3xl font-bold">Create Your Account</h1>
               <p className="text-muted-foreground mt-2">
-                Register as a Land Owner to list and sell your land on LandBiznes
+                Register as a Land Owner to list and sell your land on ScruPeak
               </p>
             </div>
 

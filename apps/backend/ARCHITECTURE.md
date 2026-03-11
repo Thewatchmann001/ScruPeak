@@ -1,4 +1,4 @@
-# LandBiznes Backend Architecture
+# ScruPeak Backend Architecture
 
 ## Executive Summary
 
@@ -576,7 +576,7 @@ Docker Compose
 ### Production Environment
 ```
 Kubernetes Cluster
-├── Namespace: landbiznes
+├── Namespace: scrupeak
 ├── Backend Deployment (500 replicas)
 ├── PostgreSQL StatefulSet
 │   ├── Primary + Standby

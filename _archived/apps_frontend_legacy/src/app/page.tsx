@@ -343,7 +343,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-lg opacity-80 leading-relaxed">
                 We combine AI-powered fraud detection with advanced security
-                to ensure every transaction on LandBiznes is secure and
+                to ensure every transaction on ScruPeak is secure and
                 transparent.
               </p>
               <ul className="space-y-4">
@@ -388,7 +388,7 @@ export default function LandingPage() {
             <span className="text-primary"> Perfect Land?</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Join thousands of buyers and sellers who trust LandBiznes for their
+            Join thousands of buyers and sellers who trust ScruPeak for their
             land transactions in Sierra Leone.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -459,7 +459,7 @@ export default function LandingPage() {
           </div>
           <div className="pt-8 border-t border-background/20 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm opacity-70">
-              2026 LandBiznes. All rights reserved.
+              2026 ScruPeak. All rights reserved.
             </p>
             <p className="text-sm opacity-70">Made with trust for Sierra Leone</p>
           </div>

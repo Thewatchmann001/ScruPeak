@@ -1,8 +1,8 @@
-# LandBiznes - Complete System Overview
+# ScruPeak - Complete System Overview
 
-## What is LandBiznes?
+## What is ScruPeak?
 
-**LandBiznes** is a national-grade, production-ready **land registry system** built with:
+**ScruPeak** is a national-grade, production-ready **land registry system** built with:
 - **Database:** PostgreSQL 15 + PostGIS 3.4 (spatial data)
 - **Backend:** Microservices architecture (5 independent services)
 - **Frontend:** React dashboard with Leaflet maps
@@ -86,10 +86,10 @@ See [MICROSERVICES_ARCHITECTURE.md](MICROSERVICES_ARCHITECTURE.md) and [MICROSER
 
 ```bash
 # Terminal 1 - Ensure DB is running
-docker run --name landbiznes_db \
-  -e POSTGRES_USER=landbiznes \
-  -e POSTGRES_PASSWORD=landbiznes \
-  -e POSTGRES_DB=landbiznes \
+docker run --name scrupeak_db \
+  -e POSTGRES_USER=scrupeak \
+  -e POSTGRES_PASSWORD=scrupeak \
+  -e POSTGRES_DB=scrupeak \
   -p 5432:5432 \
   postgis/postgis:15-3.4
 
@@ -147,10 +147,10 @@ cd frontend && npm install && npm start
 ## File Structure
 
 ```
-LandBiznes/
+ScruPeak/
 │
 ├── 📄 Database Files
-│   ├── init-scripts/01-landbiznes-schema.sql  (1050+ lines, production schema)
+│   ├── init-scripts/01-scrupeak-schema.sql  (1050+ lines, production schema)
 │   ├── docker-compose.yml                      (DB only)
 │   └── docker-compose.full.yml                 (Complete stack)
 │
@@ -337,9 +337,9 @@ POST   /ownership/:parcelId/transfer  → Transfer ownership
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=landbiznes
-DB_PASSWORD=landbiznes
-DB_NAME=landbiznes
+DB_USER=scrupeak
+DB_PASSWORD=scrupeak
+DB_NAME=scrupeak
 ```
 
 ### API Gateway (.env in api-gateway/)
@@ -463,7 +463,7 @@ curl -X POST http://localhost:3000/api/ownership/parcel-001/transfer \
 lsof -i :3001
 
 # Verify DB connection
-psql -h localhost -U landbiznes -d landbiznes -c "SELECT 1"
+psql -h localhost -U scrupeak -d scrupeak -c "SELECT 1"
 
 # Check logs
 npm run dev 2>&1 | head -50

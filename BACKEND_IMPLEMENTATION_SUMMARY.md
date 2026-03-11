@@ -132,7 +132,7 @@
 - ✅ `test_search_properties_by_status` - Filter by status
 
 **Test Database**
-- ✅ Automatic table creation in `landbiznes_test` database
+- ✅ Automatic table creation in `scrupeak_test` database
 - ✅ Automatic rollback after each test
 - ✅ Isolation between tests
 - ✅ Creation script: `create_test_db.py`
@@ -348,7 +348,7 @@ docker-compose up -d
 **Test Config**: `tests/conftest.py`
 **Test Cases**: `tests/test_auth.py`, `tests/test_land.py`
 **API Docs**: http://localhost:8000/docs
-**Postgres**: localhost:5432 (user: landbiznes)
+**Postgres**: localhost:5432 (user: scrupeak)
 **Redis**: localhost:6379
 
 ---

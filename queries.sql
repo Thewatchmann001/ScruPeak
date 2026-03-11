@@ -1,5 +1,5 @@
 -- ============================================================================
--- LandBiznes SQLTools Reference Guide
+-- ScruPeak SQLTools Reference Guide
 -- Copy-paste queries into "Current Query" editor in VS Code
 -- ============================================================================
 
@@ -402,8 +402,8 @@ ORDER BY event_count DESC;
 
 /*
 1. SELECT DATABASE:
-   - Click "LandBiznes" connection at bottom-left
-   - Verify you're in "landbiznes" database
+   - Click "ScruPeak" connection at bottom-left
+   - Verify you're in "scrupeak" database
 
 2. EXECUTE QUERIES:
    - Select entire query block

@@ -1,4 +1,4 @@
-# LandBiznes Production Schema - Complete Alignment Guide
+# ScruPeak Production Schema - Complete Alignment Guide
 
 ## ✅ Schema Alignment Status
 
@@ -210,14 +210,14 @@ SELECT * FROM grid_statistics;
 
 ### **Apply Schema to Running Database**
 ```bash
-docker exec -i landbiznes_db psql -U landbiznes -d landbiznes \
-  < init-scripts/01-landbiznes-schema.sql
+docker exec -i scrupeak_db psql -U scrupeak -d scrupeak \
+  < init-scripts/01-scrupeak-schema.sql
 ```
 
 ### **Test Schema Setup**
 ```bash
 # Connect to database
-psql -h localhost -U landbiznes -d landbiznes
+psql -h localhost -U scrupeak -d scrupeak
 
 # Verify tables
 SELECT count(*) FROM information_schema.tables 
@@ -269,7 +269,7 @@ SELECT parcel_code, spatial_identity_hash, area_sqm FROM land_registry.parcels;
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  NATIONAL LAND REGISTRY SYSTEM (LandBiznes)                         │
+│  NATIONAL LAND REGISTRY SYSTEM (ScruPeak)                         │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  spatial_grids ─────────────────┐                                 │

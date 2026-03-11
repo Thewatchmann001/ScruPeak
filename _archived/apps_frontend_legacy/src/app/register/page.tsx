@@ -65,7 +65,7 @@ export default function RegisterPage() {
           <CardHeader>
             <CardTitle>Create Your Account</CardTitle>
             <CardDescription>
-              Join LandBiznes to start buying or selling land
+              Join ScruPeak to start buying or selling land
             </CardDescription>
           </CardHeader>
           <CardContent>

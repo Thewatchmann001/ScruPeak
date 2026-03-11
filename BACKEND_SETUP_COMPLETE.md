@@ -1,4 +1,4 @@
-# LandBiznes Backend - Setup Complete
+# ScruPeak Backend - Setup Complete
 
 ## Status: ✅ FULLY FUNCTIONAL
 
@@ -17,8 +17,8 @@ The FastAPI backend is now running successfully with all essential services conf
 
 ### Services Status
 ```
-PostgreSQL (landbiznes_db):    ✅ RUNNING on localhost:5432
-Redis (landbiznes_redis):       ✅ RUNNING on localhost:6379
+PostgreSQL (scrupeak_db):    ✅ RUNNING on localhost:5432
+Redis (scrupeak_redis):       ✅ RUNNING on localhost:6379
 FastAPI Backend:               ✅ RUNNING on 0.0.0.0:8000
 ```
 
@@ -28,13 +28,13 @@ FastAPI Backend:               ✅ RUNNING on 0.0.0.0:8000
 
 ### 1. Start Docker Services
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes
+cd C:\Users\HP\Desktop\ScruPeak
 docker-compose up -d
 ```
 
 ### 2. Activate Virtual Environment
 ```powershell
-cd C:\Users\HP\Desktop\LandBiznes\apps\backend
+cd C:\Users\HP\Desktop\ScruPeak\apps\backend
 .\venv\Scripts\Activate.ps1
 ```
 
@@ -151,9 +151,9 @@ PORT=8000
 
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=landbiznes
-DB_USER=landbiznes
-DB_PASSWORD=landbiznes
+DB_NAME=scrupeak
+DB_USER=scrupeak
+DB_PASSWORD=scrupeak
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -224,7 +224,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 python init_db.py
 
 # Connect to PostgreSQL
-psql -h localhost -U landbiznes -d landbiznes
+psql -h localhost -U scrupeak -d scrupeak
 
 # Redis CLI
 redis-cli
@@ -294,9 +294,9 @@ Error: Connection refused on localhost:5432
 
 ### Database Connection Error
 ```
-Error: password authentication failed for user "landbiznes"
+Error: password authentication failed for user "scrupeak"
 → Check: .env file has correct DB credentials
-→ Current: DB_USER=landbiznes, DB_PASSWORD=landbiznes
+→ Current: DB_USER=scrupeak, DB_PASSWORD=scrupeak
 ```
 
 ### Schema Validation Errors

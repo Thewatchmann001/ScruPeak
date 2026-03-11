@@ -12,7 +12,7 @@ If you haven't applied the schema yet:
 
 ```bash
 # Copy the schema file into the running database
-docker exec -i landbiznes_db psql -U landbiznes -d landbiznes < init-scripts/01-landbiznes-schema.sql
+docker exec -i scrupeak_db psql -U scrupeak -d scrupeak < init-scripts/01-scrupeak-schema.sql
 ```
 
 Verify with SQLTools in VS Code.
@@ -197,7 +197,7 @@ kill -9 <PID>
 docker ps | grep postgres
 
 # Check DB logs
-docker logs landbiznes_db
+docker logs scrupeak_db
 
 # Reconnect from service
 # Update DB_HOST to localhost if using Docker network

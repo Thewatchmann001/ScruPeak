@@ -430,7 +430,7 @@ npm run type-check   Check TypeScript types
 🎉 CONGRATULATIONS!
 ═══════════════════════════════════════════════════════════════════════════════
 
-Your LandBiznes frontend is complete and production-ready!
+Your ScruPeak frontend is complete and production-ready!
 
 ✅ 36 files created
 ✅ 3,500+ lines of code
@@ -453,5 +453,5 @@ Happy coding! 🚀
 
 ═══════════════════════════════════════════════════════════════════════════════
 
-Built with ❤️ for LandBiznes
+Built with ❤️ for ScruPeak
 Modern • Fast • Accessible • Production-Ready

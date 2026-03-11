@@ -2,8 +2,8 @@ import psycopg2
 import os
 import sys
 
-# DATABASE_URL=postgres://landbiznes:landbiznes@localhost:5432/landbiznes
-DB_URL = "postgres://landbiznes:landbiznes@localhost:5432/landbiznes"
+# DATABASE_URL=postgres://scrupeak:scrupeak@localhost:5432/scrupeak
+DB_URL = "postgres://scrupeak:scrupeak@localhost:5432/scrupeak"
 
 print(f"Connecting to {DB_URL}...")
 try:

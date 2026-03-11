@@ -6,11 +6,11 @@ services:
   # =========================================================================
   postgres:
     image: postgis/postgis:15-3.4
-    container_name: landbiznes-postgres
+    container_name: scrupeak-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: landbiznes_db
+      POSTGRES_DB: scrupeak_db
     ports:
       - "5432:5432"
     volumes:
@@ -21,14 +21,14 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - landbiznes-network
+      - scrupeak-network
 
   # =========================================================================
   # Redis Cache
   # =========================================================================
   redis:
     image: redis:7-alpine
-    container_name: landbiznes-redis
+    container_name: scrupeak-redis
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes
@@ -40,16 +40,16 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - landbiznes-network
+      - scrupeak-network
 
   # =========================================================================
-  # LandBiznes Backend API
+  # ScruPeak Backend API
   # =========================================================================
   backend:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
-    container_name: landbiznes-backend
+    container_name: scrupeak-backend
     environment:
       ENVIRONMENT: production
       DEBUG: "False"
@@ -62,7 +62,7 @@ services:
       # Database
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: landbiznes_db
+      DB_NAME: scrupeak_db
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_POOL_SIZE: 20
@@ -108,7 +108,7 @@ services:
       start_period: 10s
     
     networks:
-      - landbiznes-network
+      - scrupeak-network
     
     logging:
       driver: "json-file"
@@ -123,7 +123,7 @@ services:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
-    container_name: landbiznes-frontend
+    container_name: scrupeak-frontend
     ports:
       - "3000:3000"
     environment:
@@ -132,7 +132,7 @@ services:
     depends_on:
       - backend
     networks:
-      - landbiznes-network
+      - scrupeak-network
     logging:
       driver: "json-file"
       options:
@@ -144,7 +144,7 @@ services:
   # =========================================================================
   nginx:
     image: nginx:alpine
-    container_name: landbiznes-nginx
+    container_name: scrupeak-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -155,7 +155,7 @@ services:
       - backend
       - frontend
     networks:
-      - landbiznes-network
+      - scrupeak-network
     profiles:
       - proxy
 
@@ -168,5 +168,5 @@ volumes:
     driver: local
 
 networks:
-  landbiznes-network:
+  scrupeak-network:
     driver: bridge

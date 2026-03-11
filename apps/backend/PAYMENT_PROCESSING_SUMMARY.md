@@ -1,7 +1,7 @@
 # Payment Processing Implementation Summary
 
 ## Overview
-Successfully implemented comprehensive payment processing system with Stripe and Paystack integration for the LandBiznes backend. The system handles payment initiation, webhook verification, status tracking, and refund management.
+Successfully implemented comprehensive payment processing system with Stripe and Paystack integration for the ScruPeak backend. The system handles payment initiation, webhook verification, status tracking, and refund management.
 
 ## Completed Components
 

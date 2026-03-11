@@ -1,7 +1,7 @@
-# LandBiznes - Complete Directory Structure
+# ScruPeak - Complete Directory Structure
 
 ```
-LandBiznes/
+ScruPeak/
 │
 ├── 📋 ROOT DOCUMENTATION
 │   ├── README.md                                    ← Original database README
@@ -84,7 +84,7 @@ LandBiznes/
 │
 ├── 🗄️ DATABASE
 │   └── init-scripts/
-│       └── 01-landbiznes-schema.sql                ← 1050+ lines production schema
+│       └── 01-scrupeak-schema.sql                ← 1050+ lines production schema
 │
 └── TOTAL: 49+ NEW FILES CREATED FOR FRONTEND & MICROSERVICES
 ```
@@ -143,7 +143,7 @@ LandBiznes/
 ### 🗄️ Database
 | File | Purpose |
 |------|---------|
-| `init-scripts/01-landbiznes-schema.sql` | 1050+ lines: 8 tables, 6 triggers, 4 functions, 7 indexes |
+| `init-scripts/01-scrupeak-schema.sql` | 1050+ lines: 8 tables, 6 triggers, 4 functions, 7 indexes |
 | `SQLTOOLS_REFERENCE.sql` | Copy-paste SQL examples |
 | `DATABASE_SETUP.md` | Connection + backup procedures |
 
@@ -248,8 +248,8 @@ cd services/ownership-service && npm install && npm run dev
 cd frontend && npm install && npm start
 
 # Terminal 7: Database (ensure running)
-docker run --name landbiznes_db -e POSTGRES_USER=landbiznes \
-  -e POSTGRES_PASSWORD=landbiznes -p 5432:5432 \
+docker run --name scrupeak_db -e POSTGRES_USER=scrupeak \
+  -e POSTGRES_PASSWORD=scrupeak -p 5432:5432 \
   postgis/postgis:15-3.4
 ```
 
@@ -273,7 +273,7 @@ docker-compose -f docker-compose.full.yml up -d
 - Shared code: `shared/*.js`
 
 ### For Database Management
-- Schema: `init-scripts/01-landbiznes-schema.sql`
+- Schema: `init-scripts/01-scrupeak-schema.sql`
 - Query examples: `SQLTOOLS_REFERENCE.sql`
 - Connection info: `DATABASE_SETUP.md`
 

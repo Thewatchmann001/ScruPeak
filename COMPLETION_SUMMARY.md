@@ -1,8 +1,8 @@
-# LandBiznes - Completion Summary
+# ScruPeak - Completion Summary
 
 ## Project Overview
 
-LandBiznes is a **production-ready, national-scale land registry system** built with:
+ScruPeak is a **production-ready, national-scale land registry system** built with:
 - **Database:** PostgreSQL 15 + PostGIS 3.4 (complete with 8 tables, 6 triggers, spatial indexing)
 - **Backend:** 5 independent microservices with API Gateway
 - **Frontend:** React dashboard with maps, parcels, conflicts, ownership management
@@ -14,7 +14,7 @@ LandBiznes is a **production-ready, national-scale land registry system** built 
 
 ### ✅ Phase 1: Database Foundation (100% Complete)
 
-**Location:** `init-scripts/01-landbiznes-schema.sql` (1050+ lines)
+**Location:** `init-scripts/01-scrupeak-schema.sql` (1050+ lines)
 
 **Database Schema:**
 - ✅ 8 core tables with spatial indexing
@@ -199,7 +199,7 @@ GET|POST /api/owners/*             → Owner Service (3005)
 - ✅ 5 service Dockerfiles (optimized Alpine images, multi-stage builds)
 - ✅ Frontend Dockerfile (multi-stage React build)
 - ✅ Health check configuration on all services
-- ✅ Network configuration (landbiznes-network)
+- ✅ Network configuration (scrupeak-network)
 - ✅ Volume management (postgres_data persistence)
 
 **Services in Compose:**
@@ -308,7 +308,7 @@ Access: **http://localhost:3000**
 ### Infrastructure
 - **Containerization:** Docker + Alpine Linux
 - **Orchestration:** Docker Compose
-- **Networking:** Bridge network (landbiznes-network)
+- **Networking:** Bridge network (scrupeak-network)
 - **Persistence:** Docker named volume (postgres_data)
 - **Health Checks:** Built-in on all services
 
@@ -517,7 +517,7 @@ shared/
 | **Containers** | Docker (Alpine Linux) |
 | **Orchestration** | Docker Compose |
 | **Ports** | 5432, 3000, 3001-3004, 3006 |
-| **Network** | landbiznes-network (bridge) |
+| **Network** | scrupeak-network (bridge) |
 | **Database Scale** | 100M+ parcels |
 | **Connections** | 20 pool per service |
 
@@ -535,7 +535,7 @@ shared/
 
 ## Summary
 
-**LandBiznes** is a complete, production-ready land registry system featuring:
+**ScruPeak** is a complete, production-ready land registry system featuring:
 
 ✅ **Database:** 1050+ lines of enterprise schema with spatial indexing, immutability triggers, genealogy tracking, and audit logs
 

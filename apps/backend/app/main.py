@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
-    logger.info("[START] Starting LandBiznes Backend...")
+    logger.info("[START] Starting ScruPeak Backend...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Database: {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
     logger.info(f"Redis: {settings.REDIS_HOST}:{settings.REDIS_PORT}")
@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    logger.info("[STOP] Shutting down LandBiznes Backend...")
+    logger.info("[STOP] Shutting down ScruPeak Backend...")
     try:
         await close_db()
         logger.info("[OK] Shutdown complete")
@@ -77,7 +77,7 @@ def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     
     app = FastAPI(
-        title="LandBiznes Backend API",
+        title="ScruPeak Backend API",
         description="National-grade land registry and management platform",
         version="1.0.0",
         docs_url="/api/v1/docs",
@@ -208,7 +208,7 @@ def create_app() -> FastAPI:
     async def root():
         """API root endpoint"""
         return {
-            "name": "LandBiznes Backend API",
+            "name": "ScruPeak Backend API",
             "version": "1.0.0",
             "environment": settings.ENVIRONMENT,
             "docs": "/api/v1/docs",

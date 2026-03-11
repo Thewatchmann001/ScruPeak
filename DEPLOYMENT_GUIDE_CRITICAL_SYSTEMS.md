@@ -87,7 +87,7 @@ cd /apps/backend
 alembic upgrade head
 
 # Verify tables were created
-psql -U landbiznes -d landbiznes -c "\dt" | grep -E "title|fraud|dispute|compliance"
+psql -U scrupeak -d scrupeak -c "\dt" | grep -E "title|fraud|dispute|compliance"
 ```
 
 Expected output:
@@ -181,11 +181,11 @@ pytest tests/ -v
 
 ```bash
 # Build Docker image
-docker build -t landbiznes-backend:latest .
+docker build -t scrupeak-backend:latest .
 
 # Push to registry (if using Docker Hub/ECR)
-docker tag landbiznes-backend:latest <your-registry>/landbiznes-backend:latest
-docker push <your-registry>/landbiznes-backend:latest
+docker tag scrupeak-backend:latest <your-registry>/scrupeak-backend:latest
+docker push <your-registry>/scrupeak-backend:latest
 
 # Deploy to staging
 docker-compose -f docker-compose.yml up -d
@@ -197,11 +197,11 @@ docker-compose -f docker-compose.yml up -d
 
 ```bash
 # 1. Backup production database
-pg_dump -U landbiznes landbiznes > backup_$(date +%Y%m%d).sql
+pg_dump -U scrupeak scrupeak > backup_$(date +%Y%m%d).sql
 
 # 2. Deploy updated code
 git pull origin main
-docker build -t landbiznes-backend:1.1 .
+docker build -t scrupeak-backend:1.1 .
 
 # 3. Run migrations
 docker-compose run backend alembic upgrade head
@@ -223,7 +223,7 @@ curl http://localhost:8000/api/v1/health
 
 ```bash
 # 1. Restore database from backup
-psql -U landbiznes landbiznes < backup_YYYYMMDD.sql
+psql -U scrupeak scrupeak < backup_YYYYMMDD.sql
 
 # 2. Restart with previous version
 docker-compose restart backend
@@ -275,7 +275,7 @@ python -m uvicorn app.main:app --reload
 docker ps | grep postgis
 
 # Check connection
-psql -U landbiznes -h localhost -d landbiznes -c "SELECT 1"
+psql -U scrupeak -h localhost -d scrupeak -c "SELECT 1"
 
 # Check environment variables
 cat .env | grep DB_

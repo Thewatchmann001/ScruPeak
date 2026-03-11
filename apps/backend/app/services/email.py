@@ -12,7 +12,7 @@ settings = get_settings()
 conf = ConnectionConfig(
     MAIL_USERNAME=settings.EMAIL_USER,
     MAIL_PASSWORD=settings.EMAIL_PASSWORD,
-    MAIL_FROM=settings.EMAIL_USER if settings.EMAIL_USER else "noreply@landbiznes.com",
+    MAIL_FROM=settings.EMAIL_USER if settings.EMAIL_USER else "noreply@scrupeak.com",
     MAIL_PORT=settings.EMAIL_PORT,
     MAIL_SERVER=settings.EMAIL_HOST,
     MAIL_STARTTLS=True,
@@ -52,14 +52,14 @@ async def send_email_async(subject: str, recipients: List[EmailStr], body: str):
 
 async def send_verification_email(to_email: str, token: str):
     """Send verification email with token"""
-    subject = "Verify your LandBiznes Account"
+    subject = "Verify your ScruPeak Account"
     # Detect frontend URL dynamically or from config in future
     verification_link = f"http://localhost:3002/auth/verify-email?token={token}"
     
     body = f"""
     <html>
         <body>
-            <h1>Welcome to LandBiznes!</h1>
+            <h1>Welcome to ScruPeak!</h1>
             <p>Please click the link below to verify your email address:</p>
             <a href="{verification_link}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
             <p>Or copy this link: {verification_link}</p>
@@ -70,7 +70,7 @@ async def send_verification_email(to_email: str, token: str):
 
 async def send_reset_password_email(to_email: str, token: str):
     """Send reset password email with token"""
-    subject = "Reset your LandBiznes Password"
+    subject = "Reset your ScruPeak Password"
     reset_link = f"http://localhost:3002/auth/reset-password?token={token}"
     
     body = f"""

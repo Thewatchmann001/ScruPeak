@@ -1,6 +1,6 @@
-# LandBiznes Frontend
+# ScruPeak Frontend
 
-Modern, production-ready Next.js 14 frontend for the LandBiznes land management platform. Built with TypeScript, Tailwind CSS, and a focus on excellent UI/UX.
+Modern, production-ready Next.js 14 frontend for the ScruPeak land management platform. Built with TypeScript, Tailwind CSS, and a focus on excellent UI/UX.
 
 ## 🎯 Features
 
@@ -340,7 +340,7 @@ CMD ["npm", "start"]
 ### Environment Variables for Production
 
 ```
-NEXT_PUBLIC_API_URL=https://api.landbiznes.com
+NEXT_PUBLIC_API_URL=https://api.scrupeak.com
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
 
@@ -380,7 +380,7 @@ npm run dev  # runs automatically
 
 ## 📝 License
 
-Proprietary - LandBiznes © 2024
+Proprietary - ScruPeak © 2024
 
 ## 👥 Support
 
@@ -392,4 +392,4 @@ For issues or questions:
 
 ---
 
-**Built with ❤️ for LandBiznes**
+**Built with ❤️ for ScruPeak**

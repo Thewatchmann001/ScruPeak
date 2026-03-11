@@ -1,5 +1,5 @@
 """
-Load Testing Suite for LandBiznes Backend
+Load Testing Suite for ScruPeak Backend
 Tests system performance and scalability at 20M+ user capacity
 """
 

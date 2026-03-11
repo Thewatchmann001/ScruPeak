@@ -1,4 +1,4 @@
-# LandBiznes Production Schema - Final Summary
+# ScruPeak Production Schema - Final Summary
 
 ## ✅ Your Requirements Met 100%
 
@@ -153,8 +153,8 @@ grid_statistics
 
 ### 1. Access SQLTools in VS Code
 ```
-Bottom-left: Click "LandBiznes" connection
-Set working database: "landbiznes"
+Bottom-left: Click "ScruPeak" connection
+Set working database: "scrupeak"
 File → New File → Choose SQL dialect
 ```
 
@@ -241,10 +241,10 @@ VALUES (
 ## 📂 File Structure
 
 ```
-LandBiznes/
+ScruPeak/
 ├── docker-compose.yml                    [Updated - working config]
 ├── init-scripts/
-│   ├── 01-landbiznes-schema.sql         [NEW - production schema]
+│   ├── 01-scrupeak-schema.sql         [NEW - production schema]
 │   └── 01-schema.sql                    [OLD - can delete]
 ├── DATABASE_SETUP.md                     [Connection guide]
 ├── GETTING_STARTED.md                    [Quick start]
@@ -311,7 +311,7 @@ SELECT * FROM land_registry.get_parcel_lineage(
 - [GETTING_STARTED.md](GETTING_STARTED.md) - Quick start
 
 **Schema File**:
-- [init-scripts/01-landbiznes-schema.sql](init-scripts/01-landbiznes-schema.sql) - Full SQL schema with comments
+- [init-scripts/01-scrupeak-schema.sql](init-scripts/01-scrupeak-schema.sql) - Full SQL schema with comments
 
 ---
 
@@ -342,7 +342,7 @@ SELECT * FROM land_registry.get_parcel_lineage(
 
 ## Summary
 
-Your LandBiznes land registry database is **PRODUCTION READY** with:
+Your ScruPeak land registry database is **PRODUCTION READY** with:
 
 ✅ Immutable parcel records with collision-proof spatial identity  
 ✅ Complete lineage tracking for subdivisions and merges  

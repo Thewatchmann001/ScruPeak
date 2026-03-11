@@ -55,9 +55,10 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
+      console.log('Initiating Google Login with callback:', from);
       await signIn.social({
         provider: 'google',
-        callbackURL: from,
+        callbackURL: window.location.origin + from,
       });
     } catch (error: any) {
       console.error(error);
@@ -81,7 +82,7 @@ export default function LoginPage() {
             Welcome back
           </h2>
           <p className="mt-2 text-base text-gray-500">
-            Sign in to continue your journey with LandBiznes
+            Sign in to continue your journey with ScruPeak
           </p>
         </div>
 

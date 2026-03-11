@@ -1,5 +1,5 @@
 """
-Spatial utilities for LandBiznes backend
+Spatial utilities for ScruPeak backend
 Handles grid ID calculation and coordinate projection
 """
 import math

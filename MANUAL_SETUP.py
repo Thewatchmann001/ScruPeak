@@ -14,10 +14,10 @@ docker pull postgis/postgis:15-3.4
 
 # Run container
 docker run -d \
-  --name landbiznes_db \
-  -e POSTGRES_DB=landbiznes \
-  -e POSTGRES_USER=landbiznes \
-  -e POSTGRES_PASSWORD=landbiznes \
+  --name scrupeak_db \
+  -e POSTGRES_DB=scrupeak \
+  -e POSTGRES_USER=scrupeak \
+  -e POSTGRES_PASSWORD=scrupeak \
   -p 5432:5432 \
   -v postgres_data:/var/lib/postgresql/data \
   postgis/postgis:15-3.4
@@ -29,10 +29,10 @@ sleep 5
 docker ps
 
 # Apply schema
-docker exec -i landbiznes_db psql -U landbiznes -d landbiznes < init-scripts/01-schema.sql
+docker exec -i scrupeak_db psql -U scrupeak -d scrupeak < init-scripts/01-schema.sql
 
 # Test connection
-psql -h localhost -U landbiznes -d landbiznes -c "SELECT version();"
+psql -h localhost -U scrupeak -d scrupeak -c "SELECT version();"
 
 ## Option 2: Install PostgreSQL locally (Windows)
 
@@ -41,8 +41,8 @@ Download from: https://www.postgresql.org/download/windows/
 Then:
 - Install PostgreSQL 15+
 - Install PostGIS extension
-- Create database 'landbiznes'
-- Run: psql -U postgres -d landbiznes < init-scripts/01-schema.sql
+- Create database 'scrupeak'
+- Run: psql -U postgres -d scrupeak < init-scripts/01-schema.sql
 
 ## Option 3: Use Cloud PostgreSQL
 
@@ -51,12 +51,12 @@ Then:
 - Azure Database for PostgreSQL
 - Digital Ocean Managed Database
 
-Connection: postgresql://landbiznes:landbiznes@your-host:5432/landbiznes
+Connection: postgresql://scrupeak:scrupeak@your-host:5432/scrupeak
 
 ## Verify Installation
 
 # Test basic connection
-psql -h localhost -U landbiznes -d landbiznes
+psql -h localhost -U scrupeak -d scrupeak
 
 # In psql, run:
 SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'land_registry';

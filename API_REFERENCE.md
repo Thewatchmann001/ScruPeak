@@ -1,7 +1,7 @@
-# LandBiznes Backend API Reference
+# ScruPeak Backend API Reference
 
 ## Overview
-Complete REST API for the LandBiznes real estate platform. Supports 61+ endpoints across 11 routers. Built with FastAPI for high performance and scalability.
+Complete REST API for the ScruPeak real estate platform. Supports 61+ endpoints across 11 routers. Built with FastAPI for high performance and scalability.
 
 **Base URL**: `http://localhost:8000/api/v1`
 
@@ -447,9 +447,9 @@ GET /api/v1/land/?status=available&min_price=10000000
 ## Support
 
 For API support:
-- Email: api-support@landbiznes.com
-- Status Page: https://status.landbiznes.com
-- Documentation: https://docs.landbiznes.com
+- Email: api-support@scrupeak.com
+- Status Page: https://status.scrupeak.com
+- Documentation: https://docs.scrupeak.com
 
 ---
 

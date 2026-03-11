@@ -128,7 +128,7 @@ class CompositeSpatialIdentity:
     def update_geometry(self, new_geometry: List[Tuple[float, float]], actor: str, reason: str):
         """
         Update the geometry of the parcel (e.g., shrinking due to subdivision).
-        Note: While the CSI model states geometry is immutable, the LandBiznes
+        Note: While the CSI model states geometry is immutable, the ScruPeak
         spec requires the 'mother polygon' to shrink while retaining its ID.
         """
         if new_geometry[0] != new_geometry[-1]:

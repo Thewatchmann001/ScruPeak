@@ -254,7 +254,7 @@ npm run type-check   # Check TypeScript
 ## 📍 File Location
 
 ```
-c:\Users\HP\Desktop\LandBiznes\apps\frontend
+c:\Users\HP\Desktop\ScruPeak\apps\frontend
 ```
 
 ---
@@ -309,7 +309,7 @@ Then visit: **http://localhost:3000**
 
 ---
 
-**Your LandBiznes frontend is ready for development! 🎉**
+**Your ScruPeak frontend is ready for development! 🎉**
 
 Start building with:
 ```bash

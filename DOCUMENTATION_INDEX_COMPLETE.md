@@ -1,8 +1,8 @@
-# 📖 LandBiznes Documentation Index - Complete System
+# 📖 ScruPeak Documentation Index - Complete System
 
 ## 🎯 Start Here
 
-**New to LandBiznes?** Start with one of these documents:
+**New to ScruPeak?** Start with one of these documents:
 
 1. **[FINAL_SUMMARY.md](./FINAL_SUMMARY.md)** ⭐ START HERE
    - 5-minute overview of the complete system
@@ -180,7 +180,7 @@
 ## 📋 File Organization
 
 ```
-LandBiznes/
+ScruPeak/
 ├── 📖 Documentation (This section)
 │   ├── FINAL_SUMMARY.md                     ⭐ Start here
 │   ├── QUICK_REFERENCE_PHASE_3.md

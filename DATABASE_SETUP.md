@@ -14,27 +14,27 @@ docker-compose up -d db
 docker ps
 ```
 
-Should show `landbiznes_db` running on port 5432.
+Should show `scrupeak_db` running on port 5432.
 
 ### 3. Connect to the Database
 
 #### Using psql (PostgreSQL CLI)
 ```bash
-psql -h localhost -U landbiznes -d landbiznes
+psql -h localhost -U scrupeak -d scrupeak
 ```
 
-When prompted, enter password: `landbiznes`
+When prompted, enter password: `scrupeak`
 
 #### Using a Database Client
 - **Host**: localhost
 - **Port**: 5432
-- **Database**: landbiznes
-- **Username**: landbiznes
-- **Password**: landbiznes
+- **Database**: scrupeak
+- **Username**: scrupeak
+- **Password**: scrupeak
 
 #### Connection String
 ```
-postgresql://landbiznes:landbiznes@localhost:5432/landbiznes
+postgresql://scrupeak:scrupeak@localhost:5432/scrupeak
 ```
 
 ## Schema Overview
@@ -209,17 +209,17 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 ### Backup Database
 ```bash
-docker exec landbiznes_db pg_dump -U landbiznes landbiznes > backup.sql
+docker exec scrupeak_db pg_dump -U scrupeak scrupeak > backup.sql
 ```
 
 ### Restore Database
 ```bash
-docker exec -i landbiznes_db psql -U landbiznes landbiznes < backup.sql
+docker exec -i scrupeak_db psql -U scrupeak scrupeak < backup.sql
 ```
 
 ### Access Database Shell
 ```bash
-docker exec -it landbiznes_db psql -U landbiznes -d landbiznes
+docker exec -it scrupeak_db psql -U scrupeak -d scrupeak
 ```
 
 ## Connection Examples
@@ -230,9 +230,9 @@ import psycopg2
 
 conn = psycopg2.connect(
     host="localhost",
-    database="landbiznes",
-    user="landbiznes",
-    password="landbiznes"
+    database="scrupeak",
+    user="scrupeak",
+    password="scrupeak"
 )
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM land_registry.current_ownership;")
@@ -248,9 +248,9 @@ const { Client } = require('pg');
 const client = new Client({
   host: 'localhost',
   port: 5432,
-  database: 'landbiznes',
-  user: 'landbiznes',
-  password: 'landbiznes'
+  database: 'scrupeak',
+  user: 'scrupeak',
+  password: 'scrupeak'
 });
 
 client.connect();
@@ -265,7 +265,7 @@ client.query('SELECT * FROM land_registry.current_ownership', (err, res) => {
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: 'postgresql://landbiznes:landbiznes@localhost:5432/landbiznes'
+  connectionString: 'postgresql://scrupeak:scrupeak@localhost:5432/scrupeak'
 });
 
 async function getOwnership() {
@@ -308,9 +308,9 @@ getOwnership();
 ## Environment Variables
 
 Edit `docker-compose.yml` to modify:
-- `POSTGRES_DB`: Database name (default: landbiznes)
-- `POSTGRES_USER`: Database user (default: landbiznes)
-- `POSTGRES_PASSWORD`: Database password (default: landbiznes)
+- `POSTGRES_DB`: Database name (default: scrupeak)
+- `POSTGRES_USER`: Database user (default: scrupeak)
+- `POSTGRES_PASSWORD`: Database password (default: scrupeak)
 
 ⚠️ **Security Note**: Change default credentials in production!
 
@@ -322,7 +322,7 @@ Edit `docker-compose.yml` to modify:
 docker ps
 
 # Check logs
-docker logs landbiznes_db
+docker logs scrupeak_db
 ```
 
 ### Database Not Initialized
@@ -331,7 +331,7 @@ docker logs landbiznes_db
 docker-compose down
 
 # Remove volume
-docker volume rm landbiznes_postgres_data
+docker volume rm scrupeak_postgres_data
 
 # Restart
 docker-compose up -d db
@@ -340,7 +340,7 @@ docker-compose up -d db
 ### Insufficient Permissions
 Ensure the user has proper PostgreSQL role permissions:
 ```sql
-GRANT ALL PRIVILEGES ON SCHEMA land_registry TO landbiznes;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA land_registry TO landbiznes;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA land_registry TO landbiznes;
+GRANT ALL PRIVILEGES ON SCHEMA land_registry TO scrupeak;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA land_registry TO scrupeak;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA land_registry TO scrupeak;
 ```

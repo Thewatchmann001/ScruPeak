@@ -22,7 +22,7 @@ export const auth = betterAuth({
         requireEmailVerification: false,
         async sendResetPassword(user, url) {
             await transporter.sendMail({
-                from: process.env.SMTP_FROM || '"LandBiznes Support" <noreply@landbiznes.com>',
+                from: process.env.SMTP_FROM || '"ScruPeak Support" <noreply@scrupeak.com>',
                 to: user.email,
                 subject: "Reset your password",
                 html: `<p>Click the link below to reset your password:</p><a href="${url}">${url}</a>`

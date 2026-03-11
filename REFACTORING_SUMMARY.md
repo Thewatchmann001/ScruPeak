@@ -1,4 +1,4 @@
-# Refactoring Summary: LandBiznes Spatial Engine Alignment with Governance Spec
+# Refactoring Summary: ScruPeak Spatial Engine Alignment with Governance Spec
 
 **Date:** January 22, 2026  
 **Status:** ✅ COMPLETE
@@ -7,7 +7,7 @@
 
 ## Objective
 
-Refactor the existing `spatial-engine-python` service to align with the **LandBiznes Spatial Intelligence Agent** governance spec, implementing:
+Refactor the existing `spatial-engine-python` service to align with the **ScruPeak Spatial Intelligence Agent** governance spec, implementing:
 - Composite Spatial Identity (CSI) model
 - Append-only parcel registry with lineage tracking
 - Spatial relationship detection and conflict classification
@@ -175,7 +175,7 @@ if decision:
 
 Run the full test suite:
 ```bash
-cd c:\Users\HP\Desktop\LandBiznes\services\spatial-engine-python\app
+cd c:\Users\HP\Desktop\ScruPeak\services\spatial-engine-python\app
 python test_agent.py
 ```
 
@@ -231,7 +231,7 @@ The implementation enforces the OARG specification:
 
 ## Conclusion
 
-The spatial-engine-python service is now aligned with the LandBiznes Spatial Intelligence Agent specification. It:
+The spatial-engine-python service is now aligned with the ScruPeak Spatial Intelligence Agent specification. It:
 - ✅ Maintains immutable CSI with append-only history
 - ✅ Enforces deterministic grid reference and parcel code rules
 - ✅ Detects spatial conflicts and classifies events
@@ -240,4 +240,4 @@ The spatial-engine-python service is now aligned with the LandBiznes Spatial Int
 - ✅ Escalates ambiguous cases to OARG authority
 - ✅ Flags fraud indicators (lineage breaks, orphans, duplicates)
 
-**Guiding Principle:** "LandBiznes does not record land — it mathematically proves it."
+**Guiding Principle:** "ScruPeak does not record land — it mathematically proves it."

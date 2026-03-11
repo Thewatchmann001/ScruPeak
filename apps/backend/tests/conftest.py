@@ -1,5 +1,5 @@
 """
-Test configuration and fixtures for LandBiznes backend
+Test configuration and fixtures for ScruPeak backend
 """
 import pytest
 import asyncio

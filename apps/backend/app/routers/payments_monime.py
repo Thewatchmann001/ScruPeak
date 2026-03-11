@@ -70,7 +70,7 @@ async def start_checkout(
                 name=f"Escrow Payment for {escrow_id}",
                 price={"currency": currency, "value": amount_minor},
                 quantity=1,
-                description="LandBiznes escrow payment",
+                description="ScruPeak escrow payment",
                 reference=str(escrow_id),
             )
         ]
