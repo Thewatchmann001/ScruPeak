@@ -272,8 +272,23 @@ jobs:
             echo "port=3000" >> $GITHUB_OUTPUT
           elif [[ "$NAME" == "web" ]]; then
             echo "port=80" >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "auth-server" ]]; then
+            echo "port=4005" >> $GITHUB_OUTPUT
           else
             echo "port=8000" >> $GITHUB_OUTPUT
+          fi
+
+          # Set resources based on service
+          if [[ "$NAME" == "ai-service" ]]; then
+            echo "memory=2Gi" >> $GITHUB_OUTPUT
+            echo "cpu=2" >> $GITHUB_OUTPUT
+            echo "concurrency=10" >> $GITHUB_OUTPUT
+            echo "timeout=300s" >> $GITHUB_OUTPUT
+          else
+            echo "memory=512Mi" >> $GITHUB_OUTPUT
+            echo "cpu=1" >> $GITHUB_OUTPUT
+            echo "concurrency=80" >> $GITHUB_OUTPUT
+            echo "timeout=60s" >> $GITHUB_OUTPUT
           fi
 
       - name: Authenticate via Workload Identity Federation
@@ -309,58 +324,11 @@ jobs:
             --allow-unauthenticated
             --min-instances=0
             --max-instances=10
-            --memory=512Mi
-            --cpu=1
-            --timeout=60s
-            --concurrency=80
+            --memory=${{ steps.svc.outputs.memory }}
+            --cpu=${{ steps.svc.outputs.cpu }}
+            --timeout=${{ steps.svc.outputs.timeout }}
+            --concurrency=${{ steps.svc.outputs.concurrency }}
             --port=${{ steps.svc.outputs.port }}
-          env_vars: |
-            NODE_ENV=${{ steps.svc.outputs.env }}
-            GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
-          secrets: |
-            DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env }}:latest
-            JWT_SECRET=JWT_SECRET:latest
-
-                  - name: Set service-specific flags
-        id: flags
-        run: |
-          NAME="${{ steps.svc.outputs.name }}"
-          PORT="${{ steps.svc.outputs.port }}"
-          
-          # Default flags for most services
-          echo "memory=512Mi" >> $GITHUB_OUTPUT
-          echo "cpu=1" >> $GITHUB_OUTPUT
-          echo "concurrency=80" >> $GITHUB_OUTPUT
-          echo "timeout=60s" >> $GITHUB_OUTPUT
-          echo "startup_probe=" >> $GITHUB_OUTPUT
-          
-          # AI service needs more resources
-          if [[ "$NAME" == "ai-service" ]]; then
-            echo "memory=2Gi" >> $GITHUB_OUTPUT
-            echo "cpu=2" >> $GITHUB_OUTPUT
-            echo "concurrency=10" >> $GITHUB_OUTPUT
-            echo "timeout=300s" >> $GITHUB_OUTPUT
-            echo "startup_probe=--startup-probe-tcp-socket-port=$PORT --startup-probe-initial-delay-secs=30 --startup-probe-timeout-secs=10 --startup-probe-failure-threshold=12 --startup-probe-period-secs=10" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Deploy to Cloud Run
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ steps.svc.outputs.cr_name }}
-          image: ${{ steps.svc.outputs.image }}
-          region: ${{ env.GCP_REGION }}
-          project_id: ${{ env.GCP_PROJECT_ID }}
-          flags: |
-            --allow-unauthenticated
-            --min-instances=0
-            --max-instances=10
-            --memory=${{ steps.flags.outputs.memory }}
-            --cpu=${{ steps.flags.outputs.cpu }}
-            --timeout=${{ steps.flags.outputs.timeout }}
-            --concurrency=${{ steps.flags.outputs.concurrency }}
-            --port=${{ steps.svc.outputs.port }}
-            ${{ steps.flags.outputs.startup_probe }}
           env_vars: |
             NODE_ENV=${{ steps.svc.outputs.env }}
             GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
