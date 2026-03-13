@@ -1,14 +1,19 @@
-from fastapi import FastAPI
+import os
+import json
 import logging
+import httpx
+from fastapi import FastAPI
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Lanstimate™ & Jems AI Service", version="1.0.0")
 
+
 @app.get("/health")
 def health():
     return {"status": "healthy", "service": "lanstimate-jems-ai"}
+
 
 @app.post("/valuation/lanstimate")
 async def lanstimate_value(land_data: dict):
@@ -18,11 +23,7 @@ async def lanstimate_value(land_data: dict):
     """
     logger.info(f"Lanstimate valuation for: {land_data}")
 
-    # Implementation using OpenAI for valuation
-    import httpx
-    import os
-
-    openai_key = "proj_DWGnbduxzc3M7p3AD6IAZ1iC" # Hardcoded per user request
+    openai_key = os.environ.get("OPENAI_API_KEY")
     url = "https://api.openai.com/v1/chat/completions"
 
     headers = {
@@ -50,14 +51,12 @@ async def lanstimate_value(land_data: dict):
             response = await client.post(url, headers=headers, json=payload)
             response.raise_for_status()
             ai_data = response.json()["choices"][0]["message"]["content"]
-            import json
             result = json.loads(ai_data)
             result["currency"] = "SLE"
             result["engine"] = "Lanstimate™ (OpenAI Powered)"
             return result
     except Exception as e:
         logger.error(f"Lanstimate OpenAI error: {e}")
-        # Fallback to local stub
         return {
             "estimated_price": 100000,
             "currency": "SLE",
@@ -65,6 +64,7 @@ async def lanstimate_value(land_data: dict):
             "factors": ["fallback_stub_used"],
             "engine": "Lanstimate™ (Stub Fallback)"
         }
+
 
 @app.post("/fraud/jems-audit")
 def jems_ai_audit(transaction_data: dict):
