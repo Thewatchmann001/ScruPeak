@@ -26,9 +26,11 @@ export function ZillowHero() {
         {/* Logo & Tagline */}
         <div className="text-center mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <div className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-xl">LB</span>
-            </div>
+            <img
+              src="/images/logo.jpg"
+              alt="ScruPeak Logo"
+              className="w-14 h-14 rounded-lg object-cover shadow-lg"
+            />
             <h1 className="text-5xl md:text-7xl font-black text-white">ScruPeak</h1>
           </div>
           <p className="text-xl md:text-2xl text-gray-300 font-light">

@@ -8,9 +8,11 @@ export function PremiumFooter() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-slate-500 flex items-center justify-center font-black text-white">
-                LB
-              </div>
+              <img
+                src="/images/logo.jpg"
+                alt="ScruPeak Logo"
+                className="w-10 h-10 rounded-lg object-cover"
+              />
               <span className="text-xl font-black">ScruPeak</span>
             </div>
             <p className="text-gray-400 text-sm">

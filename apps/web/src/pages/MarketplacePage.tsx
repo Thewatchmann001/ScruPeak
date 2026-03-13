@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { landService } from '@/services/landService';
 import { Land, PaginatedResponse } from '@/types';
 import { LandCard } from '@/components/land/LandCard';
-import { MapPinOff, SearchX } from 'lucide-react';
+import { MapPinOff, SearchX, Filter, Search, Map as MapIcon, List } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Link } from 'react-router-dom';
+import { InteractiveMap } from '@/components/map/InteractiveMap';
 
 export default function MarketplacePage() {
   const [lands, setLands] = useState<Land[]>([]);
@@ -13,8 +14,7 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [taskId, setTaskId] = useState('');
-  const [taskStatus, setTaskStatus] = useState<{ status: string; result?: any } | null>(null);
+  const [viewMode, setViewMode] = useState<'split' | 'map' | 'list'>('split');
 
   useEffect(() => {
     const fetchLands = async () => {
@@ -26,11 +26,7 @@ export default function MarketplacePage() {
           page,
           page_size: 12
         });
-        // Axios wraps response in data
         const data = response.data as unknown as PaginatedResponse<Land>; 
-        // Note: Check if response.data is directly the object or if axios wraps it. 
-        // Usually axios returns { data: ... }. landService.search returns axios promise.
-        
         setLands(data.items);
         setTotalPages(data.total_pages);
       } catch (err) {
@@ -48,130 +44,156 @@ export default function MarketplacePage() {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, page]);
 
-  const checkTaskStatus = async () => {
-    if (!taskId) return;
-    try {
-      const response = await landService.getTaskStatus(taskId);
-      setTaskStatus(response.data);
-    } catch (err) {
-      console.error('Failed to check task:', err);
-      setTaskStatus({ status: 'ERROR', result: 'Failed to fetch status' });
-    }
-  };
+  // Convert Land objects to the format InteractiveMap expects
+  const mapListings = lands.map(land => ({
+    id: land.id,
+    location: {
+      country: 'Sierra Leone',
+      district: land.district,
+      chiefdom: land.region,
+      community: land.title,
+      coordinates: land.location?.latitude && land.location?.longitude ? [land.location.latitude, land.location.longitude] as [number, number] : undefined
+    },
+    price: land.price || 0,
+    size: land.size_sqm,
+    sizeUnit: 'sqm' as const,
+    purpose: land.classification?.name || 'General',
+    verificationScore: land.blockchain_hash ? 100 : 60
+  }));
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header & Search */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Land Marketplace</h1>
-          <div className="flex gap-4 mb-6">
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-white">
+      {/* Search & Filter Header */}
+      <header className="flex-none h-16 border-b border-slate-200 px-6 flex items-center justify-between bg-white z-20">
+        <div className="flex items-center gap-4 flex-1 max-w-2xl">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by title, location, or description..."
-              className="flex-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Address, Neighborhood, or District"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setPage(1); // Reset to first page on search
+                setPage(1);
               }}
             />
           </div>
-
-
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+            <Filter className="w-4 h-4" />
+            <span>Filters</span>
+          </button>
         </div>
 
-        {/* Results */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div className="bg-gray-50 p-4 rounded-full mb-4">
-              <SearchX className="w-8 h-8 text-gray-300" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load listings</h3>
-            <p className="text-gray-500 max-w-md mx-auto mb-6 text-sm">
-              We're having trouble connecting to the marketplace right now.
-            </p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="text-primary-600 font-medium hover:underline text-sm"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {lands.map((land) => (
-                <LandCard key={land.id} land={land} />
-              ))}
-            </div>
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+          <button
+            onClick={() => setViewMode('split')}
+            className={`p-2 rounded-md transition-all ${viewMode === 'split' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-900'}`}
+          >
+            <MapIcon className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-900'}`}
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
 
-            {lands.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                {searchQuery ? (
-                  <>
-                    <div className="bg-gray-100 p-4 rounded-full mb-4">
-                      <SearchX className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No matches found</h3>
-                    <p className="text-gray-500 max-w-md mx-auto">
-                      We couldn't find any lands matching "{searchQuery}". Try adjusting your search terms or filters.
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar Listings */}
+        <aside className={`${viewMode === 'map' ? 'hidden' : viewMode === 'list' ? 'w-full' : 'w-[400px] lg:w-[480px]'} flex-none flex flex-col border-r border-slate-200 bg-white overflow-hidden`}>
+          <div className="flex-none p-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="font-bold text-slate-900">
+              {lands.length} Properties Found
+            </h2>
+            <div className="text-sm text-slate-500">
+              Sort: <span className="font-medium text-slate-900 cursor-pointer">Newest</span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            {loading ? (
+              <div className="grid grid-cols-1 gap-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-64 bg-slate-50 animate-pulse rounded-xl" />
+                ))}
+              </div>
+            ) : error ? (
+              <div className="py-12 text-center">
+                <SearchX className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                <p className="text-slate-500">Failed to load listings.</p>
+              </div>
+            ) : (
+              <div className={`grid ${viewMode === 'list' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'} gap-4`}>
+                {lands.map((land) => (
+                  <LandCard key={land.id} land={land} />
+                ))}
+
+                {lands.length === 0 && (
+                  <div className="py-20 text-center col-span-full">
+                    <MapPinOff className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-slate-900 mb-2">No Properties Found</h3>
+                    <p className="text-sm text-slate-500 px-10">
+                      Try adjusting your search or filters to find what you're looking for.
                     </p>
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="mt-6 text-primary-600 font-medium hover:underline"
-                    >
-                      Clear search
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="bg-gray-100 p-6 rounded-full mb-6">
-                      <MapPinOff className="w-12 h-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No Lands Listed Yet</h3>
-                    <p className="text-gray-500 max-w-md mx-auto mb-8">
-                      There are currently no land listings available in the marketplace. Check back soon or be the first to list a property!
-                    </p>
-                    <Link to="/sell">
-                      <Button size="lg" className="bg-primary hover:bg-primary/90">
-                        List Your Land
-                      </Button>
-                    </Link>
-                  </>
+                  </div>
                 )}
               </div>
             )}
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center mt-8 gap-2">
+              <div className="flex justify-center items-center mt-8 gap-4 pb-8">
                 <button
                   disabled={page === 1}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-100"
+                  className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-all"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2 text-gray-600">
-                  Page {page} of {totalPages}
+                <span className="text-sm text-slate-600">
+                  {page} / {totalPages}
                 </span>
                 <button
                   disabled={page === totalPages}
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-100"
+                  className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-all"
                 >
                   Next
                 </button>
               </div>
             )}
-          </>
-        )}
+          </div>
+        </aside>
+
+        {/* Map Area */}
+        <main className={`${viewMode === 'list' ? 'hidden' : 'flex-1'} relative bg-slate-100`}>
+          <InteractiveMap
+            listings={mapListings}
+            height="100%"
+            showControls={true}
+          />
+        </main>
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #cbd5e1;
+        }
+      `}</style>
     </div>
   );
 }
