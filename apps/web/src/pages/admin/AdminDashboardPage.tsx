@@ -112,8 +112,8 @@ export default function AdminDashboardPage() {
           title="Pending KYC" 
           value={stats.pending_kyc.toString()} 
           icon={ShieldCheck} 
-          color="text-orange-600" 
-          bg="bg-orange-50"
+          color="text-primary"
+          bg="bg-slate-50"
           link="/admin/kyc"
         />
         <StatCard 
@@ -158,18 +158,18 @@ export default function AdminDashboardPage() {
         <Card className="p-6">
            <div className="flex items-center justify-between mb-4">
              <h3 className="text-lg font-semibold flex items-center">
-               <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
+               <AlertTriangle className="w-5 h-5 mr-2 text-primary" />
                Public Notices
              </h3>
              <Button variant="outline" size="sm" onClick={() => window.location.href='/admin/notices'}>View All</Button>
            </div>
            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-orange-500">
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-primary">
                  <div>
                     <p className="font-medium text-gray-900">Land SL-092-22</p>
                     <p className="text-xs text-gray-500">Notice expires in 3 days</p>
                  </div>
-                 <Button size="sm" variant="ghost" className="text-orange-600">Review</Button>
+                 <Button size="sm" variant="ghost" className="text-primary">Review</Button>
               </div>
               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-green-500">
                  <div>

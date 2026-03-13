@@ -75,7 +75,7 @@ export function FeaturedListings() {
     return (
       <section className="bg-white py-20 px-6">
         <div className="max-w-7xl mx-auto flex justify-center items-center min-h-[400px]">
-          <Loader2 className="w-12 h-12 text-orange-600 animate-spin" />
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
         </div>
       </section>
     );
@@ -88,8 +88,8 @@ export function FeaturedListings() {
         <div className="max-w-7xl mx-auto text-center">
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4 justify-center">
-              <div className="w-1 h-8 bg-orange-600 rounded-full" />
-              <span className="text-orange-600 font-bold text-sm uppercase tracking-widest">Hot Properties</span>
+              <div className="w-1 h-8 bg-primary/90 rounded-full" />
+              <span className="text-primary font-bold text-sm uppercase tracking-widest">Hot Properties</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-black text-gray-900 mb-4">Featured Listings</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -110,7 +110,7 @@ export function FeaturedListings() {
               </p>
               <button
                 onClick={handleViewMarketplace}
-                className="px-8 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors"
+                className="px-8 py-3 bg-primary/90 text-white font-bold rounded-lg hover:bg-primary/90 transition-colors"
               >
                 View Marketplace
               </button>
@@ -127,8 +127,8 @@ export function FeaturedListings() {
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-1 h-8 bg-orange-600 rounded-full" />
-            <span className="text-orange-600 font-bold text-sm uppercase tracking-widest">Hot Properties</span>
+            <div className="w-1 h-8 bg-primary/90 rounded-full" />
+            <span className="text-primary font-bold text-sm uppercase tracking-widest">Hot Properties</span>
           </div>
           <h2 className="text-5xl md:text-6xl font-black text-gray-900 mb-4">Featured Listings</h2>
           <p className="text-xl text-gray-600 max-w-2xl">
@@ -140,7 +140,7 @@ export function FeaturedListings() {
         <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-12 pb-12 border-b border-gray-200">
           <div>
             <p className="text-sm text-gray-600 uppercase font-bold">Average Price</p>
-            <p className="text-2xl font-black text-orange-600">₤195K</p>
+            <p className="text-2xl font-black text-primary">₤195K</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 uppercase font-bold">Avg Verification</p>
@@ -175,7 +175,7 @@ export function FeaturedListings() {
         <div className="text-center">
           <Link
             to="/marketplace"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold text-lg rounded-xl hover:shadow-2xl transition-all transform hover:scale-105"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-primary text-white font-bold text-lg rounded-xl hover:shadow-2xl transition-all transform hover:scale-105"
           >
             Browse All {featuredProperties.length}+ Properties
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -108,8 +108,8 @@ export default function DashboardPage() {
           value="3" 
           trend="Urgent" 
           icon={Clock} 
-          color="text-orange-600"
-          bg="bg-orange-50"
+          color="text-primary"
+          bg="bg-slate-50"
           variants={item}
         />
       </motion.div>

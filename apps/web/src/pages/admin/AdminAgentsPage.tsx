@@ -110,7 +110,7 @@ export default function AdminAgentsPage() {
                       {agent.kyc_verified ? (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Verified</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-orange-500 border-orange-200 bg-orange-50">Pending</Badge>
+                        <Badge variant="outline" className="text-primary border-slate-200 bg-slate-50">Pending</Badge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

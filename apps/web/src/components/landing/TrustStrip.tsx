@@ -34,9 +34,9 @@ export function TrustStrip() {
           {badges.map((badge, idx) => (
             <div
               key={idx}
-              className="flex items-center gap-4 p-4 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition-all transform hover:scale-105 hover:shadow-lg cursor-pointer"
+              className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-slate-50 hover:bg-primary/10 transition-all transform hover:scale-105 hover:shadow-lg cursor-pointer"
             >
-              <div className="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-slate-500 text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
                 {badge.icon}
               </div>
               <div>

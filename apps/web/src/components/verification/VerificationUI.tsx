@@ -33,10 +33,10 @@ export function VerificationBadge({
       text: "text-red-900",
     },
     warning: {
-      bg: "bg-orange-50",
-      border: "border-orange-200",
-      dot: "bg-orange-500",
-      text: "text-orange-900",
+      bg: "bg-slate-50",
+      border: "border-slate-200",
+      dot: "bg-slate-500",
+      text: "text-primary/90",
     },
   };
 

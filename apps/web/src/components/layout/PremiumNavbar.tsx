@@ -1,12 +1,10 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 export function PremiumNavbar() {
   const { user, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -15,9 +13,11 @@ export function PremiumNavbar() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <Link to="/landing" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6600] to-[#FF8533] flex items-center justify-center shadow-soft">
-              <span className="text-white font-bold text-lg">LB</span>
-            </div>
+            <img
+              src="/images/logo.jpg"
+              alt="ScruPeak Logo"
+              className="w-10 h-10 rounded-lg object-cover shadow-soft"
+            />
             <span className="text-xl font-bold text-neutral-900 hidden sm:inline">ScruPeak</span>
           </Link>
 
@@ -25,25 +25,25 @@ export function PremiumNavbar() {
           <div className="flex items-center space-x-8">
             <Link
               to="/explore"
-              className="text-neutral-700 hover:text-orange-600 transition-colors font-medium"
+              className="text-neutral-700 hover:text-primary transition-colors font-medium"
             >
               Explore Land
             </Link>
             <Link
               to="/map"
-              className="text-neutral-700 hover:text-orange-600 transition-colors font-medium"
+              className="text-neutral-700 hover:text-primary transition-colors font-medium"
             >
               Map
             </Link>
             <Link
               to="/insights"
-              className="text-neutral-700 hover:text-orange-600 transition-colors font-medium"
+              className="text-neutral-700 hover:text-primary transition-colors font-medium"
             >
               Market Insights
             </Link>
             <Link
               to="/verify"
-              className="text-neutral-700 hover:text-orange-600 transition-colors font-medium"
+              className="text-neutral-700 hover:text-primary transition-colors font-medium"
             >
               Verify Land
             </Link>
@@ -55,7 +55,7 @@ export function PremiumNavbar() {
               <>
                 <Link
                   to="/landing"
-                  className="text-sm text-neutral-700 hover:text-orange-600"
+                  className="text-sm text-neutral-700 hover:text-primary"
                 >
                   Home
                 </Link>
@@ -70,13 +70,13 @@ export function PremiumNavbar() {
               <>
                 <Link
                   to="/landing"
-                  className="text-sm text-neutral-700 hover:text-orange-600"
+                  className="text-sm text-neutral-700 hover:text-primary"
                 >
                   Home
                 </Link>
                 <Link
                   to="/landing"
-                  className="px-4 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-soft"
+                  className="px-4 py-2 text-sm bg-primary/90 text-white rounded-lg hover:bg-primary/90 transition-colors shadow-soft"
                 >
                   Explore
                 </Link>
@@ -91,7 +91,7 @@ export function PremiumNavbar() {
         <div className="flex items-center justify-around py-3">
           <Link
             to="/landing"
-            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-orange-600"
+            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-primary"
           >
             <svg
               className="w-6 h-6"
@@ -111,7 +111,7 @@ export function PremiumNavbar() {
 
           <Link
             to="/explore"
-            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-orange-600"
+            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-primary"
           >
             <svg
               className="w-6 h-6"
@@ -131,7 +131,7 @@ export function PremiumNavbar() {
 
           <Link
             to="/map"
-            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-orange-600"
+            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-primary"
           >
             <svg
               className="w-6 h-6"
@@ -151,7 +151,7 @@ export function PremiumNavbar() {
 
           <Link
             to="/insights"
-            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-orange-600"
+            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-primary"
           >
             <svg
               className="w-6 h-6"
@@ -171,7 +171,7 @@ export function PremiumNavbar() {
 
           <Link
             to="/verify"
-            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-orange-600"
+            className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-primary"
           >
             <svg
               className="w-6 h-6"

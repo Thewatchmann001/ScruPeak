@@ -144,7 +144,7 @@ const RoleApplicationPage = () => {
                   {user.kyc_verified ? (
                     <Badge className="bg-green-500">KYC Verified</Badge>
                   ) : (
-                    <Badge variant="outline" className="text-orange-500 border-orange-200 bg-orange-50">KYC Required</Badge>
+                    <Badge variant="outline" className="text-primary border-slate-200 bg-slate-50">KYC Required</Badge>
                   )}
                 </h4>
                 {!user.kyc_verified && (

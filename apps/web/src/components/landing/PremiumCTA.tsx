@@ -27,7 +27,7 @@ export function PremiumCTA() {
               onClick={() =>
                 user ? navigate("/kyc") : navigate("/auth/login?redirect=/kyc")
               }
-              className="px-8 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg rounded-lg transition-all transform hover:scale-105 shadow-lg inline-block"
+              className="px-8 py-3 bg-primary/90 hover:bg-primary/90 text-white font-bold text-lg rounded-lg transition-all transform hover:scale-105 shadow-lg inline-block"
             >
               Get Registered
             </button>
@@ -42,7 +42,7 @@ export function PremiumCTA() {
         </div>
 
         {/* Right Card - Invest */}
-        <div className="relative overflow-hidden rounded-3xl bg-orange-500 p-10 md:p-14 text-white min-h-[400px] flex flex-col justify-center shadow-xl group">
+        <div className="relative overflow-hidden rounded-3xl bg-slate-500 p-10 md:p-14 text-white min-h-[400px] flex flex-col justify-center shadow-xl group">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <img 
@@ -50,7 +50,7 @@ export function PremiumCTA() {
               alt="Luxury Home" 
               className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-900/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-transparent" />
           </div>
 
           <div className="relative z-10">
