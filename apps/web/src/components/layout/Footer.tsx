@@ -73,7 +73,7 @@ export default function Footer() {
               href="https://www.watchmann.dev" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-xs font-bold text-orange-500 tracking-wide mt-1 hover:text-orange-400 transition-colors"
+              className="text-xs font-bold text-primary tracking-wide mt-1 hover:text-primary/80 transition-colors"
             >
               by Watchmann
             </a>

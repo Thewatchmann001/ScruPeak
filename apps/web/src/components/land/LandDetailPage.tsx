@@ -128,7 +128,7 @@ export default function LandDetailPage(props: LandDetailProps) {
         <div className="max-w-5xl mx-auto px-6 py-4">
           <Link
             to="/explore"
-            className="flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium transition-colors"
+            className="flex items-center gap-2 text-primary hover:text-primary/90 font-medium transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -140,9 +140,9 @@ export default function LandDetailPage(props: LandDetailProps) {
 
       {/* Status Banner */}
       {land.status === "under_notice" && (
-        <div className="bg-orange-50 border-b border-orange-200 px-6 py-3">
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-3">
             <div className="max-w-5xl mx-auto flex items-center justify-between">
-                <div className="flex items-center text-orange-800">
+                <div className="flex items-center text-primary/90">
                     <AlertTriangle className="w-5 h-5 mr-2" />
                     <span className="font-medium">Public Notice Period Active</span>
                     <span className="mx-2">•</span>
@@ -151,7 +151,7 @@ export default function LandDetailPage(props: LandDetailProps) {
                 <Button 
                     size="sm" 
                     variant="outline" 
-                    className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                    className="border-primary/30 text-primary/90 hover:bg-primary/10"
                     onClick={() => setShowObjectionModal(true)}
                 >
                     Lodge Objection
@@ -316,7 +316,7 @@ export default function LandDetailPage(props: LandDetailProps) {
                       {land.risks.map((risk, idx) => (
                         <div key={idx} className="flex items-start gap-3">
                           <svg
-                            className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5"
+                            className="w-5 h-5 text-primary flex-shrink-0 mt-0.5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -467,7 +467,7 @@ export default function LandDetailPage(props: LandDetailProps) {
                 </div>
                 
                 <div className="space-y-4">
-                    <div className="p-4 bg-orange-50 rounded-lg text-sm text-orange-800">
+                    <div className="p-4 bg-slate-50 rounded-lg text-sm text-primary/90">
                         <p className="font-medium">Warning: False Claims</p>
                         <p>Lodging a false objection is a punishable offense. Your identity will be recorded on-chain.</p>
                     </div>
@@ -475,7 +475,7 @@ export default function LandDetailPage(props: LandDetailProps) {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Objection</label>
                         <textarea 
-                            className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                             placeholder="Describe your claim (e.g., boundary dispute, inheritance claim)..."
                             value={objectionReason}
                             onChange={(e) => setObjectionReason(e.target.value)}
@@ -486,7 +486,7 @@ export default function LandDetailPage(props: LandDetailProps) {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Evidence (Optional URL)</label>
                         <input 
                             type="text" 
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
                             placeholder="https://..."
                         />
                     </div>

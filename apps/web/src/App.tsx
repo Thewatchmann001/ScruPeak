@@ -64,7 +64,7 @@ const HomePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Card 1 */}
           <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-shadow">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 mb-6">
+            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-6">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -77,7 +77,7 @@ const HomePage = () => {
           
           {/* Card 2 */}
           <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-shadow">
-             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 mb-6">
+             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-6">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -90,7 +90,7 @@ const HomePage = () => {
           
           {/* Card 3 */}
           <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-shadow">
-             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 mb-6">
+             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-6">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -105,7 +105,7 @@ const HomePage = () => {
         <div className="text-center mt-12">
            <button
              onClick={() => navigate('/auth/login?redirect=/kyc')}
-             className="inline-block px-8 py-3 bg-orange-50 text-orange-700 font-bold rounded-lg border border-orange-200 hover:bg-orange-100 transition-colors">
+             className="inline-block px-8 py-3 bg-slate-50 text-primary/90 font-bold rounded-lg border border-slate-200 hover:bg-primary/10 transition-colors">
              Register Your Land Now
            </button>
         </div>
@@ -131,7 +131,7 @@ const HomePage = () => {
              { step: 6, title: "Release", desc: "Funds are released to seller." }
            ].map((item) => (
              <div key={item.step} className="flex flex-col items-center max-w-[150px] relative z-10">
-                <div className="w-10 h-10 rounded-full bg-orange-600 text-white font-bold flex items-center justify-center mb-4 shadow-lg ring-4 ring-white">
+                <div className="w-10 h-10 rounded-full bg-primary/90 text-white font-bold flex items-center justify-center mb-4 shadow-lg ring-4 ring-white">
                   {item.step}
                 </div>
                 <h4 className="text-sm font-black text-gray-900 mb-1">{item.title}</h4>

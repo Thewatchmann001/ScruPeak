@@ -53,7 +53,7 @@ export function ZillowCard({
           {/* Save Button */}
           <button className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all transform hover:scale-110 z-10">
             <svg
-              className={`w-5 h-5 ${isSaved ? "text-orange-600 fill-current" : "text-gray-600"}`}
+              className={`w-5 h-5 ${isSaved ? "text-primary fill-current" : "text-gray-600"}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -78,7 +78,7 @@ export function ZillowCard({
           </div>
 
           {/* Price Badge */}
-          <div className="absolute bottom-3 right-3 bg-gradient-to-r from-orange-600 to-orange-500 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-lg">
+          <div className="absolute bottom-3 right-3 bg-gradient-to-r from-primary to-primary text-white px-4 py-2 rounded-lg font-bold text-lg shadow-lg">
             ₤{(price / 1000).toFixed(0)}K
           </div>
         </div>
@@ -90,7 +90,7 @@ export function ZillowCard({
             <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
               {location.district} • {location.chiefdom}
             </p>
-            <h3 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+            <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
               {location.community}
             </h3>
           </div>
@@ -133,7 +133,7 @@ export function ZillowCard({
           </div>
 
           {/* View Details CTA */}
-          <button className="w-full mt-4 px-4 py-2 bg-gray-100 text-gray-900 font-bold rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all transform group-hover:shadow-md">
+          <button className="w-full mt-4 px-4 py-2 bg-gray-100 text-gray-900 font-bold rounded-lg hover:bg-slate-50 hover:text-primary transition-all transform group-hover:shadow-md">
             View Details
           </button>
         </div>

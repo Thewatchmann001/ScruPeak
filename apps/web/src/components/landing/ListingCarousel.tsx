@@ -25,7 +25,7 @@ export function ListingCarousel({ title, listings }: ListingCarouselProps) {
     <div className="bg-gray-50 py-16">
       <div className="max-w-7xl mx-auto px-6">
         <h2 className="text-4xl font-black text-gray-900 mb-2">
-          Featured <span className="text-orange-500">Listings</span>
+          Featured <span className="text-primary">Listings</span>
         </h2>
         <p className="text-gray-600 mb-12">Explore verified land from across Sierra Leone</p>
 
@@ -44,7 +44,7 @@ export function ListingCarousel({ title, listings }: ListingCarouselProps) {
                     alt={listing.location}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-3 right-3 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                  <div className="absolute top-3 right-3 bg-slate-500 text-white px-3 py-1 rounded-full text-sm font-bold">
                     {listing.verification}% Verified
                   </div>
                 </div>
@@ -60,7 +60,7 @@ export function ListingCarousel({ title, listings }: ListingCarouselProps) {
 
                   {/* Price */}
                   <div className="flex items-baseline gap-2 mb-4 pb-4 border-b border-gray-200">
-                    <span className="text-2xl font-black text-orange-500">
+                    <span className="text-2xl font-black text-primary">
                       ${listing.price.toLocaleString()}
                     </span>
                   </div>
@@ -69,7 +69,7 @@ export function ListingCarousel({ title, listings }: ListingCarouselProps) {
                   <div className="mb-4">
                     <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-orange-500 transition-all"
+                        className="h-full bg-slate-500 transition-all"
                         style={{ width: `${listing.verification}%` }}
                       />
                     </div>
@@ -80,10 +80,10 @@ export function ListingCarousel({ title, listings }: ListingCarouselProps) {
 
                   {/* CTA Buttons */}
                   <div className="flex gap-2">
-                    <button className="flex-1 py-2 text-sm font-bold border-2 border-orange-500 text-orange-500 rounded-lg hover:bg-orange-50 transition-all">
+                    <button className="flex-1 py-2 text-sm font-bold border-2 border-primary text-primary rounded-lg hover:bg-slate-50 transition-all">
                       View
                     </button>
-                    <button className="flex-1 py-2 text-sm font-bold bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all">
+                    <button className="flex-1 py-2 text-sm font-bold bg-slate-500 text-white rounded-lg hover:bg-primary/90 transition-all">
                       Inquire
                     </button>
                   </div>
