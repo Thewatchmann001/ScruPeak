@@ -33,6 +33,7 @@ sqlalchemy-utils = "^0.41.0"
 pytz = "^2023.3"
 requests = "^2.31.0"
 ulid-py = "^1.1.0"
+fastapi-mail = "^1.4.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
