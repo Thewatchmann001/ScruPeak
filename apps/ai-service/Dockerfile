@@ -11,13 +11,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Use exec form with shell to expand $PORT
-# Gunicorn is production-ready and handles multiple workers
+# Production: Use Gunicorn with Uvicorn workers
+# - 1 worker (Cloud Run scales horizontally, not vertically)
+# - 8 threads (for I/O concurrency)
+# - 0 timeout (let Cloud Run handle scaling)
+# - Preload to catch startup errors early
 CMD exec gunicorn app.main:app \
-    -w 2 \
-    -k uvicorn.workers.UvicornWorker \
-    --bind 0.0.0.0:${PORT:-8000} \
-    --timeout 120 \
-    --keep-alive 5 \
+    --bind :${PORT:-8000} \
+    --workers 1 \
+    --threads 8 \
+    --timeout 0 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --preload \
     --access-logfile - \
     --error-logfile -
