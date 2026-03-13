@@ -11,4 +11,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use exec form with shell to expand $PORT
+# Gunicorn is production-ready and handles multiple workers
+CMD exec gunicorn app.main:app \
+    -w 2 \
+    -k uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:${PORT:-8000} \
+    --timeout 120 \
+    --keep-alive 5 \
+    --access-logfile - \
+    --error-logfile -
