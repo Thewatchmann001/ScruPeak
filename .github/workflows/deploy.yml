@@ -311,7 +311,6 @@ jobs:
             2>/dev/null || echo "none")
           echo "revision=$PREV" >> $GITHUB_OUTPUT
           echo "Previous revision: $PREV"
-
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
