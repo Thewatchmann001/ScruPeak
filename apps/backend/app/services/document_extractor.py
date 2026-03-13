@@ -3,14 +3,14 @@ Document Extraction Service
 Extracts land details (Owner, Coordinates, History) from uploaded documents.
 Supports Hybrid OCR Strategy:
 1. Cloud OCR (AWS Textract) - Primary (if configured)
-2. Local Fallback (PyPDF2/Regex) - Secondary
+2. Local Fallback (pypdf/Regex) - Secondary
 """
 import re
 import logging
 import os
 from pathlib import Path
 from typing import Dict, Any, Optional, List
-import PyPDF2
+from pypdf import PdfReader
 from app.services.jems_ai import get_jems_service
 
 logger = logging.getLogger(__name__)
@@ -28,12 +28,12 @@ class OCRProvider:
         raise NotImplementedError
 
 class LocalPDFExtractor(OCRProvider):
-    """Fallback extractor using PyPDF2 (Text-based PDFs only)"""
+    """Fallback extractor using pypdf (Text-based PDFs only)"""
     def extract_text(self, file_path: str) -> str:
         text = ""
         try:
             with open(file_path, 'rb') as f:
-                reader = PyPDF2.PdfReader(f)
+                reader = PdfReader(f)
                 for page in reader.pages:
                     extracted = page.extract_text()
                     if extracted:
