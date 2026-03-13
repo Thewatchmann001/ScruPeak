@@ -13,7 +13,7 @@ COPY pyproject.toml poetry.lock* ./
 RUN pip install --upgrade pip && \
     pip install poetry && \
     poetry config virtualenvs.create false && \
-    poetry lock --no-update && \
+    poetry lock && \
     poetry install --only main --no-interaction --no-ansi
 
 COPY . /app/
