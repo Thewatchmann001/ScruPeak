@@ -1,42 +1,47 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import PremiumHero from '@/components/landing/PremiumHero';
+import { AuraHero } from '@/components/aura/AuraHero';
 import { TrustStrip } from '@/components/landing/TrustStrip';
 import { FeaturedListings } from '@/components/landing/FeaturedListings';
 import { PremiumCTA } from '@/components/landing/PremiumCTA';
 
 const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
+  initial: { opacity: 0, y: 40 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.6 }
+  viewport: { once: true, margin: "-100px" },
+  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
 };
 
 const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white">
-      <PremiumHero />
-      <TrustStrip />
+    <div className="min-h-screen space-y-24">
+      <AuraHero />
+
+      <motion.div {...fadeInUp}>
+        <TrustStrip />
+      </motion.div>
 
       {/* Secure Land Registration Services Section */}
       <motion.section
         {...fadeInUp}
-        className="py-32 bg-slate-50"
+        className="py-32 relative overflow-hidden"
       >
+        <div className="absolute inset-0 bg-primary/5 -skew-y-3 origin-right -z-10" />
+
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-black text-slate-900 mb-6">Secure Land Registration Services</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            <h2 className="text-4xl lg:text-5xl font-black mb-6">Secure Land Registration Services</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Bringing transparency and efficiency to land ownership through cutting-edge technology and legal expertise.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Card 1 */}
-            <div className="bg-white p-10 rounded-3xl shadow-sm hover:shadow-xl transition-all border border-slate-100 group">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform">
+            <div className="glass dark:glass-dark p-10 rounded-3xl shadow-sm hover:shadow-2xl transition-all group border-white/5">
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform aura-gradient shadow-lg shadow-primary/20">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -126,7 +131,7 @@ const Home = () => {
                  transition={{ delay: idx * 0.1 }}
                  className="flex flex-col items-center text-center group"
                >
-                  <div className="w-20 h-20 rounded-3xl bg-white border border-slate-100 text-slate-400 group-hover:border-primary group-hover:text-primary font-black text-2xl flex items-center justify-center mb-6 shadow-sm group-hover:shadow-xl group-hover:shadow-primary/10 transition-all duration-500 relative bg-white z-10">
+                  <div className="w-20 h-20 rounded-3xl glass dark:glass-dark border border-white/5 text-slate-400 group-hover:border-primary group-hover:text-primary font-black text-2xl flex items-center justify-center mb-6 shadow-sm group-hover:shadow-2xl group-hover:shadow-primary/10 transition-all duration-500 relative z-10">
                     {item.step}
                     <div className="absolute inset-0 rounded-3xl bg-primary/5 scale-0 group-hover:scale-100 transition-transform duration-500 -z-10" />
                   </div>

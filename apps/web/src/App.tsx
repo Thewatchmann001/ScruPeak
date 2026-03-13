@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastProvider';
+import { AuraLayout } from '@/components/aura/AuraLayout';
+import { AuraToaster } from '@/components/aura/AuraToaster';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import PremiumHero from '@/components/landing/PremiumHero';
@@ -31,6 +33,7 @@ import AdminAgentsPage from '@/pages/admin/AdminAgentsPage';
 import AdminTaxPage from '@/pages/admin/AdminTaxPage';
 import RoleApplicationPage from '@/pages/RoleApplicationPage';
 import LandDetailPage from '@/components/land/LandDetailPage';
+import ServiceCommandCenter from '@/pages/aura/ServiceCommandCenter';
 
 // New Pages
 import EscrowPage from '@/pages/EscrowPage';
@@ -54,10 +57,9 @@ function App() {
     <Router>
       <AuthProvider>
         <ToastProvider />
-        <div className="flex flex-col min-h-screen">
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
+        <AuraToaster />
+        <AuraLayout>
+          <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/land/:id" element={<LandDetailPage />} />
@@ -114,16 +116,16 @@ function App() {
                 </AdminLayout>
               } />
 
-              {/* Auth Routes */}
-              <Route path="/auth/login" element={<LoginPage />} />
-              <Route path="/auth/register" element={<SignupPage />} />
-              <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+              <Route path="/command-center" element={<ServiceCommandCenter />} />
+
+            {/* Auth Routes */}
+            <Route path="/auth/login" element={<LoginPage />} />
+            <Route path="/auth/register" element={<SignupPage />} />
+            <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+          </Routes>
+        </AuraLayout>
       </AuthProvider>
     </Router>
   );
