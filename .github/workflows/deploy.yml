@@ -335,6 +335,7 @@ jobs:
           secrets: |
             DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env }}:latest
             JWT_SECRET=JWT_SECRET:latest
+            OPENAI_API_KEY=OPENAI_API_KEY:latest
 
       - name: Health check
         id: health
