@@ -35,11 +35,10 @@ app.get('/health', (req, res) => {
 
 // Service Configuration
 const services = {
-  core: process.env.CORE_SERVICE_URL || 'http://backend:8000',
-  spatial: process.env.SPATIAL_SERVICE_URL || 'http://spatial-service:8000',
-  ai: process.env.AI_SERVICE_URL || 'http://ai-service:8000',
+  core: process.env.CORE_SERVICE_URL || 'https://backend-prod-198638918293.us-central1.run.app',
+  spatial: process.env.SPATIAL_SERVICE_URL || 'https://spatial-service-prod-198638918293.us-central1.run.app',
+  ai: process.env.AI_SERVICE_URL || 'https://ai-service-prod-198638918293.us-central1.run.app',
 };
-
 console.log('Service Routes Configuration:', services);
 
 // Proxy Routes
