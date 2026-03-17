@@ -24,7 +24,7 @@ export default function SellerDashboard() {
   const fetchListings = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/land/my-listings');
+      const response = await api.get<any>('/land/my-listings');
       setListings(response.data.items || []);
     } catch (error) {
       console.error("Failed to fetch listings:", error);

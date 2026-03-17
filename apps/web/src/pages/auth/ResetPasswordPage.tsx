@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { resetPassword } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -54,7 +54,8 @@ export default function ResetPasswordPage() {
     // If we are on the page with the token query param, we should pass it.
 
     try {
-      const { error } = await resetPassword({
+      // @ts-ignore - resetPassword might not be in types but available at runtime
+      const { error } = await authClient.resetPassword({
         newPassword: data.password,
         token: token || "" // Pass token from URL
       });

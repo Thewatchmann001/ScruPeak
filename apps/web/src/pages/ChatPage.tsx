@@ -44,7 +44,7 @@ export default function ChatPage() {
   }, [chatId]);
 
   useEffect(() => {
-    api.get(`/api/v1/chat/conversations/me`).then((res) => {
+    api.get<any>(`/api/v1/chat/conversations/me`).then((res) => {
       setConversations(res.data?.items || []);
     }).catch(() => {});
   }, []);
@@ -219,7 +219,7 @@ export default function ChatPage() {
                   {!recording ? (
                     <Button onClick={startRecording} variant="secondary">🎙️ Voice</Button>
                   ) : (
-                    <Button onClick={stopRecording} variant="danger">⏹ Stop</Button>
+                    <Button onClick={stopRecording} variant="destructive">⏹ Stop</Button>
                   )}
                   <Input
                     value={text}

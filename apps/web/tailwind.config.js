@@ -18,6 +18,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
+        serif: ["Cormorant Garamond", "serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       colors: {
@@ -29,17 +30,13 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          aura: "hsl(262 83% 58%)",
-          electric: "hsl(267 100% 70%)",
+          gold: "#C9A84C",
+          "gold-light": "#E5C674",
+          "gold-dark": "#A68936",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-          indigo: "hsl(239 84% 67%)",
-        },
-        teal: {
-          500: "hsl(171 77% 47%)",
-          aura: "hsl(174 100% 41%)",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

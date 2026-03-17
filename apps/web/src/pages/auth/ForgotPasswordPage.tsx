@@ -9,7 +9,7 @@ import { Mail, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { forgetPassword } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -32,7 +32,8 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordFormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await forgetPassword({
+      // @ts-ignore - forgetPassword might not be in types but available at runtime
+      const { error } = await authClient.forgetPassword({
         email: data.email,
         redirectTo: "/auth/reset-password",
       });

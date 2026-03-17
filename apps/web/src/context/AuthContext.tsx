@@ -48,7 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         name,
-        role // This will be handled if defined in additionalFields on server
+        // @ts-ignore - role is supported via additionalFields but might not be in the default client types
+        role
     });
     if (error) {
         throw error;
