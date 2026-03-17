@@ -22,7 +22,7 @@ export const auth = betterAuth({
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: false,
-        async sendResetPassword(user, url) {
+        async sendResetPassword({ user, url }: { user: { email: string }, url: string, token: string }) {
             await transporter.sendMail({
                 from: process.env.SMTP_FROM || '"ScruPeak Support" <noreply@scrupeak.com>',
                 to: user.email,
