@@ -338,6 +338,9 @@ jobs:
             OPENAI_API_KEY=OPENAI_API_KEY:latest
             GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest
             GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest
+            CORE_SERVICE_URL=CORE_SERVICE_URL:latest
+            SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
+            AI_SERVICE_URL=AI_SERVICE_URL:latest
 
       - name: Health check
         id: health
