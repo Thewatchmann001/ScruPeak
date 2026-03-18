@@ -42,6 +42,9 @@ export interface Land {
   status: "available" | "pending" | "sold" | "disputed";
   price?: number;
   documents: Document[];
+  ulid: string;
+  has_photo: boolean;
+  blockchain_verified: boolean;
   blockchain_hash?: string;
   created_at: string;
   updated_at: string;

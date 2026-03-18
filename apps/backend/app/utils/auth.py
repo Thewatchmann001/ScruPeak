@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from uuid import UUID
 import jwt
+import logging
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
@@ -155,6 +156,8 @@ class JWTHandler:
 # DEPENDENCY INJECTION
 # ============================================================================
 
+logger = logging.getLogger(__name__)
+
 # Security scheme for Swagger documentation
 security = HTTPBearer()
 jwt_handler = JWTHandler()
@@ -206,11 +209,30 @@ async def get_current_user(
     user = result.scalars().first()
     
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        # Just-In-Time Provisioning: If user doesn't exist in backend DB but has a valid token
+        # we create a basic user record. This is common when using external auth providers.
+        try:
+            email = payload.get("email")
+            name = payload.get("name") or email.split('@')[0] if email else "New User"
+
+            user = User(
+                id=user_uuid,
+                email=email or f"{user_id}@placeholder.com",
+                name=name,
+                role=UserRole.BUYER,
+                is_active=True,
+                email_verified=True # Trusted from better-auth
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"User not found and provisioning failed: {str(e)}",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
     
     if not user.is_active:
         raise HTTPException(

@@ -14,7 +14,7 @@ from app.schemas import UserResponse, UserUpdate, PaginatedResponse
 from app.utils.auth import get_current_user, hash_password, verify_password
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/users", tags=["Users"])
+router = APIRouter(tags=["Users"])
 
 
 @router.get(

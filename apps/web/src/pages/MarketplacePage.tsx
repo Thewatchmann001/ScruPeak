@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { landService } from '@/services/landService';
 import { Land, PaginatedResponse } from '@/types';
-import { LandCard } from '@/components/land/LandCard';
-import { MapPinOff, SearchX, Filter, Search, Map as MapIcon, List } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Link } from 'react-router-dom';
+import { ZillowCard } from '@/components/landing/ZillowCard';
+import { MapPinOff, SearchX, Filter, Search, Map as MapIcon, List, Grid, ChevronDown } from 'lucide-react';
 import { InteractiveMap } from '@/components/map/InteractiveMap';
 
 export default function MarketplacePage() {
@@ -14,7 +12,7 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [viewMode, setViewMode] = useState<'split' | 'map' | 'list'>('split');
+  const [viewMode, setViewMode] = useState<'grid' | 'map' | 'list'>('grid');
 
   useEffect(() => {
     const fetchLands = async () => {
@@ -44,7 +42,6 @@ export default function MarketplacePage() {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, page]);
 
-  // Convert Land objects to the format InteractiveMap expects
   const mapListings = lands.map(land => ({
     id: land.id,
     location: {
@@ -62,16 +59,16 @@ export default function MarketplacePage() {
   }));
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-white">
-      {/* Search & Filter Header */}
-      <header className="flex-none h-16 border-b border-slate-200 px-6 flex items-center justify-between bg-white z-20">
-        <div className="flex items-center gap-4 flex-1 max-w-2xl">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-white overflow-hidden font-sans">
+      {/* Search & Header */}
+      <div className="flex-none bg-white border-b border-border px-6 h-20 flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1 max-w-3xl">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-primary transition-colors" />
             <input
               type="text"
               placeholder="Address, Neighborhood, or District"
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-standard"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -79,104 +76,130 @@ export default function MarketplacePage() {
               }}
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2.5 border border-border rounded-lg text-sm font-bold text-text hover:bg-surface transition-standard">
             <Filter className="w-4 h-4" />
-            <span>Filters</span>
+            Filters
           </button>
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-          <button
-            onClick={() => setViewMode('split')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'split' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-900'}`}
-          >
-            <MapIcon className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-900'}`}
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-text-muted">Sort:</span>
+            <button className="flex items-center gap-1 font-bold text-text hover:text-primary transition-colors">
+              Newest <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
 
-      {/* Main Content Area */}
+          <div className="flex bg-surface p-1 rounded-lg border border-border">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-standard ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-text-muted hover:text-text'}`}
+            >
+              <Grid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-standard ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-text-muted hover:text-text'}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`p-2 rounded-md transition-standard ${viewMode === 'map' ? 'bg-white shadow-sm text-primary' : 'text-text-muted hover:text-text'}`}
+            >
+              <MapIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Listings */}
-        <aside className={`${viewMode === 'map' ? 'hidden' : viewMode === 'list' ? 'w-full' : 'w-[400px] lg:w-[480px]'} flex-none flex flex-col border-r border-slate-200 bg-white overflow-hidden`}>
-          <div className="flex-none p-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="font-bold text-slate-900">
-              {lands.length} Properties Found
-            </h2>
-            <div className="text-sm text-slate-500">
-              Sort: <span className="font-medium text-slate-900 cursor-pointer">Newest</span>
+        {/* Left Sidebar (Only visible in non-full-map modes) */}
+        {viewMode !== 'map' && (
+          <aside className={`${viewMode === 'list' ? 'w-full' : 'w-full lg:w-[600px] xl:w-[700px]'} flex flex-col border-r border-border bg-white overflow-hidden`}>
+            <div className="flex-none p-6 border-b border-border flex items-center justify-between">
+              <h2 className="text-lg font-bold text-text">
+                {lands.length} properties found
+              </h2>
+              {viewMode === 'grid' && (
+                 <button onClick={() => setViewMode('map')} className="lg:hidden flex items-center gap-2 text-primary font-bold text-sm">
+                   <MapIcon className="w-4 h-4" /> View Map
+                 </button>
+              )}
             </div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            {loading ? (
-              <div className="grid grid-cols-1 gap-4">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-64 bg-slate-50 animate-pulse rounded-xl" />
-                ))}
-              </div>
-            ) : error ? (
-              <div className="py-12 text-center">
-                <SearchX className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <p className="text-slate-500">Failed to load listings.</p>
-              </div>
-            ) : (
-              <div className={`grid ${viewMode === 'list' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'} gap-4`}>
-                {lands.map((land) => (
-                  <LandCard key={land.id} land={land} />
-                ))}
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#F8F9FA]">
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="h-[380px] bg-white border border-border rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="py-20 text-center">
+                  <SearchX className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-20" />
+                  <p className="text-text-secondary font-medium">Failed to load listings.</p>
+                </div>
+              ) : (
+                <div className={`grid ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-6`}>
+                  {lands.map((land) => (
+                    <ZillowCard key={land.id} listing={land} />
+                  ))}
 
-                {lands.length === 0 && (
-                  <div className="py-20 text-center col-span-full">
-                    <MapPinOff className="w-16 h-16 text-slate-100 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">No Properties Found</h3>
-                    <p className="text-sm text-slate-500 px-10">
-                      Try adjusting your search or filters to find what you're looking for.
-                    </p>
+                  {lands.length === 0 && (
+                    <div className="py-24 text-center col-span-full">
+                      <MapPinOff className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
+                      <h3 className="text-xl font-bold text-text mb-2">No Properties Found</h3>
+                      <p className="text-text-secondary max-w-sm mx-auto">
+                        Try adjusting your search filters to find what you're looking for.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center mt-12 gap-2 pb-12">
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className="px-4 py-2 border border-border bg-white rounded-lg text-sm font-bold text-text disabled:opacity-50 hover:bg-surface transition-standard"
+                  >
+                    Previous
+                  </button>
+                  <div className="px-4 py-2 text-sm font-bold text-text-secondary">
+                    {page} of {totalPages}
                   </div>
-                )}
-              </div>
-            )}
+                  <button
+                    disabled={page === totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    className="px-4 py-2 border border-border bg-white rounded-lg text-sm font-bold text-text disabled:opacity-50 hover:bg-surface transition-standard"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          </aside>
+        )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center mt-8 gap-4 pb-8">
-                <button
-                  disabled={page === 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-all"
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-slate-600">
-                  {page} / {totalPages}
-                </span>
-                <button
-                  disabled={page === totalPages}
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-all"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        </aside>
+        {/* Map (Visible in split mode and map mode) */}
+        {(viewMode === 'grid' || viewMode === 'map') && (
+           <main className={`flex-1 relative bg-surface ${viewMode === 'grid' ? 'hidden lg:block' : 'block'}`}>
+             <InteractiveMap
+               listings={mapListings}
+               height="100%"
+               showControls={true}
+             />
 
-        {/* Map Area */}
-        <main className={`${viewMode === 'list' ? 'hidden' : 'flex-1'} relative bg-slate-100`}>
-          <InteractiveMap
-            listings={mapListings}
-            height="100%"
-            showControls={true}
-          />
-        </main>
+             {/* Floating Info Panel (Mock) */}
+             <div className="absolute top-4 right-4 z-10 w-80 pointer-events-none">
+                {/* Information about active selection would go here */}
+             </div>
+           </main>
+        )}
       </div>
 
       <style>{`
@@ -187,11 +210,11 @@ export default function MarketplacePage() {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
+          background: #E2E8F0;
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
+          background: #CBD5E1;
         }
       `}</style>
     </div>

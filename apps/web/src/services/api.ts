@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { ApiError } from "@/types";
+import { authClient } from "@/lib/auth-client";
 
 class ApiClient {
   private client: AxiosInstance;
@@ -14,12 +15,16 @@ class ApiClient {
     });
 
     // Request interceptor to add auth token from better-auth
-    this.client.interceptors.request.use((config) => {
-      // better-auth-session is usually stored as a cookie by the browser,
-      // but if we need to pass a JWT, better-auth store is the source.
-      // For ScruPeak backend compatibility, we check localStorage or cookies
-      // where better-auth-session-token might be present.
-      const token = localStorage.getItem("better-auth.session-token") || localStorage.getItem("access_token");
+    this.client.interceptors.request.use(async (config) => {
+      // Use authClient (better-auth) to get the current session token
+      // This is more robust than manual localStorage access
+      const session = await authClient.getSession();
+
+      // If using jwtClient plugin, the token might be in the session object
+      // For better-auth, the session token is often managed via cookies,
+      // but we explicitly attach it for the FastAPI backend which expects Bearer auth.
+      const token = localStorage.getItem("better-auth.session-token") || (session?.data as any)?.token;
+
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

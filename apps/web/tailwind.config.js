@@ -23,12 +23,23 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#006AFF",
+          hover: "#0051CC",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+        },
+        success: {
+          DEFAULT: "#2E7D32",
+          light: "#E8F5E9",
+        },
+        surface: "#F8F9FA",
+        text: {
+          DEFAULT: "#1A1A1A",
+          secondary: "#4A5568",
+          muted: "#9CA3AF",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -52,9 +63,15 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "12px",
+        md: "8px",
+        sm: "4px",
+      },
+      boxShadow: {
+        'card-hover': '0 4px 12px rgba(0,0,0,0.08)',
+      },
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
       },
     },
   },
