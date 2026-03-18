@@ -101,23 +101,38 @@ class JWTHandler:
         return encoded_jwt
     
     def decode_token(self, token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
-        """Decode and verify JWT token"""
+        """Decode and verify JWT token (Supports better-auth JWTs)"""
         try:
+            # First try decoding as a standard ScruPeak JWT
             payload = jwt.decode(
                 token,
                 self.settings.SECRET_KEY,
                 algorithms=[self.settings.ALGORITHM]
             )
             
-            # Verify token type
-            if payload.get("type") != token_type:
+            # Verify token type only if it exists (Better-auth JWTs might not have 'type')
+            if payload.get("type") and payload.get("type") != token_type:
                 return None
             
             return payload
-        except jwt.ExpiredSignatureError:
-            return None
-        except jwt.InvalidTokenError:
-            return None
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            # Fallback for better-auth JWTs or alternate formats
+            try:
+                # Better-auth JWTs might use standard 'sub' for user ID
+                # We relax audience check as it varies between frontend and backend
+                payload = jwt.decode(
+                    token,
+                    self.settings.SECRET_KEY,
+                    options={"verify_aud": False},
+                    algorithms=[self.settings.ALGORITHM]
+                )
+                return payload
+            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
+                logger.warning(f"Failed to decode token with fallback: {e}")
+                return None
+            except Exception as e:
+                logger.error(f"Unexpected error during token decoding: {e}")
+                return None
     
     def create_token_pair(self, user_id: str, email: str) -> Dict[str, str]:
         """Create both access and refresh tokens"""

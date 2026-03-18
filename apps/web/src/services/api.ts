@@ -13,9 +13,13 @@ class ApiClient {
       },
     });
 
-    // Request interceptor to add auth token
+    // Request interceptor to add auth token from better-auth
     this.client.interceptors.request.use((config) => {
-      const token = localStorage.getItem("access_token");
+      // better-auth-session is usually stored as a cookie by the browser,
+      // but if we need to pass a JWT, better-auth store is the source.
+      // For ScruPeak backend compatibility, we check localStorage or cookies
+      // where better-auth-session-token might be present.
+      const token = localStorage.getItem("better-auth.session-token") || localStorage.getItem("access_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -28,41 +32,12 @@ class ApiClient {
       async (error: AxiosError<ApiError>) => {
         const originalRequest = error.config as any;
 
-        // Handle 401 Unauthorized - Try to refresh token
+        // Handle 401 Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          const refreshToken = localStorage.getItem("refresh_token");
-
-          if (refreshToken) {
-            try {
-              // Call refresh endpoint directly using axios to avoid interceptor loop
-              const response = await axios.post(
-                `${this.client.defaults.baseURL}/auth/refresh`,
-                { refresh_token: refreshToken }
-              );
-
-              const { access_token, refresh_token: new_refresh_token } = response.data;
-
-              localStorage.setItem("access_token", access_token);
-              if (new_refresh_token) {
-                localStorage.setItem("refresh_token", new_refresh_token);
-              }
-
-              // Update header and retry original request
-              originalRequest.headers.Authorization = `Bearer ${access_token}`;
-              return this.client(originalRequest);
-            } catch (refreshError) {
-              // Refresh failed - logout
-              localStorage.removeItem("access_token");
-              localStorage.removeItem("refresh_token");
-              window.location.href = "/auth/login";
-            }
-          } else {
-            // No refresh token - logout
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            window.location.href = "/auth/login";
-          }
+          // In better-auth, session management is automated.
+          // If we get a 401, we should redirect to login.
+          window.location.href = "/auth/login";
         }
         return Promise.reject(error);
       }

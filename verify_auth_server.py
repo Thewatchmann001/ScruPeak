@@ -3,7 +3,7 @@ import time
 import json
 
 BASE_URL = "http://localhost:4005/api/auth"
-HEALTH_URL = "http://localhost:4005/"
+HEALTH_URL = "http://localhost:4005/health"
 
 def test_health():
     try:
