@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { jwt } from "better-auth/plugins";
+import { Pool } from "pg";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
@@ -16,7 +17,9 @@ const transporter = nodemailer.createTransport({
 });
 
 export const auth = betterAuth({
-    database: new Database(process.env.DATABASE_URL || "auth.db"),
+    database: new Pool({
+        connectionString: process.env.DATABASE_URL,
+    }),
     plugins: [
         jwt({
             jwt: {
@@ -38,8 +41,8 @@ export const auth = betterAuth({
     },
     socialProviders: {
         google: {
-            clientId: process.env.GOOGLE_CLIENT_ID || "placeholder-google-client-id",
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "placeholder-google-client-secret",
+            clientId: process.env.GOOGLE_CLIENT_ID || "",
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         },
     },
     user: {
