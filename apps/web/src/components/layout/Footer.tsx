@@ -3,7 +3,7 @@ import { MapPin } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+    <footer className="bg-white text-text py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -16,10 +16,10 @@ export default function Footer() {
                 className="w-10 h-10 rounded-xl object-cover"
               />
               <span className="text-xl font-bold">
-                Scru<span className="text-primary-500">Peak</span>
+                Scru<span className="text-primary">Peak</span>
               </span>
             </Link>
-            <p className="text-sm opacity-70">
+            <p className="text-sm text-text-secondary">
               Sierra Leone's most trusted land marketplace with verified
               secure transactions.
             </p>
@@ -60,15 +60,15 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-white/20" />
+        <div className="border-t border-border" />
 
         {/* Bottom Section */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <p className="text-sm opacity-60">
+          <p className="text-sm text-text-secondary">
             &copy; 2026 ScruPeak Digital Property. All rights reserved.
           </p>
           <div className="flex flex-col items-center sm:items-end">
-            <p className="text-sm opacity-80">
+            <p className="text-sm text-text-secondary font-medium">
               Made with trust for Sierra Leone
             </p>
             <a 
@@ -101,7 +101,7 @@ function FooterColumn({
           <li key={link.label}>
             <Link
               to={link.href}
-              className="text-sm opacity-70 hover:opacity-100 hover:text-primary-400 transition-all duration-300"
+              className="text-sm text-text-secondary hover:text-primary transition-all duration-300"
             >
               {link.label}
             </Link>

@@ -1,51 +1,26 @@
-"use client";
+import React from "react";
+import { ShieldCheck, Target, Database, Lock } from "lucide-react";
 
 export function TrustStrip() {
-  const badges = [
-    {
-      icon: "✓",
-      title: "Verified Survey Plan",
-      description: "Confirmed by licensed surveyors",
-    },
-    {
-      icon: "👥",
-      title: "Community Confirmed",
-      description: "Local stakeholders validated",
-    },
-    {
-      icon: "📋",
-      title: "Family Ownership Disclosed",
-      description: "Complete ownership history",
-    },
-    {
-      icon: "⚖️",
-      title: "No Court Disputes",
-      description: "Clear legal history",
-    },
+  const trusts = [
+    { icon: ShieldCheck, number: "2,400+", label: "Verified Listings" },
+    { icon: Target, number: "100%", label: "Survey Confirmed" },
+    { icon: Database, number: "On-Chain", label: "Records" },
+    { icon: Lock, number: "Escrow", label: "Protected" },
   ];
 
   return (
-    <div className="bg-white py-8 border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-6">
-        <p className="text-center text-sm font-bold text-gray-600 uppercase tracking-widest mb-8">
-          Every listing verified for trust
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {badges.map((badge, idx) => (
-            <div
-              key={idx}
-              className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-slate-50 hover:bg-primary/10 transition-all transform hover:scale-105 hover:shadow-lg cursor-pointer"
-            >
-              <div className="w-12 h-12 rounded-full bg-slate-500 text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
-                {badge.icon}
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900 text-sm">{badge.title}</h4>
-                <p className="text-xs text-gray-600">{badge.description}</p>
-              </div>
+    <div className="max-w-7xl mx-auto px-6 -mt-16 mb-16 relative z-20">
+      <div className="bg-white rounded-xl border border-border shadow-md py-8 px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+        {trusts.map((item, index) => (
+          <div key={index} className="flex flex-col items-center text-center group">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-3 group-hover:scale-110 transition-transform">
+              <item.icon className="w-6 h-6" />
             </div>
-          ))}
-        </div>
+            <div className="text-xl font-bold text-text mb-0.5">{item.number}</div>
+            <div className="text-xs uppercase tracking-wider font-semibold text-text-muted">{item.label}</div>
+          </div>
+        ))}
       </div>
     </div>
   );

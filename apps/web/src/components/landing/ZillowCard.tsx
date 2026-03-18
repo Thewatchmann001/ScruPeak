@@ -1,143 +1,78 @@
-"use client";
-
-import { Link } from "react-router-dom";
-import { VerificationIndicator } from "@/components/verification/VerificationUI";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Shield, Database } from 'lucide-react';
+import { Land } from '@/types';
 
 interface ZillowCardProps {
-  id: string;
-  image: string;
-  price: number;
-  location: {
-    community: string;
-    chiefdom: string;
-    district: string;
-  };
-  size: number;
-  sizeUnit: "sqm" | "acres";
-  purpose: string;
-  verificationScore: number;
-  daysOnMarket?: number;
-  isSaved?: boolean;
-  onSelect?: () => void;
+  listing: Land;
 }
 
-export function ZillowCard({
-  id,
-  image,
-  price,
-  location,
-  size,
-  sizeUnit,
-  purpose,
-  verificationScore,
-  daysOnMarket = 5,
-  isSaved = false,
-}: ZillowCardProps) {
-  const riskLevel = verificationScore >= 80 ? "low" : verificationScore >= 50 ? "medium" : "high";
-  const riskColor = riskLevel === "low" ? "bg-green-100 text-green-800" : riskLevel === "medium" ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800";
+export const ZillowCard: React.FC<ZillowCardProps> = ({ listing }) => {
+  const navigate = useNavigate();
+  const photoDoc = listing.documents.find(d =>
+    d.document_type === 'photo' || d.document_type === 'land_photo'
+  );
 
   return (
-    <Link to={`/land/${id}`}>
-      <div className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer">
-        {/* Image Container */}
-        <div className="relative h-64 md:h-72 overflow-hidden bg-gray-200">
+    <div
+      className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-card-hover transition-standard cursor-pointer group"
+      onClick={() => navigate(`/land/${listing.id}`)}
+    >
+      <div className="relative h-[200px] bg-slate-100 overflow-hidden">
+        {photoDoc ? (
           <img
-            src={image}
-            alt={`${location.community}, ${location.district}`}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            src={photoDoc.file_url}
+            alt={listing.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-
-          {/* Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-          {/* Save Button */}
-          <button className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all transform hover:scale-110 z-10">
-            <svg
-              className={`w-5 h-5 ${isSaved ? "text-primary fill-current" : "text-gray-600"}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z"
-              />
-            </svg>
-          </button>
-
-          {/* Verification Badge */}
-          <div className="absolute top-3 left-3 z-10">
-            <VerificationIndicator score={verificationScore} risk={riskLevel as "low" | "medium" | "high"} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-text-muted bg-surface">
+            No Image Available
           </div>
+        )}
 
-          {/* Days on Market */}
-          <div className="absolute bottom-3 left-3 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-bold">
-            {daysOnMarket} days on market
-          </div>
-
-          {/* Price Badge */}
-          <div className="absolute bottom-3 right-3 bg-gradient-to-r from-primary to-primary text-white px-4 py-2 rounded-lg font-bold text-lg shadow-lg">
-            ₤{(price / 1000).toFixed(0)}K
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-4 md:p-5">
-          {/* Location */}
-          <div className="mb-3">
-            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
-              {location.district} • {location.chiefdom}
-            </p>
-            <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
-              {location.community}
-            </h3>
-          </div>
-
-          {/* Key Details Grid */}
-          <div className="grid grid-cols-3 gap-2 mb-4 pb-4 border-b border-gray-200">
-            <div>
-              <p className="text-xs text-gray-600">Size</p>
-              <p className="font-bold text-gray-900">
-                {size.toLocaleString()} {sizeUnit === "sqm" ? "sqm" : "ac"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-600">Type</p>
-              <p className="font-bold text-gray-900 text-sm">{purpose}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-600">Status</p>
-              <p className={`font-bold text-xs py-1 px-2 rounded ${riskColor} text-center`}>
-                {riskLevel === "low" ? "✓ Verified" : riskLevel === "medium" ? "⚠ Trusted" : "⚠ Flagged"}
-              </p>
-            </div>
-          </div>
-
-          {/* Risk Assessment */}
-          <div className="flex items-center gap-2 text-xs">
-            <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className={`h-full ${
-                  riskLevel === "low"
-                    ? "bg-green-500"
-                    : riskLevel === "medium"
-                      ? "bg-yellow-500"
-                      : "bg-red-500"
-                }`}
-                style={{ width: `${verificationScore}%` }}
-              />
-            </div>
-            <span className="font-bold text-gray-700">{verificationScore}%</span>
-          </div>
-
-          {/* View Details CTA */}
-          <button className="w-full mt-4 px-4 py-2 bg-gray-100 text-gray-900 font-bold rounded-lg hover:bg-slate-50 hover:text-primary transition-all transform group-hover:shadow-md">
-            View Details
-          </button>
+        {/* ULID Badge */}
+        <div className="absolute bottom-3 left-3 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-widest border border-white/20">
+          ULID: {listing.ulid.substring(0, 8)}...
         </div>
       </div>
-    </Link>
+
+      <div className="p-4 flex flex-col gap-2">
+        <div className="flex justify-between items-start">
+          <div className="text-2xl font-bold text-primary">
+            Le {listing.price?.toLocaleString() || "Contact for Price"}
+          </div>
+          <div className="px-2 py-1 bg-surface border border-border rounded text-[10px] font-bold text-text-secondary uppercase">
+            {listing.status.replace('_', ' ')}
+          </div>
+        </div>
+
+        <div className="text-sm text-text-secondary font-medium truncate">
+          {listing.region}, {listing.district}
+        </div>
+
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+          {listing.title}
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-2">
+          {listing.blockchain_verified && (
+            <div className="px-2 py-1 bg-[#E3F2FD] text-[#1565C0] rounded text-[10px] font-bold uppercase flex items-center gap-1">
+              <Database className="w-3 h-3" />
+              On-Chain
+            </div>
+          )}
+          <div className="px-2 py-1 bg-success-light text-success rounded text-[10px] font-bold uppercase flex items-center gap-1">
+            <Shield className="w-3 h-3" />
+            Verified
+          </div>
+        </div>
+
+        <button className="w-full mt-4 py-2.5 border border-primary text-primary text-sm font-bold rounded-md hover:bg-primary hover:text-white transition-standard">
+          View Details
+        </button>
+      </div>
+    </div>
   );
-}
+};
