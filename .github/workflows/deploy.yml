@@ -285,6 +285,11 @@ jobs:
             echo "cpu=2" >> $GITHUB_OUTPUT
             echo "concurrency=10" >> $GITHUB_OUTPUT
             echo "timeout=300s" >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "backend" ]]; then
+            echo "memory=1Gi" >> $GITHUB_OUTPUT
+            echo "cpu=2" >> $GITHUB_OUTPUT
+            echo "concurrency=80" >> $GITHUB_OUTPUT
+            echo "timeout=300s" >> $GITHUB_OUTPUT
           else
             echo "memory=512Mi" >> $GITHUB_OUTPUT
             echo "cpu=1" >> $GITHUB_OUTPUT
