@@ -1,6 +1,5 @@
 import { betterAuth } from "better-auth";
 import { jwt } from "better-auth/plugins";
-import Database from "better-sqlite3";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
