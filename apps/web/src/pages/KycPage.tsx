@@ -9,8 +9,20 @@ import { useNavigate } from 'react-router-dom';
 import { Camera, CheckCircle2, RotateCcw } from 'lucide-react';
 
 const KycPage = () => {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [files, setFiles] = useState<{ id_document: File | null, proof_of_address: File | null }>({
+    id_document: null,
+    proof_of_address: null,
+  });
+  const [capturedImages, setCapturedImages] = useState<{ straight: Blob | null, left: Blob | null, right: Blob | null }>({
+    straight: null,
+    left: null,
+    right: null,
+  });
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [livenessStep, setLivenessStep] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

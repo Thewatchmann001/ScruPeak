@@ -12,7 +12,7 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, loading } = useAuth();
+  const { user, isLoading: loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
