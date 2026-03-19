@@ -7,15 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Try importing from local module (for Docker/package) or relative (for local dev)
-try:
-    from app.engine import SpatialIntelligence
-except ImportError:
-    try:
-        from .engine import SpatialIntelligence
-    except ImportError:
-        # Fallback if running directly
-        from engine import SpatialIntelligence
+from app.engine import SpatialIntelligence
 
 app = FastAPI(title="Spatial Service", version="1.0.0")
 
