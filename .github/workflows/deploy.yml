@@ -55,7 +55,6 @@ jobs:
           SERVICES=(
             "apps/ai-service:ai-service"
             "apps/api-gateway:api-gateway"
-            "apps/auth-server:auth-server"
             "apps/backend:backend"
             "apps/spatial-service:spatial-service"
             "apps/web:web"
@@ -273,8 +272,6 @@ jobs:
             echo "port=3000" >> $GITHUB_OUTPUT
           elif [[ "$NAME" == "web" ]]; then
             echo "port=80" >> $GITHUB_OUTPUT
-          elif [[ "$NAME" == "auth-server" ]]; then
-            echo "port=4005" >> $GITHUB_OUTPUT
           else
             echo "port=8000" >> $GITHUB_OUTPUT
           fi
@@ -340,9 +337,9 @@ jobs:
           secrets: |
             DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env }}:latest
             JWT_SECRET=JWT_SECRET:latest
-            OPENAI_API_KEY=OPENAI_API_KEY:latest
-            GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest
-            GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest
+            MISTRAL_API_KEY=MISTRAL_API_KEY:latest
+            PRIVY_APP_ID=PRIVY_APP_ID:latest
+            PRIVY_APP_SECRET=PRIVY_APP_SECRET:latest
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest

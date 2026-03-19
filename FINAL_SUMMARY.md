@@ -4,7 +4,7 @@
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
-║         LANDBIZNES PLATFORM - IMPLEMENTATION COMPLETE         ║
+║         SCRUPEAK PLATFORM - IMPLEMENTATION COMPLETE         ║
 ║                                                                ║
 ║  Starting State:    50% MVP                                   ║
 ║  After Phase 1:     85% Core Features                         ║

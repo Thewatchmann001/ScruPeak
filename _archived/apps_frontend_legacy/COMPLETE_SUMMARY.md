@@ -1,6 +1,6 @@
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                                                            ║
-║         🎉 LANDBIZNES FRONTEND - PRODUCTION READY & COMPLETE 🎉            ║
+║         🎉 SCRUPEAK FRONTEND - PRODUCTION READY & COMPLETE 🎉            ║
 ║                                                                            ║
 ║              A Complete, Modern Next.js 14 Frontend Application           ║
 ║                  With Solid UI/UX & Best Practices                        ║

@@ -1,206 +1,118 @@
 """
-Jems AI Advisory Router
-Non-invasive Jems AI integration for land guidance and document review
+ScruPeak AI Service Router
+Handles Lanstimate™ valuations and Jems AI transaction monitoring
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+import os
+import httpx
+import logging
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 from app.core.database import get_db
 from app.utils.auth import get_current_user
 from app.models import User
-from app.services.jems_ai import get_jems_service
-import logging
 
 logger = logging.getLogger(__name__)
-router = APIRouter(tags=["Jems AI Advisory"])
+router = APIRouter(tags=["ScruPeak AI Services"])
 
-# ============================================================================
+AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "https://ai-service-prod-198638918293.us-central1.run.app")
+
+# ============================================================
 # SCHEMAS
-# ============================================================================
+# ============================================================
 
-class LandGuidanceRequest(BaseModel):
-    """Request for land guidance"""
-    question: str = Field(..., description="User's question about land", min_length=10, max_length=1000)
-    context: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Optional context (location, property_type, size, etc.)"
-    )
+class ValuationRequest(BaseModel):
+    district: str
+    city: str
+    land_type: str
+    size_sqm: float
+    verification_status: str
 
+class BehaviorAnalysisRequest(BaseModel):
+    user_id: str
+    activities: list
 
-class DocumentReviewRequest(BaseModel):
-    """Request for document review"""
-    document_text: str = Field(..., description="Text content of document", min_length=50, max_length=10000)
-    document_type: str = Field(
-        default="survey_plan",
-        description="Type of document (survey_plan, title_deed, chief_form, etc.)"
-    )
+class DocumentModerationRequest(BaseModel):
+    document_id: str
+    text: str
 
+# ============================================================
+# ENDPOINTS
+# ============================================================
 
-class AIAssistRequest(BaseModel):
-    """General AI assistance request"""
-    query: str = Field(..., description="User query", min_length=10, max_length=1000)
-    context: Optional[Dict[str, Any]] = None
-
-
-# ============================================================================
-# ENDPOINTS: LAND GUIDANCE
-# ============================================================================
-
-@router.post("/assist")
-async def ai_assist(
-    request: AIAssistRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    General AI assistance endpoint
-    Provides advisory guidance on land-related questions
-    """
+@router.post("/valuation/lanstimate")
+async def get_valuation(request: ValuationRequest, current_user: User = Depends(get_current_user)):
+    """Lanstimate™ AI Land Valuation"""
     try:
-        service = get_jems_service()
-        
-        if not service.enabled:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="AI service is not configured or disabled"
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{AI_SERVICE_URL}/valuation/lanstimate",
+                json=request.dict(),
+                timeout=30.0
             )
-        
-        result = await service.get_land_guidance(
-            question=request.query,
-            context=request.context
-        )
-        
-        if not result.get("success"):
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=result.get("error", "AI service unavailable")
-            )
-        
-        logger.info(f"AI assist request from user {current_user.id}: {request.query[:50]}...")
-        
-        return result
-        
-    except HTTPException:
-        raise
+            response.raise_for_status()
+            return response.json()
     except Exception as e:
-        logger.error(f"Error in AI assist: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process AI request"
-        )
+        logger.error(f"Valuation error: {e}")
+        raise HTTPException(status_code=503, detail="AI valuation service unavailable")
 
-
-@router.post("/land-guidance")
-async def get_land_guidance(
-    request: LandGuidanceRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Get plain English Jems AI guidance for Sierra Leone context
-    Advisory only - no legal guarantees
-    """
+@router.get("/valuation/market-insights")
+async def get_market_insights(district: str = "Western Area", land_type: str = "residential", current_user: User = Depends(get_current_user)):
+    """Lanstimate™ Market Insights"""
     try:
-        service = get_jems_service()
-        
-        if not service.enabled:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="AI service is not configured or disabled"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{AI_SERVICE_URL}/valuation/market-insights",
+                params={"district": district, "land_type": land_type},
+                timeout=20.0
             )
-        
-        result = await service.get_land_guidance(
-            question=request.question,
-            context=request.context
-        )
-        
-        if not result.get("success"):
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=result.get("error", "AI service unavailable")
-            )
-        
-        logger.info(f"Land guidance request from user {current_user.id}")
-        
-        return result
-        
-    except HTTPException:
-        raise
+            response.raise_for_status()
+            return response.json()
     except Exception as e:
-        logger.error(f"Error in land guidance: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process guidance request"
-        )
+        logger.error(f"Market insights error: {e}")
+        raise HTTPException(status_code=503, detail="Market insights service unavailable")
 
-
-# ============================================================================
-# ENDPOINTS: DOCUMENT REVIEW
-# ============================================================================
-
-@router.post("/document-review")
-async def review_document(
-    request: DocumentReviewRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Review land document and detect potential red flags using Jems AI
-    Advisory only - all documents must be verified by professionals
-    """
+@router.post("/jems/behavior-analysis")
+async def analyze_user_behavior(request: BehaviorAnalysisRequest, current_user: User = Depends(get_current_user)):
+    """Jems AI Behavioral Analysis"""
     try:
-        service = get_jems_service()
-        
-        if not service.enabled:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="AI service is not configured or disabled"
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{AI_SERVICE_URL}/jems/behavior-analysis",
+                json=request.dict(),
+                timeout=20.0
             )
-        
-        result = await service.review_document(
-            document_text=request.document_text,
-            document_type=request.document_type
-        )
-        
-        if not result.get("success"):
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=result.get("error", "AI service unavailable")
-            )
-        
-        logger.info(f"Document review request from user {current_user.id} for {request.document_type}")
-        
-        return result
-        
-    except HTTPException:
-        raise
+            response.raise_for_status()
+            return response.json()
     except Exception as e:
-        logger.error(f"Error in document review: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process document review"
-        )
+        logger.error(f"Behavior analysis error: {e}")
+        raise HTTPException(status_code=503, detail="Behavior analysis service unavailable")
 
-
-# ============================================================================
-# ENDPOINTS: SERVICE STATUS
-# ============================================================================
+@router.post("/moderation/document")
+async def moderate_land_document(request: DocumentModerationRequest, current_user: User = Depends(get_current_user)):
+    """Jems AI Document Moderation"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{AI_SERVICE_URL}/moderation/document",
+                json=request.dict(),
+                timeout=20.0
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        logger.error(f"Document moderation error: {e}")
+        raise HTTPException(status_code=503, detail="Document moderation service unavailable")
 
 @router.get("/status")
-async def get_ai_status(
-    current_user: User = Depends(get_current_user)
-):
-    """Get Jems AI service status and availability"""
-    service = get_jems_service()
-    
-    return {
-        "enabled": service.enabled,
-        "model": service.model.value if service.enabled else None,
-        "status": "available" if service.enabled else "disabled",
-        "message": "Jems AI service is available" if service.enabled else "Jems AI service is not configured",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+async def get_ai_status():
+    """AI Service Health Check"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{AI_SERVICE_URL}/health")
+            return response.json()
+    except Exception:
+        return {"status": "unreachable"}
