@@ -334,12 +334,12 @@ jobs:
           env_vars: |
             NODE_ENV=${{ steps.svc.outputs.env }}
             GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
+            MISTRAL_API_KEY=${{ secrets.MISTRAL_API_KEY }}
+            PRIVY_APP_ID=cmmxpr19800000cl51l48f0yv
+            PRIVY_APP_SECRET=${{ secrets.PRIVY_APP_SECRET }}
           secrets: |
             DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env }}:latest
             JWT_SECRET=JWT_SECRET:latest
-            MISTRAL_API_KEY=MISTRAL_API_KEY:latest
-            PRIVY_APP_ID=PRIVY_APP_ID:latest
-            PRIVY_APP_SECRET=PRIVY_APP_SECRET:latest
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
