@@ -1,14 +1,15 @@
 """
 Authentication utilities - JWT token generation, verification, and password hashing
-Optimized for 20M+ users with secure defaults
+Updated to support Privy authentication
 """
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from uuid import UUID
 import jwt
 import logging
+import uuid as uuid_pkg
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import HTTPBearer
 from typing import Any
 
@@ -17,6 +18,7 @@ from app.core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models import User, UserRole
+from app.utils.privy_auth import verify_privy_token
 
 
 # ============================================================================
@@ -169,16 +171,18 @@ async def get_current_user(
 ) -> User:
     """
     Dependency to get current authenticated user from JWT token
-    
-    Usage in route:
-        @router.get("/protected")
-        async def protected_route(user: User = Depends(get_current_user)):
-            return {"user_id": user.id}
+    Supports both legacy better-auth/internal tokens and new Privy tokens
     """
     token = credentials.credentials
     
-    # Decode token
-    payload = jwt_handler.decode_token(token, token_type="access")
+    # Try decoding as Privy token first if it looks like one (usually longer/different header)
+    # Actually, verify_privy_token will handle it.
+    payload = None
+    try:
+        payload = await verify_privy_token(credentials)
+    except HTTPException:
+        # If Privy verification fails, try standard token
+        payload = jwt_handler.decode_token(token, token_type="access")
     
     if payload is None:
         raise HTTPException(
@@ -195,33 +199,38 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # User ID from Privy is usually 'did:privy:...'
+    # We might need to map it or handle it as a string if it's not a UUID
+    is_privy_id = str(user_id).startswith("did:privy:")
+
     # Get user from database
-    try:
-        user_uuid = UUID(user_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid user ID",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    if not is_privy_id:
+        try:
+            user_uuid = UUID(user_id)
+            result = await db.execute(select(User).where(User.id == user_uuid))
+        except ValueError:
+            # Maybe it's not a UUID but a legacy ID or something else
+            result = await db.execute(select(User).where(User.email == payload.get("email")))
+    else:
+        # Look up by email for Privy users for now, or add a privy_id column later
+        email = payload.get("email")
+        result = await db.execute(select(User).where(User.email == email))
     
-    result = await db.execute(select(User).where(User.id == user_uuid))
     user = result.scalars().first()
     
     if user is None:
-        # Just-In-Time Provisioning: If user doesn't exist in backend DB but has a valid token
-        # we create a basic user record. This is common when using external auth providers.
+        # Just-In-Time Provisioning
         try:
             email = payload.get("email")
             name = payload.get("name") or email.split('@')[0] if email else "New User"
 
             user = User(
-                id=user_uuid,
+                id=uuid_pkg.uuid4() if is_privy_id else UUID(user_id),
                 email=email or f"{user_id}@placeholder.com",
                 name=name,
                 role=UserRole.BUYER,
                 is_active=True,
-                email_verified=True # Trusted from better-auth
+                email_verified=True # Trusted from auth provider
             )
             db.add(user)
             await db.commit()
@@ -242,6 +251,29 @@ async def get_current_user(
     
     return user
 
+
+async def get_current_user_from_privy(payload: dict = Security(verify_privy_token), db: AsyncSession = Depends(get_db)):
+    """Helper for explicit Privy auth if needed"""
+    # This can be used if we want to bypass the legacy check
+    email = payload.get("email")
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalars().first()
+
+    if not user:
+        # Provisioning logic
+        user = User(
+            id=uuid_pkg.uuid4(),
+            email=email,
+            name=payload.get("name") or email.split('@')[0],
+            role=UserRole.BUYER,
+            is_active=True,
+            email_verified=True
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    return user
 
 async def get_current_admin(
     current_user: User = Depends(get_current_user),

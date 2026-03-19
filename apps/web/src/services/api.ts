@@ -1,34 +1,18 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { ApiError } from "@/types";
-import { authClient } from "@/lib/auth-client";
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://api-gateway-prod-198638918293.us-central1.run.app';
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || "/api/v1",
+      baseURL: API_URL,
       timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || "30000"),
       headers: {
         "Content-Type": "application/json",
       },
-    });
-
-    // Request interceptor to add auth token from better-auth
-    this.client.interceptors.request.use(async (config) => {
-      // Use authClient (better-auth) to get the current session token
-      // This is more robust than manual localStorage access
-      const session = await authClient.getSession();
-
-      // If using jwtClient plugin, the token might be in the session object
-      // For better-auth, the session token is often managed via cookies,
-      // but we explicitly attach it for the FastAPI backend which expects Bearer auth.
-      const token = localStorage.getItem("better-auth.session-token") || (session?.data as any)?.token;
-
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
     });
 
     // Response interceptor to handle errors
@@ -40,13 +24,23 @@ class ApiClient {
         // Handle 401 Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          // In better-auth, session management is automated.
-          // If we get a 401, we should redirect to login.
+          // In Privy, session management is automated.
+          // If we get a 401, we should potentially trigger a re-login or redirect.
+          // For now, we'll just redirect to login if we can't refresh.
           window.location.href = "/auth/login";
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  // Call this after Privy is ready to inject token
+  setAuthToken(token: string | null) {
+    if (token) {
+      this.client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete this.client.defaults.headers.common['Authorization'];
+    }
   }
 
   get<T>(url: string, config = {}) {
@@ -71,3 +65,4 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
+export const setAuthToken = (token: string | null) => api.setAuthToken(token);

@@ -118,6 +118,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = "proj_DWGnbduxzc3M7p3AD6IAZ1iC"
     OPENAI_ENABLED: bool = True
 
+    # Privy Auth
+    PRIVY_APP_ID: str = "cmmxpr19800000cl51l48f0yv"
+    PRIVY_APP_SECRET: str = ""
+
     # DeepSeek AI (Fallback Layer)
     DEEPSEEK_API_KEY: Optional[str] = None
     DEEPSEEK_ENABLED: bool = True  # Enable if API key is provided

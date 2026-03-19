@@ -1,20 +1,24 @@
-import { createAuthClient } from "better-auth/react";
-import { jwtClient } from "better-auth/client/plugins";
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL || "https://auth-server-prod-ey3v3gkpaq-uc.a.run.app";
+export { usePrivy, useWallets };
 
-export const authClient = createAuthClient({
-    baseURL: AUTH_URL,
-    plugins: [
-        jwtClient()
-    ]
-});
+export const useAuth = () => {
+  const {
+    ready,
+    authenticated,
+    user,
+    login,
+    logout,
+    getAccessToken
+  } = usePrivy();
 
-export const { 
-    signIn, 
-    signUp, 
-    useSession, 
-    signOut, 
-    forgetPassword, 
-    resetPassword 
-} = authClient;
+  return {
+    ready,
+    authenticated,
+    user,
+    login,
+    logout,
+    getAccessToken,
+    isLoading: !ready,
+  };
+};
