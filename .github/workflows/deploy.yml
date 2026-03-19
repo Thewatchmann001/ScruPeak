@@ -346,6 +346,7 @@ jobs:
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
+            MISTRAL_API_KEY=MISTRAL_API_KEY:latest
 
       - name: Health check
         id: health
