@@ -259,7 +259,7 @@ def print_status():
     """Print formatted status report"""
     
     print("\n" + "="*70)
-    print("🎉 LANDBIZNES PLATFORM - FINAL STATUS REPORT 🎉")
+    print("🎉 SCRUPEAK PLATFORM - FINAL STATUS REPORT 🎉")
     print("="*70)
     
     print(f"\n📊 PROJECT: {STATUS_REPORT['project']}")

@@ -341,7 +341,7 @@ class StakeholderUser(FastHttpUser):
 def on_test_start(environment, **kwargs):
     """Called when test starts"""
     print("\n" + "="*70)
-    print("LANDBIZNES LOAD TEST SUITE STARTED")
+    print("SCRUPEAK LOAD TEST SUITE STARTED")
     print("="*70)
     print(f"Start Time: {datetime.utcnow()}")
     print(f"Target: {BASE_URL}")
@@ -352,7 +352,7 @@ def on_test_start(environment, **kwargs):
 def on_test_stop(environment, **kwargs):
     """Called when test stops"""
     print("\n" + "="*70)
-    print("LANDBIZNES LOAD TEST SUITE COMPLETED")
+    print("SCRUPEAK LOAD TEST SUITE COMPLETED")
     print("="*70)
     
     # Print summary

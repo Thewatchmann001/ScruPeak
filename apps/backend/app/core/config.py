@@ -114,9 +114,8 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
     
-    # OpenAI AI (Primary Intelligence Layer)
-    OPENAI_API_KEY: Optional[str] = "proj_DWGnbduxzc3M7p3AD6IAZ1iC"
-    OPENAI_ENABLED: bool = True
+    # Mistral AI (Primary Intelligence Layer)
+    MISTRAL_API_KEY: Optional[str] = None
 
     # Privy Auth
     PRIVY_APP_ID: str = "cmmxpr19800000cl51l48f0yv"
