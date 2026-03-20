@@ -34,8 +34,8 @@ class Decision:
     3. justification: Technical + regulatory reasoning
     """
     
-    parcel_id: str
-    related_parcel_id: str
+    parcel_code: str
+    related_parcel_code: str
     classification: DecisionType
     decision_text: str
     justification: str
@@ -58,8 +58,8 @@ SPATIAL DECISION
    {self.justification}
 
 DETAILS:
-   Parcel: {self.parcel_id}
-   Related: {self.related_parcel_id}
+   Parcel: {self.parcel_code}
+   Related: {self.related_parcel_code}
    Relation: {self.spatial_relation}
    Overlap: {self.overlap_pct:.1f}%
 ================================
@@ -84,19 +84,19 @@ def classify_relation(
     # ========== IDENTICAL GEOMETRY ==========
     if relation == SpatialRelation.IDENTICAL:
         return Decision(
-            parcel_id=subject.parcel_id,
-            related_parcel_id=other.parcel_id,
+            parcel_code=subject.parcel_code,
+            related_parcel_code=other.parcel_code,
             classification=DecisionType.FRAUD_DETECTED,
             decision_text=(
-                f"FRAUD: Parcel {subject.parcel_id} has identical geometry to {other.parcel_id}. "
+                f"FRAUD: Parcel {subject.parcel_code} has identical geometry to {other.parcel_code}. "
                 f"Two parcels cannot claim the same land. OARG must determine which registration is valid."
             ),
             justification=(
                 f"Spatial test: geometry is identical (100% overlap). "
-                f"Subject: {subject.parcel_id} (area={subject.area_sqm:.0f}sqm). "
-                f"Other: {other.parcel_id} (area={other.area_sqm:.0f}sqm). "
-                f"Lineage: subject.parent={subject.parent_id}, other.parent={other.parent_id}. "
-                f"Grid rule: both registered to grid {subject.grid_ref.key()}. "
+                f"Subject: {subject.parcel_code} (area={subject.area:.0f}sqm). "
+                f"Other: {other.parcel_code} (area={other.area:.0f}sqm). "
+                f"Lineage: subject.parents={subject.parents}, other.parents={other.parents}. "
+                f"Grid rule: both registered to grid {subject.reference_grid.key()}. "
                 f"Verdict: Duplicate registration or fraudulent claim. Requires OARG intervention."
             ),
             spatial_relation=relation.value,
@@ -104,21 +104,21 @@ def classify_relation(
         )
     
     # ========== LEGITIMATE SUBDIVISION ==========
-    if relation == SpatialRelation.CONTAINED and subject.parent_id == other.parcel_id:
+    if relation == SpatialRelation.CONTAINED and other.parcel_code in subject.parents:
         return Decision(
-            parcel_id=subject.parcel_id,
-            related_parcel_id=other.parcel_id,
+            parcel_code=subject.parcel_code,
+            related_parcel_code=other.parcel_code,
             classification=DecisionType.LEGITIMATE_SUBDIVISION,
             decision_text=(
-                f"APPROVED: Parcel {subject.parcel_id} is a legitimate child of {other.parcel_id}. "
+                f"APPROVED: Parcel {subject.parcel_code} is a legitimate child of {other.parcel_code}. "
                 f"Geometry is fully contained within parent. Lineage verified. "
                 f"Parent remains intact. This is a valid subdivision."
             ),
             justification=(
-                f"Spatial test: {subject.parcel_id} contained in {other.parcel_id} "
+                f"Spatial test: {subject.parcel_code} contained in {other.parcel_code} "
                 f"({overlap_pct:.1f}% overlap). "
-                f"Lineage test: parent_id link verified. "
-                f"Grid rule: first vertex of child determines grid {subject.grid_ref.key()}. "
+                f"Lineage test: parent link verified. "
+                f"Grid rule: first vertex of child determines grid {subject.reference_grid.key()}. "
                 f"Parent integrity: geometry unchanged, only child reference added. "
                 f"Verdict: Valid subdivision. No property law violation."
             ),
@@ -127,19 +127,19 @@ def classify_relation(
         )
     
     # ========== CONTAINED WITHOUT LINEAGE (ORPHAN) ==========
-    if relation == SpatialRelation.CONTAINED and subject.parent_id != other.parcel_id:
+    if relation == SpatialRelation.CONTAINED and other.parcel_code not in subject.parents:
         return Decision(
-            parcel_id=subject.parcel_id,
-            related_parcel_id=other.parcel_id,
+            parcel_code=subject.parcel_code,
+            related_parcel_code=other.parcel_code,
             classification=DecisionType.FRAUD_DETECTED,
             decision_text=(
-                f"FRAUD: Parcel {subject.parcel_id} is spatially contained within {other.parcel_id}, "
+                f"FRAUD: Parcel {subject.parcel_code} is spatially contained within {other.parcel_code}, "
                 f"but NO lineage link exists. This is an orphan parcel—either invalid or fraudulent."
             ),
             justification=(
-                f"Spatial test: {subject.parcel_id} fully contained in {other.parcel_id}. "
-                f"Lineage test: NO parent_lineage link to {other.parcel_id}. "
-                f"Subject parent_id: {subject.parent_id}. "
+                f"Spatial test: {subject.parcel_code} fully contained in {other.parcel_code}. "
+                f"Lineage test: NO parent link to {other.parcel_code}. "
+                f"Subject parents: {subject.parents}. "
                 f"Grid rule: containment alone is insufficient; formal subdivision creates lineage. "
                 f"Verdict: Fraudulent or erroneous containment. Flag for OARG investigation."
             ),
@@ -150,17 +150,17 @@ def classify_relation(
     # ========== PARTIAL OVERLAP ==========
     if relation == SpatialRelation.OVERLAP:
         return Decision(
-            parcel_id=subject.parcel_id,
-            related_parcel_id=other.parcel_id,
+            parcel_code=subject.parcel_code,
+            related_parcel_code=other.parcel_code,
             classification=DecisionType.CONFLICT_REQUIRES_OARG,
             decision_text=(
-                f"AMBIGUOUS: Parcels {subject.parcel_id} and {other.parcel_id} have a "
+                f"AMBIGUOUS: Parcels {subject.parcel_code} and {other.parcel_code} have a "
                 f"partial overlap ({overlap_pct:.1f}%). The overlapping area cannot be "
                 f"owned by both parties. OARG officer must resolve boundary and determine "
                 f"rightful owner of overlap."
             ),
             justification=(
-                f"Spatial test: partial overlap, {overlap_pct:.1f}% of {subject.parcel_id}. "
+                f"Spatial test: partial overlap, {overlap_pct:.1f}% of {subject.parcel_code}. "
                 f"Lineage: no formal parent-child relationship. "
                 f"Geometric analysis: neither contains nor is identical. "
                 f"Regulatory: no automated rule can resolve overlapping ownership. "
@@ -172,19 +172,19 @@ def classify_relation(
     
     # ========== SUBJECT CONTAINS OTHER ==========
     if relation == SpatialRelation.CONTAINS:
-        if other.parent_id == subject.parcel_id:
+        if subject.parcel_code in other.parents:
             return Decision(
-                parcel_id=subject.parcel_id,
-                related_parcel_id=other.parcel_id,
+                parcel_code=subject.parcel_code,
+                related_parcel_code=other.parcel_code,
                 classification=DecisionType.LEGITIMATE_SUBDIVISION,
                 decision_text=(
-                    f"APPROVED: Parcel {subject.parcel_id} is parent; it correctly contains "
-                    f"child {other.parcel_id}. Parent geometry unchanged. Children registered as "
+                    f"APPROVED: Parcel {subject.parcel_code} is parent; it correctly contains "
+                    f"child {other.parcel_code}. Parent geometry unchanged. Children registered as "
                     f"separate parcels with lineage links. Valid subdivision."
                 ),
                 justification=(
-                    f"Spatial test: {subject.parcel_id} contains {other.parcel_id}. "
-                    f"Lineage: other.parent_id = {subject.parcel_id} (verified). "
+                    f"Spatial test: {subject.parcel_code} contains {other.parcel_code}. "
+                    f"Lineage: other.parents contains {subject.parcel_code} (verified). "
                     f"Parent integrity: geometry immutable, metadata updated only with child reference. "
                     f"Grid rule: each parcel has deterministic reference grid from first vertex. "
                     f"Verdict: Valid parent-child subdivision structure."
@@ -194,17 +194,17 @@ def classify_relation(
             )
         else:
             return Decision(
-                parcel_id=subject.parcel_id,
-                related_parcel_id=other.parcel_id,
+                parcel_code=subject.parcel_code,
+                related_parcel_code=other.parcel_code,
                 classification=DecisionType.CONFLICT_REQUIRES_OARG,
                 decision_text=(
-                    f"AMBIGUOUS: Parcel {subject.parcel_id} contains {other.parcel_id}, "
+                    f"AMBIGUOUS: Parcel {subject.parcel_code} contains {other.parcel_code}, "
                     f"but no formal parent-child lineage exists. OARG must clarify whether "
                     f"this represents an unregistered subdivision or overlapping claims."
                 ),
                 justification=(
                     f"Spatial test: containment detected. "
-                    f"Lineage: other.parent_id points to {other.parent_id}, not {subject.parcel_id}. "
+                    f"Lineage: other.parents points to {other.parents}, not {subject.parcel_code}. "
                     f"Grid rule: formal subdivision requires explicit lineage. "
                     f"Verdict: Ambiguous containment. Requires OARG review and boundary clarification."
                 ),
@@ -215,11 +215,11 @@ def classify_relation(
     # ========== DISJOINT (NO CONFLICT) ==========
     if relation == SpatialRelation.DISJOINT:
         return Decision(
-            parcel_id=subject.parcel_id,
-            related_parcel_id=other.parcel_id,
+            parcel_code=subject.parcel_code,
+            related_parcel_code=other.parcel_code,
             classification=DecisionType.PARCEL_OK,
             decision_text=(
-                f"OK: Parcels {subject.parcel_id} and {other.parcel_id} do not overlap. "
+                f"OK: Parcels {subject.parcel_code} and {other.parcel_code} do not overlap. "
                 f"No spatial conflict."
             ),
             justification=(
@@ -231,12 +231,12 @@ def classify_relation(
     
     # ========== DEFAULT (UNCERTAIN) ==========
     return Decision(
-        parcel_id=subject.parcel_id,
-        related_parcel_id=other.parcel_id,
+        parcel_code=subject.parcel_code,
+        related_parcel_code=other.parcel_code,
         classification=DecisionType.CONFLICT_REQUIRES_OARG,
         decision_text=(
             f"UNCERTAIN: Could not automatically classify relationship between "
-            f"{subject.parcel_id} and {other.parcel_id}. OARG review required."
+            f"{subject.parcel_code} and {other.parcel_code}. OARG review required."
         ),
         justification=(
             f"Spatial analysis inconclusive. Relation: {relation.value}. "

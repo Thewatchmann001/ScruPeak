@@ -12,11 +12,7 @@ from app.engine import SpatialIntelligence
 app = FastAPI(title="Spatial Service", version="1.0.0")
 
 # Initialize Engine
-try:
-    spatial_engine = SpatialIntelligence()
-except Exception as e:
-    logger.error(f"Failed to initialize SpatialIntelligence: {e}")
-    spatial_engine = None
+spatial_engine = SpatialIntelligence()
 
 class PolygonRequest(BaseModel):
     polygon: List[Tuple[float, float]]
@@ -29,9 +25,6 @@ def health():
 
 @app.post("/register")
 def register_parcel(request: PolygonRequest):
-    if not spatial_engine:
-        raise HTTPException(status_code=503, detail="Spatial Engine not initialized")
-    
     try:
         parcel = spatial_engine.register_parcel(
             polygon=request.polygon, 
@@ -47,12 +40,11 @@ def register_parcel(request: PolygonRequest):
 
 @app.get("/conflicts/{parcel_id}")
 def detect_conflicts(parcel_id: str, actor: str = "system"):
-    if not spatial_engine:
-        raise HTTPException(status_code=503, detail="Spatial Engine not initialized")
-        
     try:
         decisions = spatial_engine.detect_conflicts_for_parcel(parcel_id, actor=actor)
         return decisions
+    except ValueError as e:
+         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Error detecting conflicts: {e}")
         raise HTTPException(status_code=500, detail=str(e))

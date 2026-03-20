@@ -16,6 +16,13 @@ from enum import Enum
 
 class EventType(Enum):
     """Append-only event types for CSI history"""
+    CREATED = "created"
+    VERIFIED = "verified"
+    SUBDIVIDED = "subdivided"
+    FRAUD_FLAGGED = "fraud_flagged"
+    OVERLAP_DETECTED = "overlap_detected"
+
+    # Legacy / Alternative names
     PARCEL_CREATED = "parcel_created"
     PARCEL_VERIFIED = "parcel_verified"
     PARCEL_SPLIT = "parcel_split"
@@ -51,7 +58,12 @@ class GridReference:
 
     def canonical_key(self) -> str:
         """Deterministic grid key for parcel coding"""
-        return f"{self.grid_id:03d}{self.grid_x:02d}{self.grid_y:02d}"
+        # Using 5 digits for grid_id to accommodate range as per grid_new.py
+        return f"{self.grid_id:05d}{self.grid_x:02d}{self.grid_y:02d}"
+
+    def key(self) -> str:
+        """Alias for canonical_key"""
+        return self.canonical_key()
 
 
 @dataclass
