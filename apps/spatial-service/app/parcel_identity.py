@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Tuple
 from datetime import datetime
 import hashlib
-
+from csi_model import EventType
 
 @dataclass
 class ParcelIdentity:
