@@ -142,23 +142,23 @@ def is_valid_subdivision(
         return False, "No children provided"
     
     parent_poly = poly_to_shapely(parent.polygon)
-    parent_area = parent.area_sqm
+    parent_area = parent.area
     
     # Rule 1: Each child contained in parent
     for child in children:
         child_poly = poly_to_shapely(child.polygon)
         if not parent_poly.contains(child_poly):
-            return False, f"Child {child.parcel_id} not fully contained in parent"
+            return False, f"Child {child.parcel_code} not fully contained in parent"
     
     # Rule 2: Children don't overlap each other
     for i, child_a in enumerate(children):
         for child_b in children[i+1:]:
             result = analyze_spatial_relation(child_a, child_b)
             if result.relation != SpatialRelation.DISJOINT:
-                return False, f"Child {child_a.parcel_id} overlaps with {child_b.parcel_id}"
+                return False, f"Child {child_a.parcel_code} overlaps with {child_b.parcel_code}"
     
     # Rule 3: Area conservation (with tolerance)
-    total_child_area = sum(c.area_sqm for c in children)
+    total_child_area = sum(c.area for c in children)
     area_diff_pct = abs(total_child_area - parent_area) / parent_area * 100
     
     if area_diff_pct > tolerance_pct:
@@ -180,7 +180,7 @@ def grid_bounded_query(
     
     Optimization: Cache by grid_key in governance layer.
     """
-    return [p for p in parcels if p.grid_ref.key() == grid_key]
+    return [p for p in parcels if p.reference_grid.key() == grid_key]
 
 
 def find_overlaps_in_grid(

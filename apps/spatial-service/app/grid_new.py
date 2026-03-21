@@ -29,6 +29,10 @@ class GridReference:
         # Using 5 digits for grid_id to accommodate range up to ~34,000 (200x171)
         return f"{self.formatted_grid_id()}{self.grid_x:02d}{self.grid_y:02d}"
 
+    def key(self) -> str:
+        """Alias for canonical_key"""
+        return self.canonical_key()
+
     def formatted_grid_id(self) -> str:
         """Return the zero-padded grid ID (e.g., 00001)"""
         return f"{self.grid_id:05d}"

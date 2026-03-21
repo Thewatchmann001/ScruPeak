@@ -5,14 +5,17 @@ Exact specification:
 
 ParcelIdentity = {
     "parcel_code": str,              # deterministic from grid + sequence
-    "reference_grid": str,           # "001-00-02" (from first vertex)
+    "reference_grid": GridRef,       # GridReference object
     "sih": str,                      # Spatial Identity Hash (SHA256 of polygon)
     "polygon": List[Tuple[float, float]],  # closed polygon [(lat,lon), ..., (lat,lon)]
-    "area": float,                   # computed from polygon (Shoelace)
+    "area": float,                   # computed from polygon (sqm)
     "parents": List[str],            # parent parcel codes (for merged parcels)
     "children": List[str],           # child parcel codes (from subdivisions)
     "birth_event": str,              # creation event (actor + timestamp + reason)
-    "created_at": datetime           # timestamp of creation
+    "created_at": datetime,          # timestamp of creation
+    "status": str,                   # unverified, verified, disputed
+    "oarg_approved": bool,           # OARG approval flag
+    "events": List[Event]            # history of events
 }
 
 Core Principle: If you change the geometry, you changed the land.
@@ -22,10 +25,13 @@ Core Principle: If you change the geometry, you changed the land.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 from datetime import datetime
 import hashlib
-from csi_model import EventType
+
+# Import needed types from their correct source files
+from csi_model import EventType, HistoryEvent as Event
+from grid_new import GridReference as GridRef
 
 @dataclass
 class ParcelIdentity:
@@ -36,7 +42,7 @@ class ParcelIdentity:
     """
     
     parcel_code: str                        # "SL-001-00-02-0001"
-    reference_grid: str                     # "001-00-02"
+    reference_grid: GridRef                 # GridReference object
     sih: str                                # SHA256(polygon) spatial identity hash
     polygon: List[Tuple[float, float]]      # closed polygon
     area: float                             # computed from polygon (sqm)
@@ -44,6 +50,21 @@ class ParcelIdentity:
     children: List[str] = field(default_factory=list)  # child codes
     birth_event: str = ""                   # "created by actor_xyz at 2026-01-22 10:15:32 reason: ..."
     created_at: datetime = field(default_factory=datetime.utcnow)  # timestamp
+    status: str = "unverified"              # unverified, verified, disputed
+    oarg_approved: bool = False             # OARG approval flag
+    events: List[Event] = field(default_factory=list) # history of events
+    owner: Optional[str] = None             # optional owner
+
+    @property
+    def parent_id(self) -> Optional[str]:
+        """Legacy compatibility for single parent"""
+        return self.parents[0] if self.parents else None
+
+    @parent_id.setter
+    def parent_id(self, value: str):
+        """Legacy compatibility for setting single parent"""
+        if value and value not in self.parents:
+            self.parents = [value]
     
     @staticmethod
     def compute_spatial_hash(polygon: List[Tuple[float, float]]) -> str:
@@ -63,7 +84,6 @@ class ParcelIdentity:
         Shoelace formula for polygon area (lat/lon coordinates).
         
         Returns area in approximate square meters (rough; use proper projection for accuracy).
-        For exact: use UTM projection before computing area.
         """
         if len(polygon) < 3:
             return 0.0
@@ -81,7 +101,6 @@ class ParcelIdentity:
         area = abs(area) / 2.0
         
         # Very rough conversion from decimal degrees to sqm (~111km per degree)
-        # For production: use proper UTM projection
         area_sqm = area * 111000 * 111000
         return area_sqm
     
@@ -95,27 +114,28 @@ class ParcelIdentity:
     def add_event(self, event_type: EventType, actor: str, msg: str, meta: Optional[Dict] = None):
         """Append event to immutable log"""
         event = Event(
-            ts=datetime.utcnow(),
+            timestamp=datetime.utcnow(),
             event_type=event_type,
             actor=actor,
-            msg=msg,
-            meta=meta or {}
+            description=msg,
+            metadata=meta or {}
         )
         self.events.append(event)
     
-    def register_child(self, child_id: str):
+    def register_child(self, child_code: str):
         """Register child parcel"""
-        if child_id not in self.child_ids:
-            self.child_ids.append(child_id)
+        if child_code not in self.children:
+            self.children.append(child_code)
     
     def __repr__(self):
-        return f"<Parcel {self.parcel_id} grid={self.grid_ref.key()} area={self.area_sqm:.0f}sqm>"
+        grid_key = self.reference_grid.key() if hasattr(self.reference_grid, "key") else str(self.reference_grid)
+        return f"<Parcel {self.parcel_code} grid={grid_key} area={self.area:.0f}sqm>"
 
 
 def create_parcel_identity(
     polygon: List[Tuple[float, float]],
-    parcel_id: str,
-    grid_ref: GridRef,
+    parcel_code: str,
+    reference_grid: GridRef,
     owner: Optional[str] = None,
     actor: str = "system"
 ) -> ParcelIdentity:
@@ -130,23 +150,23 @@ def create_parcel_identity(
     if not ParcelIdentity.validate_polygon(polygon):
         raise ValueError("Invalid polygon (must be closed)")
     
-    spatial_hash = ParcelIdentity.compute_spatial_hash(polygon)
-    area_sqm = ParcelIdentity.compute_polygon_area(polygon)
+    sih = ParcelIdentity.compute_spatial_hash(polygon)
+    area = ParcelIdentity.compute_polygon_area(polygon)
     
     parcel = ParcelIdentity(
-        parcel_id=parcel_id,
-        spatial_hash=spatial_hash,
+        parcel_code=parcel_code,
+        sih=sih,
         polygon=polygon,
-        area_sqm=area_sqm,
-        grid_ref=grid_ref,
+        area=area,
+        reference_grid=reference_grid,
         owner=owner
     )
     
     parcel.add_event(
         event_type=EventType.CREATED,
         actor=actor,
-        msg=f"Parcel created: {parcel_id}",
-        meta={"grid": grid_ref.key(), "area": area_sqm, "owner": owner}
+        msg=f"Parcel created: {parcel_code}",
+        meta={"grid": reference_grid.key(), "area": area, "owner": owner}
     )
     
     return parcel

@@ -10,7 +10,7 @@ Core operations:
 """
 
 from typing import List, Tuple, Optional
-from parcel_identity import ParcelIdentity, GridRef, EventType
+from parcel_identity import ParcelIdentity, EventType, GridRef
 from governance import ParcelGovernance
 from spatial_analysis import (
     analyze_spatial_relation,
@@ -50,10 +50,10 @@ class SpatialIntelligence:
         
         - Validates closed polygon
         - Auto-detects grid from first vertex
-        - Generates deterministic parcel ID
+        - Generates deterministic parcel code
         - Checks for duplicate geometry (fraud detection)
         
-        Returns: ParcelIdentity with parcel_id, spatial_hash, area, grid
+        Returns: ParcelIdentity with parcel_code, sih, area, grid
         """
         # Validate polygon
         if polygon[0] != polygon[-1]:
@@ -63,12 +63,12 @@ class SpatialIntelligence:
         grid_id, grid_x, grid_y = determine_reference_grid(polygon)
         
         # Check for duplicate geometry BEFORE storing
-        spatial_hash = ParcelIdentity.compute_spatial_hash(polygon)
-        duplicates = self.gov.store.get_by_hash(spatial_hash)
+        sih = ParcelIdentity.compute_spatial_hash(polygon)
+        duplicates = self.gov.store.get_by_hash(sih)
         if duplicates:
             raise ValueError(
                 f"DUPLICATE GEOMETRY DETECTED. "
-                f"Spatial hash already registered as {duplicates[0].parcel_id}"
+                f"Spatial hash already registered as {duplicates[0].parcel_code}"
             )
         
         # Register parcel
@@ -85,7 +85,7 @@ class SpatialIntelligence:
     
     def detect_conflicts_for_parcel(
         self,
-        parcel_id: str,
+        parcel_code: str,
         actor: str = "system"
     ) -> List[Decision]:
         """
@@ -98,14 +98,13 @@ class SpatialIntelligence:
         4. Classify each conflict
         5. Return list of 3-section decisions
         """
-        parcel = self.gov.store.get(parcel_id)
+        parcel = self.gov.store.get(parcel_code)
         if not parcel:
-            raise ValueError(f"Parcel not found: {parcel_id}")
+            raise ValueError(f"Parcel not found: {parcel_code}")
         
         # Grid-bounded query: only parcels in same grid cell
-        grid_key = parcel.grid_ref.key()
-        grid_parcels = self.gov.store.get_in_grid(parcel.grid_ref)
-        other_parcels = [p for p in grid_parcels if p.parcel_id != parcel_id]
+        grid_parcels = self.gov.store.get_in_grid(parcel.reference_grid)
+        other_parcels = [p for p in grid_parcels if p.parcel_code != parcel_code]
         
         # Detect conflicts
         conflicts = detect_conflicts(parcel, other_parcels)
@@ -121,9 +120,9 @@ class SpatialIntelligence:
             parcel.add_event(
                 event_type=EventType.OVERLAP_DETECTED,
                 actor=actor,
-                msg=f"Conflict with {other_parcel.parcel_id}: {decision.classification.value}",
+                msg=f"Conflict with {other_parcel.parcel_code}: {decision.classification.value}",
                 meta={
-                    "related_parcel": other_parcel.parcel_id,
+                    "related_parcel": other_parcel.parcel_code,
                     "relation": spatial_result.relation.value,
                     "overlap_pct": spatial_result.overlap_pct_a,
                     "decision": decision.classification.value
@@ -134,7 +133,7 @@ class SpatialIntelligence:
     
     def create_subdivision(
         self,
-        parent_id: str,
+        parent_code: str,
         child_polygons: List[List[Tuple[float, float]]],
         actor: str = "system"
     ) -> List[ParcelIdentity]:
@@ -143,14 +142,14 @@ class SpatialIntelligence:
         
         Rules:
         - Parent geometry UNCHANGED
-        - Each child gets new parcel ID and lineage link
+        - Each child gets new parcel code and lineage link
         - Validates subdivision pattern (containment + area)
         
         Returns: List of child ParcelIdentity
         """
-        parent = self.gov.store.get(parent_id)
+        parent = self.gov.store.get(parent_code)
         if not parent:
-            raise ValueError(f"Parent parcel not found: {parent_id}")
+            raise ValueError(f"Parent parcel not found: {parent_code}")
         
         # Validate subdivision pattern
         # (Create temporary child parcels for validation)
@@ -158,11 +157,11 @@ class SpatialIntelligence:
         for child_poly in child_polygons:
             grid_id, grid_x, grid_y = determine_reference_grid(child_poly)
             child = ParcelIdentity(
-                parcel_id="temp",
-                spatial_hash="temp",
+                parcel_code="temp",
+                sih="temp",
                 polygon=child_poly,
-                area_sqm=ParcelIdentity.compute_polygon_area(child_poly),
-                grid_ref=GridRef(grid_id, grid_x, grid_y)
+                area=ParcelIdentity.compute_polygon_area(child_poly),
+                reference_grid=GridRef(grid_id, grid_x, grid_y)
             )
             temp_children.append(child)
         
@@ -186,21 +185,21 @@ class SpatialIntelligence:
         
         return children
     
-    def verify_parcel(self, parcel_id: str, actor: str = "oarg"):
+    def verify_parcel(self, parcel_code: str, actor: str = "oarg"):
         """Verify parcel by OARG authority"""
-        self.gov.verify_parcel(parcel_id, actor=actor)
+        self.gov.verify_parcel(parcel_code, actor=actor)
     
-    def flag_fraud(self, parcel_id: str, reason: str, actor: str = "system"):
+    def flag_fraud(self, parcel_code: str, reason: str, actor: str = "system"):
         """Flag parcel for fraud"""
-        self.gov.flag_fraud(parcel_id, reason, actor=actor)
+        self.gov.flag_fraud(parcel_code, reason, actor=actor)
     
-    def get_genealogy(self, parcel_id: str) -> dict:
+    def get_genealogy(self, parcel_code: str) -> dict:
         """Get parcel genealogy (parent, children, ancestors)"""
-        return self.gov.get_parcel_genealogy(parcel_id)
+        return self.gov.get_parcel_genealogy(parcel_code)
     
-    def get_parcel(self, parcel_id: str) -> Optional[ParcelIdentity]:
-        """Retrieve parcel by ID"""
-        return self.gov.store.get(parcel_id)
+    def get_parcel(self, parcel_code: str) -> Optional[ParcelIdentity]:
+        """Retrieve parcel by code"""
+        return self.gov.store.get(parcel_code)
     
     def get_all_decisions(self) -> List[Decision]:
         """Get all issued decisions"""
@@ -229,68 +228,3 @@ class SpatialIntelligence:
             f"verified={stats['verified']} "
             f"decisions={stats['decisions']}>"
         )
-
-
-# ========== QUICK TEST ==========
-
-if __name__ == "__main__":
-    print("\n" + "="*70)
-    print("ScruPeak Spatial Intelligence - Quick Test")
-    print("="*70)
-    
-    si = SpatialIntelligence()
-    
-    # 1. Register parcel
-    print("\n1. Register parcel...")
-    p1 = si.register_parcel(
-        polygon=[
-            (6.90, -13.30),
-            (6.91, -13.30),
-            (6.91, -13.31),
-            (6.90, -13.31),
-            (6.90, -13.30)
-        ],
-        owner="Alice",
-        actor="officer_001"
-    )
-    print(f"   ✓ {p1.parcel_id}")
-    print(f"   ✓ Hash: {p1.spatial_hash[:12]}...")
-    print(f"   ✓ Area: {p1.area_sqm:.0f} sqm")
-    print(f"   ✓ Grid: {p1.grid_ref.key()}")
-    
-    # 2. Register overlapping parcel
-    print("\n2. Register overlapping parcel...")
-    p2 = si.register_parcel(
-        polygon=[
-            (6.905, -13.305),
-            (6.915, -13.305),
-            (6.915, -13.315),
-            (6.905, -13.315),
-            (6.905, -13.305)
-        ],
-        owner="Bob",
-        actor="officer_002"
-    )
-    print(f"   ✓ {p2.parcel_id}")
-    
-    # 3. Detect conflicts
-    print("\n3. Detect conflicts...")
-    decisions = si.detect_conflicts_for_parcel(p1.parcel_id)
-    if decisions:
-        for d in decisions:
-            si.print_decision(d)
-    
-    # 4. Verify parcel
-    print("\n4. Verify parcel...")
-    si.verify_parcel(p1.parcel_id, actor="oarg_001")
-    print(f"   ✓ {p1.parcel_id} verified")
-    
-    # 5. Check stats
-    print(f"\n5. System stats:")
-    stats = si.stats()
-    for k, v in stats.items():
-        print(f"   {k}: {v}")
-    
-    print("\n" + "="*70)
-    print("✓ QUICK TEST COMPLETE")
-    print("="*70 + "\n")
