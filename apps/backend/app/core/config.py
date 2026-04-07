@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "ScruPeak Backend"
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
+    PLATFORM_FEE_RATE: float = 0.07
     DEBUG: bool = False
     
     # Server
@@ -125,12 +126,6 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: Optional[str] = None
     DEEPSEEK_ENABLED: bool = True  # Enable if API key is provided
     
-    # Monime Payments
-    MONIME_API_URL: str = "https://api.monime.app"
-    MONIME_ACCESS_TOKEN: Optional[str] = None
-    MONIME_WEBHOOK_ID: Optional[str] = None
-    MONIME_APP_URL: Optional[str] = None
-    
     # Uploads
     UPLOAD_DIR: str = "uploads"
     
@@ -141,6 +136,8 @@ class Settings(BaseSettings):
     MONIME_WEBHOOK_ID: Optional[str] = None
     MONIME_APP_URL: Optional[str] = None  # For building success/cancel URLs
     MONIME_ENABLE_RECEIPTS: bool = True
+    MONIME_ESCROW_FLOAT_ACCOUNT_ID: Optional[str] = None
+    MONIME_PLATFORM_REVENUE_ACCOUNT_ID: str = "fac-k6P8Ug3YTsFJFL44kH2GPpFfD13"
     
     class Config:
         env_file = ".env"
