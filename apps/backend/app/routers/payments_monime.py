@@ -149,21 +149,24 @@ async def monime_webhook(
 
 @router.post("/api/v1/payments/monime/payout", status_code=status.HTTP_201_CREATED)
 async def release_funds_to_seller(
-    source_account_id: str,
     destination: Dict[str, Any],  # e.g., {"type":"account","accountId":"..."} or bank details
     amount_minor: int,
     currency: str,
+    source_account_id: Optional[str] = None,
     description: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Release funds from escrow float account to seller via Monime Payout API.
+    Release funds from escrow/revenue account to seller via Monime Payout API.
+    Note: For land transactions, use /api/v1/admin/escrow/{id}/release to handle the 7% split.
     """
     try:
         client = MonimeClient()
+        source_id = source_account_id or settings.MONIME_PLATFORM_REVENUE_ACCOUNT_ID
+
         result = await client.payout(
-            source_account_id=source_account_id,
+            source_account_id=source_id,
             destination=destination,
             amount_minor=amount_minor,
             currency=currency,

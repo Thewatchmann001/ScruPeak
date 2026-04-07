@@ -194,3 +194,13 @@ def require_role(*roles: UserRole):
             )
         return current_user
     return role_checker
+
+async def create_tokens_for_user(user: User):
+    """Stub for legacy token generation, now handled by Privy"""
+    return {
+        "access_token": "privy_managed",
+        "refresh_token": "privy_managed",
+        "token_type": "bearer",
+        "expires_in": 3600,
+        "user": user
+    }

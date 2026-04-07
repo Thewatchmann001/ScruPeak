@@ -20,6 +20,8 @@ from app.schemas import UserResponse
 from app.utils.auth import get_current_admin
 from app.utils.spatial import generate_parcel_id
 from app.tasks import generate_title_document, process_blockchain_hash
+from app.services.payout_service import PayoutService
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
@@ -513,6 +515,7 @@ async def release_escrow_funds(
     """
     Force release of funds to the Seller (Override).
     Used when manual verification is complete but automated trigger failed.
+    Implements 7% platform fee deduction.
     """
     result = await db.execute(select(Escrow).where(Escrow.id == escrow_id))
     escrow = result.scalars().first()
@@ -522,15 +525,38 @@ async def release_escrow_funds(
         
     if escrow.status != EscrowStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Escrow is not active, cannot release funds")
-        
+
+    # Get seller
+    seller_result = await db.execute(select(User).where(User.id == escrow.seller_id))
+    seller = seller_result.scalar_one_or_none()
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+
+    # Execute Payout with 7% platform fee deduction
+    # Using Platform Revenue/Escrow account ID (fac-k6P8Ug3YTsFJFL44kH2GPpFfD13)
+    settings = get_settings()
+    payout_results = await PayoutService.process_escrow_payout(
+        db=db,
+        escrow=escrow,
+        seller=seller,
+        monime_source_account=settings.MONIME_PLATFORM_REVENUE_ACCOUNT_ID
+    )
+
+    if payout_results["status"] == "failed":
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Payout execution failed: {payout_results.get('error')}"
+        )
+
     escrow.status = EscrowStatus.COMPLETED
     escrow.completed_at = datetime.utcnow()
     
-    # Trigger Payout Logic (Mock)
-    # In real world: PayoutService.transfer(escrow.seller_id, escrow.amount)
-    
     await db.commit()
-    logger.info(f"Escrow {escrow_id} force-released by Admin {current_user.id}")
+    logger.info(f"Escrow {escrow_id} force-released by Admin {current_user.id}. Split: Fee={escrow.platform_fee_amount}, Payout={escrow.seller_payout_amount}")
     
-    return {"message": "Funds released to seller", "status": "completed"}
+    return {
+        "message": "Funds released to seller with 7% platform fee deduction",
+        "status": "completed",
+        "payout_details": payout_results
+    }
 
