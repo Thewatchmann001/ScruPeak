@@ -27,9 +27,9 @@ export default function PremiumHero() {
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
+    <div className="relative w-full min-h-screen bg-white overflow-hidden">
+      {/* Background Image - Low Opacity */}
+      <div className="absolute inset-0 opacity-10">
         <img 
           src="/images/hero.png" 
           alt="Land Background" 
@@ -40,14 +40,14 @@ export default function PremiumHero() {
       {/* Enhanced Background with Layered Effects */}
       <div className="absolute inset-0">
         {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-black/80 to-gray-950/90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F0F7FF] via-white to-white" />
         
         {/* Animated grid lines */}
-        <div className="absolute inset-0 opacity-[0.02]">
+        <div className="absolute inset-0 opacity-[0.05]">
           <div className="absolute inset-0" style={{
             backgroundImage: `
-              linear-gradient(90deg, rgba(249,115,22,0.1) 1px, transparent 1px),
-              linear-gradient(180deg, rgba(249,115,22,0.1) 1px, transparent 1px)
+              linear-gradient(90deg, rgba(0,106,255,0.1) 1px, transparent 1px),
+              linear-gradient(180deg, rgba(0,106,255,0.1) 1px, transparent 1px)
             `,
             backgroundSize: '50px 50px',
             animation: 'gridMove 20s linear infinite'
@@ -55,7 +55,7 @@ export default function PremiumHero() {
         </div>
 
         {/* Floating orbs */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-slate-500/5 rounded-full blur-3xl animate-float" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float-delayed" />
         <div className="absolute top-2/3 left-1/3 w-48 h-48 bg-primary/10 rounded-full blur-2xl animate-float-slow" />
       </div>
@@ -66,7 +66,7 @@ export default function PremiumHero() {
           {/* Header Section */}
           <div className="text-center mb-12 lg:mb-16 animate-slide-up">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/20 border border-primary/20 rounded-full px-4 py-2 mb-6 lg:mb-8">
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-6 lg:mb-8">
               <Shield className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold text-primary uppercase tracking-wider">
                 Verified Land Marketplace
@@ -74,13 +74,13 @@ export default function PremiumHero() {
             </div>
 
             {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-4 lg:mb-6 leading-tight">
-              Buy <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">Verified Land</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-text mb-4 lg:mb-6 leading-tight">
+              Buy <span className="text-primary">Verified Land</span>
               <br className="hidden lg:block" /> in Sierra Leone — Without Fear
             </h1>
 
             {/* Subheading */}
-            <p className="text-lg lg:text-xl text-gray-300 max-w-3xl mx-auto mb-8 lg:mb-12">
+            <p className="text-lg lg:text-xl text-text-secondary max-w-3xl mx-auto mb-8 lg:mb-12">
               Verified family ownership. Survey plans confirmed. Community witnessed. Escrow-protected payments.
             </p>
           </div>
@@ -88,23 +88,23 @@ export default function PremiumHero() {
           {/* Trust Indicators */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 lg:mb-12 max-w-4xl mx-auto animate-slide-up-delayed">
             {[
-              { icon: Shield, label: "No Double Sales", color: "text-green-500" },
-              { icon: MapPin, label: "Survey Confirmed", color: "text-blue-500" },
-              { icon: Target, label: "Community Verified", color: "text-purple-500" },
+              { icon: Shield, label: "No Double Sales", color: "text-success" },
+              { icon: MapPin, label: "Survey Confirmed", color: "text-primary" },
+              { icon: Target, label: "Community Verified", color: "text-primary" },
               { icon: CreditCard, label: "Escrow Protected", color: "text-primary" }
             ].map((item, index) => (
-              <div key={index} className="flex items-center gap-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 lg:p-4">
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color.replace('text-', '')}/10`}>
+              <div key={index} className="flex items-center gap-3 bg-white border border-border rounded-xl p-3 lg:p-4 shadow-sm">
+                <div className={`p-2 rounded-lg bg-primary/5`}>
                   <item.icon className={`w-4 h-4 lg:w-5 lg:h-5 ${item.color}`} />
                 </div>
-                <span className="text-sm lg:text-base font-medium text-white">{item.label}</span>
+                <span className="text-sm lg:text-base font-medium text-text">{item.label}</span>
               </div>
             ))}
           </div>
 
           {/* Search Bar - MAINTAINED AS REQUESTED */}
           <div className="max-w-5xl mx-auto mb-8 lg:mb-12 animate-slide-up-delayed-2">
-            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-1">
+            <div className="bg-white rounded-2xl shadow-xl border border-border p-1">
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 lg:gap-3 p-4 lg:p-5">
                 {/* District */}
                 <div className="relative">
@@ -114,7 +114,7 @@ export default function PremiumHero() {
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all backdrop-blur-sm"
+                    className="w-full px-4 py-3 lg:py-4 bg-surface border border-border rounded-xl text-text placeholder-gray-400 text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -123,13 +123,13 @@ export default function PremiumHero() {
                   <select
                     value={landType}
                     onChange={(e) => setLandType(e.target.value)}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all backdrop-blur-sm appearance-none"
+                    className="w-full px-4 py-3 lg:py-4 bg-surface border border-border rounded-xl text-text text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all appearance-none"
                   >
-                    <option value="" className="bg-gray-900">Land Type</option>
-                    <option value="residential" className="bg-gray-900">Residential</option>
-                    <option value="commercial" className="bg-gray-900">Commercial</option>
-                    <option value="agricultural" className="bg-gray-900">Agricultural</option>
-                    <option value="industrial" className="bg-gray-900">Industrial</option>
+                    <option value="">Land Type</option>
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="agricultural">Agricultural</option>
+                    <option value="industrial">Industrial</option>
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ArrowDown className="w-4 h-4 text-gray-400" />
@@ -141,13 +141,13 @@ export default function PremiumHero() {
                   <select
                     value={purpose}
                     onChange={(e) => setPurpose(e.target.value)}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all backdrop-blur-sm appearance-none"
+                    className="w-full px-4 py-3 lg:py-4 bg-surface border border-border rounded-xl text-text text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all appearance-none"
                   >
-                    <option value="" className="bg-gray-900">Purpose</option>
-                    <option value="build" className="bg-gray-900">Build Home</option>
-                    <option value="invest" className="bg-gray-900">Invest</option>
-                    <option value="farm" className="bg-gray-900">Farm</option>
-                    <option value="develop" className="bg-gray-900">Develop</option>
+                    <option value="">Purpose</option>
+                    <option value="build">Build Home</option>
+                    <option value="invest">Invest</option>
+                    <option value="farm">Farm</option>
+                    <option value="develop">Develop</option>
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ArrowDown className="w-4 h-4 text-gray-400" />
@@ -159,13 +159,13 @@ export default function PremiumHero() {
                   <select
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full px-4 py-3 lg:py-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all backdrop-blur-sm appearance-none"
+                    className="w-full px-4 py-3 lg:py-4 bg-surface border border-border rounded-xl text-text text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all appearance-none"
                   >
-                    <option value="" className="bg-gray-900">Budget (Le)</option>
-                    <option value="0-25000" className="bg-gray-900">Under Le25K</option>
-                    <option value="25000-50000" className="bg-gray-900">Le25K - Le50K</option>
-                    <option value="50000-100000" className="bg-gray-900">Le50K - Le100K</option>
-                    <option value="100000+" className="bg-gray-900">Le100K+</option>
+                    <option value="">Budget (Le)</option>
+                    <option value="0-25000">Under Le25K</option>
+                    <option value="25000-50000">Le25K - Le50K</option>
+                    <option value="50000-100000">Le50K - Le100K</option>
+                    <option value="100000+">Le100K+</option>
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ArrowDown className="w-4 h-4 text-gray-400" />
@@ -175,7 +175,7 @@ export default function PremiumHero() {
                 {/* Search Button */}
                 <button
                   onClick={handleSearch}
-                  className="group px-6 py-3 lg:py-4 bg-gradient-to-r from-primary to-primary/80 text-white font-bold rounded-xl hover:from-primary hover:to-primary/90 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="group px-6 py-3 lg:py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   <Search className="w-4 h-4 lg:w-5 lg:h-5" />
                   <span>Explore</span>
@@ -189,7 +189,7 @@ export default function PremiumHero() {
             {!user && (
               <button
                 onClick={() => navigate('/auth/register')}
-                className="group px-8 py-4 bg-gradient-to-r from-primary to-primary/80 text-white font-bold text-lg rounded-xl hover:from-primary hover:to-primary/90 transition-all transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl flex items-center gap-3"
+                className="group px-8 py-4 bg-primary text-white font-bold text-lg rounded-xl hover:bg-primary-hover transition-all transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl flex items-center gap-3"
               >
                 <span>Get Started</span>
                 <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
@@ -198,7 +198,7 @@ export default function PremiumHero() {
             
             <button
               onClick={handleSearch}
-              className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+              className="px-8 py-4 bg-white border-2 border-primary text-primary font-bold text-lg rounded-xl hover:bg-primary/5 transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
             >
               Browse Marketplace
             </button>

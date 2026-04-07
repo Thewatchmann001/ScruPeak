@@ -248,6 +248,8 @@ class EscrowResponse(BaseModel):
     buyer_id: UUID
     seller_id: UUID
     amount: Decimal
+    platform_fee_amount: Optional[Decimal] = None
+    seller_payout_amount: Optional[Decimal] = None
     status: EscrowStatus
     escrow_contract_address: Optional[str]
     transaction_signature: Optional[str]
