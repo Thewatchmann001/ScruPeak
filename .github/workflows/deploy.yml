@@ -21,6 +21,16 @@ env:
   WORKLOAD_IDENTITY_PROVIDER: projects/198638918293/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: scrupeak001@scrupeak-489600.iam.gserviceaccount.com
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Services overview:
+#   apps/ai-service      → ai-service       (DB: yes, Privy: no)
+#   apps/api-gateway     → api-gateway      (DB: no,  Privy: yes - proxies auth)
+#   apps/backend         → backend          (DB: yes, Privy: yes)
+#   apps/spatial-service → spatial-service  (DB: yes, Privy: no)
+#   apps/web             → web              (DB: no,  Privy: yes - frontend)
+# Auth is handled by Privy — no separate auth service needed
+# ─────────────────────────────────────────────────────────────────────────────
+
 jobs:
 
   # ─────────────────────────────────────────────
@@ -42,7 +52,8 @@ jobs:
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || \
+             [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
             echo "environment=prod" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             echo "environment=staging" >> $GITHUB_OUTPUT
@@ -53,7 +64,6 @@ jobs:
       - name: Detect changed services
         id: changed
         run: |
-          # Use push event SHAs for reliable diffs; fall back to ls-files on first commit
           BEFORE="${{ github.event.before }}"
           AFTER="${{ github.sha }}"
 
@@ -66,6 +76,7 @@ jobs:
           echo "Changed files:"
           echo "$CHANGED"
 
+          # All 5 services — auth is Privy, no auth service here
           SERVICES=(
             "apps/ai-service:ai-service"
             "apps/api-gateway:api-gateway"
@@ -73,6 +84,9 @@ jobs:
             "apps/spatial-service:spatial-service"
             "apps/web:web"
           )
+
+          # Services that own DB schemas and run migrations
+          DB_SERVICES=("backend" "ai-service" "spatial-service")
 
           CHANGED_SERVICES=()
           NEEDS_MIGRATION=false
@@ -82,9 +96,11 @@ jobs:
             NAME="${SERVICE_ENTRY##*:}"
             if echo "$CHANGED" | grep -q "^${FOLDER}/"; then
               CHANGED_SERVICES+=("$SERVICE_ENTRY")
-              if [[ "$NAME" == "backend" ]]; then
-                NEEDS_MIGRATION=true
-              fi
+              for DB_SVC in "${DB_SERVICES[@]}"; do
+                if [[ "$NAME" == "$DB_SVC" ]]; then
+                  NEEDS_MIGRATION=true
+                fi
+              done
             fi
           done
 
@@ -95,14 +111,14 @@ jobs:
             NEEDS_MIGRATION=true
           fi
 
-          # Nothing detected → rebuild all as safety net
+          # Nothing detected → rebuild all as a safety net
           if [ ${#CHANGED_SERVICES[@]} -eq 0 ]; then
             echo "No specific changes detected — building all services"
             CHANGED_SERVICES=("${SERVICES[@]}")
           fi
 
           JSON=$(printf '%s\n' "${CHANGED_SERVICES[@]}" | jq -R . | jq -s -c .)
-          echo "services=$JSON" >> $GITHUB_OUTPUT
+          echo "services=$JSON"           >> $GITHUB_OUTPUT
           echo "needs_migration=$NEEDS_MIGRATION" >> $GITHUB_OUTPUT
           echo "Services to deploy: $JSON"
           echo "Needs migration: $NEEDS_MIGRATION"
@@ -128,21 +144,22 @@ jobs:
         run: |
           ENTRY="${{ matrix.service }}"
           echo "folder=${ENTRY%%:*}" >> $GITHUB_OUTPUT
-          echo "name=${ENTRY##*:}" >> $GITHUB_OUTPUT
+          echo "name=${ENTRY##*:}"   >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Run tests if Dockerfile exists
+      - name: Run tests
         run: |
           FOLDER="${{ steps.svc.outputs.folder }}"
+          NAME="${{ steps.svc.outputs.name }}"
           if [ -f "${FOLDER}/Dockerfile" ]; then
             docker build --target test -t test-img ./${FOLDER} 2>/dev/null || \
             docker build -t test-img ./${FOLDER}
             docker run --rm -e NODE_ENV=test test-img npm test 2>/dev/null || \
-            echo "⚠️  No test target — skipping tests for ${{ steps.svc.outputs.name }}"
+            echo "⚠️  No test target — skipping tests for ${NAME}"
           else
-            echo "⚠️  No Dockerfile found in ${FOLDER} — skipping"
+            echo "⚠️  No Dockerfile found in ${FOLDER} — skipping ${NAME}"
           fi
 
   # ─────────────────────────────────────────────
@@ -176,10 +193,10 @@ jobs:
           SHORT_SHA="${GITHUB_SHA::8}"
           TAG="${ENV}-${SHORT_SHA}"
           FULL_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${NAME}"
-          echo "folder=$FOLDER" >> $GITHUB_OUTPUT
-          echo "name=$NAME" >> $GITHUB_OUTPUT
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "image=${FULL_IMAGE}:${TAG}" >> $GITHUB_OUTPUT
+          echo "folder=$FOLDER"                           >> $GITHUB_OUTPUT
+          echo "name=$NAME"                               >> $GITHUB_OUTPUT
+          echo "tag=$TAG"                                 >> $GITHUB_OUTPUT
+          echo "image=${FULL_IMAGE}:${TAG}"               >> $GITHUB_OUTPUT
           echo "image_latest=${FULL_IMAGE}:${ENV}-latest" >> $GITHUB_OUTPUT
 
       - name: Authenticate via Workload Identity Federation
@@ -216,7 +233,8 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 4. MIGRATE
-  # Only runs when backend or shared code changed
+  # Only runs when backend, ai-service, or spatial-service changed.
+  # Uses the backend image (owns the DB schema) to run Alembic.
   # ─────────────────────────────────────────────
   migrate:
     name: Run Database Migrations
@@ -242,7 +260,6 @@ jobs:
       - name: Run migrations via Cloud Run Job
         run: |
           ENV="${{ needs.detect-changes.outputs.environment }}"
-          # Normalise to uppercase for Secret Manager secret names (e.g. DATABASE_URL_PROD)
           ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
           SHORT_SHA="${GITHUB_SHA::8}"
           TAG="${ENV}-${SHORT_SHA}"
@@ -273,12 +290,18 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 5. DEPLOY
+  #
+  # Per-service secret profiles:
+  #   web              → PRIVY_APP_ID only (public config, no backend secrets)
+  #   api-gateway      → Privy + inter-service URLs
+  #   backend          → DB + Privy + JWT + inter-service URLs
+  #   ai-service       → DB + Mistral + inter-service URLs
+  #   spatial-service  → DB + inter-service URLs
   # ─────────────────────────────────────────────
   deploy:
     name: Deploy — ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: [detect-changes, build-and-push, migrate]
-    # Run even if migrate was skipped (it's conditional), but not if it failed
     if: |
       github.event_name != 'pull_request' &&
       needs.detect-changes.outputs.services != '[]' &&
@@ -299,47 +322,42 @@ jobs:
           ENTRY="${{ matrix.service }}"
           NAME="${ENTRY##*:}"
           ENV="${{ needs.detect-changes.outputs.environment }}"
-          # Normalise casing to match Secret Manager secret names
           ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
           SHORT_SHA="${GITHUB_SHA::8}"
           TAG="${ENV}-${SHORT_SHA}"
           FULL_IMAGE="${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${NAME}:${TAG}"
           CR_NAME="${NAME}-${ENV}"
-          echo "name=$NAME" >> $GITHUB_OUTPUT
-          echo "image=$FULL_IMAGE" >> $GITHUB_OUTPUT
-          echo "cr_name=$CR_NAME" >> $GITHUB_OUTPUT
-          echo "env=$ENV" >> $GITHUB_OUTPUT
+
+          echo "name=$NAME"           >> $GITHUB_OUTPUT
+          echo "image=$FULL_IMAGE"    >> $GITHUB_OUTPUT
+          echo "cr_name=$CR_NAME"     >> $GITHUB_OUTPUT
+          echo "env=$ENV"             >> $GITHUB_OUTPUT
           echo "env_upper=$ENV_UPPER" >> $GITHUB_OUTPUT
 
-          # Port per service
-          if   [[ "$NAME" == "api-gateway" ]]; then echo "port=3000"  >> $GITHUB_OUTPUT
-          elif [[ "$NAME" == "web" ]];         then echo "port=80"    >> $GITHUB_OUTPUT
-          else                                      echo "port=8000"  >> $GITHUB_OUTPUT
+          # ── Port ──────────────────────────────────────────────
+          if   [[ "$NAME" == "api-gateway" ]]; then echo "port=3000" >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "web" ]];         then echo "port=80"   >> $GITHUB_OUTPUT
+          else                                      echo "port=8000" >> $GITHUB_OUTPUT
           fi
 
-          # Resources per service
+          # ── Resources ─────────────────────────────────────────
           if [[ "$NAME" == "ai-service" ]]; then
-            echo "memory=2Gi"      >> $GITHUB_OUTPUT
-            echo "cpu=2"           >> $GITHUB_OUTPUT
-            echo "concurrency=10"  >> $GITHUB_OUTPUT
-            echo "timeout=300s"    >> $GITHUB_OUTPUT
+            echo "memory=2Gi"     >> $GITHUB_OUTPUT; echo "cpu=2" >> $GITHUB_OUTPUT
+            echo "concurrency=10" >> $GITHUB_OUTPUT; echo "timeout=300s" >> $GITHUB_OUTPUT
           elif [[ "$NAME" == "backend" ]]; then
-            echo "memory=1Gi"      >> $GITHUB_OUTPUT
-            echo "cpu=2"           >> $GITHUB_OUTPUT
-            echo "concurrency=80"  >> $GITHUB_OUTPUT
-            echo "timeout=300s"    >> $GITHUB_OUTPUT
+            echo "memory=1Gi"     >> $GITHUB_OUTPUT; echo "cpu=2" >> $GITHUB_OUTPUT
+            echo "concurrency=80" >> $GITHUB_OUTPUT; echo "timeout=300s" >> $GITHUB_OUTPUT
           else
-            echo "memory=512Mi"    >> $GITHUB_OUTPUT
-            echo "cpu=1"           >> $GITHUB_OUTPUT
-            echo "concurrency=80"  >> $GITHUB_OUTPUT
-            echo "timeout=60s"     >> $GITHUB_OUTPUT
+            echo "memory=512Mi"   >> $GITHUB_OUTPUT; echo "cpu=1" >> $GITHUB_OUTPUT
+            echo "concurrency=80" >> $GITHUB_OUTPUT; echo "timeout=60s" >> $GITHUB_OUTPUT
           fi
 
-          # Is this a backend service (needs DB/auth secrets)?
-          if [[ "$NAME" == "web" ]]; then
-            echo "is_backend=false" >> $GITHUB_OUTPUT
-          else
-            echo "is_backend=true"  >> $GITHUB_OUTPUT
+          # ── Secret profile ─────────────────────────────────────
+          if   [[ "$NAME" == "web" ]];             then echo "secret_profile=web"     >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "api-gateway" ]];     then echo "secret_profile=gateway" >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "backend" ]];         then echo "secret_profile=backend" >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "ai-service" ]];      then echo "secret_profile=ai"      >> $GITHUB_OUTPUT
+          elif [[ "$NAME" == "spatial-service" ]]; then echo "secret_profile=spatial" >> $GITHUB_OUTPUT
           fi
 
       - name: Authenticate via Workload Identity Federation
@@ -355,18 +373,72 @@ jobs:
         id: prev
         run: |
           PREV=$(gcloud run services describe \
-            ${{ steps.svc.outputs.cr_name }} \
-            --region=${{ env.GCP_REGION }} \
-            --project=${{ env.GCP_PROJECT_ID }} \
+            "${{ steps.svc.outputs.cr_name }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
             --format="value(status.latestReadyRevisionName)" \
             2>/dev/null || echo "none")
           echo "revision=$PREV" >> $GITHUB_OUTPUT
           echo "Previous revision: $PREV"
 
-      # Deploy: backend services (ai-service, api-gateway, backend, spatial-service)
-      - name: Deploy backend service to Cloud Run
+      # ── web: public Privy config only ──────────────────────────
+      - name: Deploy — web
+        id: deploy_web
+        if: steps.svc.outputs.secret_profile == 'web'
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.svc.outputs.cr_name }}
+          image: ${{ steps.svc.outputs.image }}
+          region: ${{ env.GCP_REGION }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          flags: |
+            --allow-unauthenticated
+            --min-instances=0
+            --max-instances=10
+            --memory=${{ steps.svc.outputs.memory }}
+            --cpu=${{ steps.svc.outputs.cpu }}
+            --timeout=${{ steps.svc.outputs.timeout }}
+            --concurrency=${{ steps.svc.outputs.concurrency }}
+            --port=${{ steps.svc.outputs.port }}
+          env_vars: |
+            NODE_ENV=${{ steps.svc.outputs.env }}
+            GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
+          secrets: |
+            PRIVY_APP_ID=PRIVY_APP_ID:latest
+
+      # ── api-gateway: Privy + inter-service URLs ─────────────────
+      - name: Deploy — api-gateway
+        id: deploy_gateway
+        if: steps.svc.outputs.secret_profile == 'gateway'
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.svc.outputs.cr_name }}
+          image: ${{ steps.svc.outputs.image }}
+          region: ${{ env.GCP_REGION }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          flags: |
+            --allow-unauthenticated
+            --min-instances=0
+            --max-instances=10
+            --memory=${{ steps.svc.outputs.memory }}
+            --cpu=${{ steps.svc.outputs.cpu }}
+            --timeout=${{ steps.svc.outputs.timeout }}
+            --concurrency=${{ steps.svc.outputs.concurrency }}
+            --port=${{ steps.svc.outputs.port }}
+          env_vars: |
+            NODE_ENV=${{ steps.svc.outputs.env }}
+            GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
+          secrets: |
+            PRIVY_APP_ID=PRIVY_APP_ID:latest
+            PRIVY_APP_SECRET=PRIVY_APP_SECRET:latest
+            CORE_SERVICE_URL=CORE_SERVICE_URL:latest
+            SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
+            AI_SERVICE_URL=AI_SERVICE_URL:latest
+
+      # ── backend: DB + Privy + JWT + inter-service URLs ──────────
+      - name: Deploy — backend
         id: deploy_backend
-        if: steps.svc.outputs.is_backend == 'true'
+        if: steps.svc.outputs.secret_profile == 'backend'
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ steps.svc.outputs.cr_name }}
@@ -388,17 +460,16 @@ jobs:
           secrets: |
             DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env_upper }}:latest
             JWT_SECRET=JWT_SECRET:latest
-            MISTRAL_API_KEY=MISTRAL_API_KEY:latest
             PRIVY_APP_ID=PRIVY_APP_ID:latest
             PRIVY_APP_SECRET=PRIVY_APP_SECRET:latest
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
 
-      # Deploy: frontend (web) — no database or auth secrets
-      - name: Deploy frontend service to Cloud Run
-        id: deploy_frontend
-        if: steps.svc.outputs.is_backend == 'false'
+      # ── ai-service: DB + Mistral + inter-service URLs ───────────
+      - name: Deploy — ai-service
+        id: deploy_ai
+        if: steps.svc.outputs.secret_profile == 'ai'
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ steps.svc.outputs.cr_name }}
@@ -417,26 +488,66 @@ jobs:
           env_vars: |
             NODE_ENV=${{ steps.svc.outputs.env }}
             GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
+          secrets: |
+            DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env_upper }}:latest
+            MISTRAL_API_KEY=MISTRAL_API_KEY:latest
+            CORE_SERVICE_URL=CORE_SERVICE_URL:latest
+            SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
 
+      # ── spatial-service: DB + inter-service URLs ────────────────
+      - name: Deploy — spatial-service
+        id: deploy_spatial
+        if: steps.svc.outputs.secret_profile == 'spatial'
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.svc.outputs.cr_name }}
+          image: ${{ steps.svc.outputs.image }}
+          region: ${{ env.GCP_REGION }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          flags: |
+            --allow-unauthenticated
+            --min-instances=0
+            --max-instances=10
+            --memory=${{ steps.svc.outputs.memory }}
+            --cpu=${{ steps.svc.outputs.cpu }}
+            --timeout=${{ steps.svc.outputs.timeout }}
+            --concurrency=${{ steps.svc.outputs.concurrency }}
+            --port=${{ steps.svc.outputs.port }}
+          env_vars: |
+            NODE_ENV=${{ steps.svc.outputs.env }}
+            GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
+          secrets: |
+            DATABASE_URL=DATABASE_URL_${{ steps.svc.outputs.env_upper }}:latest
+            CORE_SERVICE_URL=CORE_SERVICE_URL:latest
+            AI_SERVICE_URL=AI_SERVICE_URL:latest
+
+      # ── Resolve URL from whichever deploy step ran ──────────────
       - name: Resolve deployed URL
         id: url
         run: |
-          if [[ "${{ steps.svc.outputs.is_backend }}" == "true" ]]; then
-            echo "url=${{ steps.deploy_backend.outputs.url }}" >> $GITHUB_OUTPUT
-          else
-            echo "url=${{ steps.deploy_frontend.outputs.url }}" >> $GITHUB_OUTPUT
+          PROFILE="${{ steps.svc.outputs.secret_profile }}"
+          if   [[ "$PROFILE" == "web" ]];     then echo "url=${{ steps.deploy_web.outputs.url }}"     >> $GITHUB_OUTPUT
+          elif [[ "$PROFILE" == "gateway" ]]; then echo "url=${{ steps.deploy_gateway.outputs.url }}" >> $GITHUB_OUTPUT
+          elif [[ "$PROFILE" == "backend" ]]; then echo "url=${{ steps.deploy_backend.outputs.url }}" >> $GITHUB_OUTPUT
+          elif [[ "$PROFILE" == "ai" ]];      then echo "url=${{ steps.deploy_ai.outputs.url }}"      >> $GITHUB_OUTPUT
+          elif [[ "$PROFILE" == "spatial" ]]; then echo "url=${{ steps.deploy_spatial.outputs.url }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Health check
         id: health
         run: |
           URL="${{ steps.url.outputs.url }}"
-          echo "Checking: ${URL}"
+          echo "Checking: ${URL}/health"
           for i in {1..5}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              --max-time 10 "${URL}" || echo "000")
-            if [[ "$STATUS" =~ ^(200|301|302|404)$ ]]; then
-              echo "✅ Service is responding (status $STATUS)"
+              --max-time 10 "${URL}/health" || echo "000")
+            if [[ "$STATUS" == "200" ]]; then
+              echo "✅ Health check passed (200)"
+              exit 0
+            fi
+            # Accept redirect/not-found as alive until /health endpoints are added
+            if [[ "$STATUS" =~ ^(301|302|404)$ ]]; then
+              echo "✅ Service responding (status $STATUS) — add GET /health for stricter checks"
               exit 0
             fi
             echo "⏳ Attempt $i — status $STATUS — retrying in 10s"
@@ -450,10 +561,10 @@ jobs:
         run: |
           echo "⚠️  Rolling back to ${{ steps.prev.outputs.revision }}"
           gcloud run services update-traffic \
-            ${{ steps.svc.outputs.cr_name }} \
-            --region=${{ env.GCP_REGION }} \
-            --project=${{ env.GCP_PROJECT_ID }} \
-            --to-revisions=${{ steps.prev.outputs.revision }}=100
+            "${{ steps.svc.outputs.cr_name }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --to-revisions="${{ steps.prev.outputs.revision }}=100"
           echo "✅ Rolled back"
           exit 1
 
@@ -478,10 +589,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| | |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | \`${{ needs.detect-changes.outputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Status | ${{ needs.deploy.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Commit | \`${GITHUB_SHA::8}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch | \`${GITHUB_REF_NAME}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| By | @${GITHUB_ACTOR} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Time | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment   | \`${{ needs.detect-changes.outputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status        | ${{ needs.deploy.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit        | \`${GITHUB_SHA::8}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch        | \`${GITHUB_REF_NAME}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by  | @${GITHUB_ACTOR} |" >> $GITHUB_STEP_SUMMARY
           echo "| Migration ran | ${{ needs.detect-changes.outputs.needs_migration }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Time          | $(date -u) |" >> $GITHUB_STEP_SUMMARY
