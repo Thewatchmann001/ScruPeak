@@ -14,12 +14,12 @@ on:
   workflow_dispatch:
 
 env:
-  GCP_PROJECT_ID: scrupeak-489600
+  GCP_PROJECT_ID: scrupeak01
   GCP_REGION: us-central1
   ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
   REGISTRY_REPO: scrupeak-services
-  WORKLOAD_IDENTITY_PROVIDER: projects/198638918293/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-  SERVICE_ACCOUNT: scrupeak001@scrupeak-489600.iam.gserviceaccount.com
+  WORKLOAD_IDENTITY_PROVIDER: projects/1090857402667/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  SERVICE_ACCOUNT: scrupeak001@scrupeak01.iam.gserviceaccount.com
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Services overview:
@@ -76,7 +76,6 @@ jobs:
           echo "Changed files:"
           echo "$CHANGED"
 
-          # All 5 services — auth is Privy, no auth service here
           SERVICES=(
             "apps/ai-service:ai-service"
             "apps/api-gateway:api-gateway"
@@ -85,7 +84,6 @@ jobs:
             "apps/web:web"
           )
 
-          # Services that own DB schemas and run migrations
           DB_SERVICES=("backend" "ai-service" "spatial-service")
 
           CHANGED_SERVICES=()
@@ -104,22 +102,20 @@ jobs:
             fi
           done
 
-          # Root/shared changes → rebuild everything and run migrations
           if echo "$CHANGED" | grep -qE "^(shared/|package\.json|turbo\.json|nx\.json|\.env\.example)"; then
             echo "Root/shared config changed — rebuilding all services"
             CHANGED_SERVICES=("${SERVICES[@]}")
             NEEDS_MIGRATION=true
           fi
 
-          # Nothing detected → rebuild all as a safety net
           if [ ${#CHANGED_SERVICES[@]} -eq 0 ]; then
             echo "No specific changes detected — building all services"
             CHANGED_SERVICES=("${SERVICES[@]}")
           fi
 
           JSON=$(printf '%s\n' "${CHANGED_SERVICES[@]}" | jq -R . | jq -s -c .)
-          echo "services=$JSON"           >> $GITHUB_OUTPUT
-          echo "needs_migration=$NEEDS_MIGRATION" >> $GITHUB_OUTPUT
+          echo "services=$JSON"                     >> $GITHUB_OUTPUT
+          echo "needs_migration=$NEEDS_MIGRATION"   >> $GITHUB_OUTPUT
           echo "Services to deploy: $JSON"
           echo "Needs migration: $NEEDS_MIGRATION"
 
@@ -233,8 +229,6 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 4. MIGRATE
-  # Only runs when backend, ai-service, or spatial-service changed.
-  # Uses the backend image (owns the DB schema) to run Alembic.
   # ─────────────────────────────────────────────
   migrate:
     name: Run Database Migrations
@@ -290,13 +284,6 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 5. DEPLOY
-  #
-  # Per-service secret profiles:
-  #   web              → PRIVY_APP_ID only (public config, no backend secrets)
-  #   api-gateway      → Privy + inter-service URLs
-  #   backend          → DB + Privy + JWT + inter-service URLs
-  #   ai-service       → DB + Mistral + inter-service URLs
-  #   spatial-service  → DB + inter-service URLs
   # ─────────────────────────────────────────────
   deploy:
     name: Deploy — ${{ matrix.service }}
@@ -334,13 +321,11 @@ jobs:
           echo "env=$ENV"             >> $GITHUB_OUTPUT
           echo "env_upper=$ENV_UPPER" >> $GITHUB_OUTPUT
 
-          # ── Port ──────────────────────────────────────────────
           if   [[ "$NAME" == "api-gateway" ]]; then echo "port=3000" >> $GITHUB_OUTPUT
           elif [[ "$NAME" == "web" ]];         then echo "port=80"   >> $GITHUB_OUTPUT
           else                                      echo "port=8000" >> $GITHUB_OUTPUT
           fi
 
-          # ── Resources ─────────────────────────────────────────
           if [[ "$NAME" == "ai-service" ]]; then
             echo "memory=2Gi"     >> $GITHUB_OUTPUT; echo "cpu=2" >> $GITHUB_OUTPUT
             echo "concurrency=10" >> $GITHUB_OUTPUT; echo "timeout=300s" >> $GITHUB_OUTPUT
@@ -352,7 +337,6 @@ jobs:
             echo "concurrency=80" >> $GITHUB_OUTPUT; echo "timeout=60s" >> $GITHUB_OUTPUT
           fi
 
-          # ── Secret profile ─────────────────────────────────────
           if   [[ "$NAME" == "web" ]];             then echo "secret_profile=web"     >> $GITHUB_OUTPUT
           elif [[ "$NAME" == "api-gateway" ]];     then echo "secret_profile=gateway" >> $GITHUB_OUTPUT
           elif [[ "$NAME" == "backend" ]];         then echo "secret_profile=backend" >> $GITHUB_OUTPUT
@@ -381,7 +365,6 @@ jobs:
           echo "revision=$PREV" >> $GITHUB_OUTPUT
           echo "Previous revision: $PREV"
 
-      # ── web: public Privy config only ──────────────────────────
       - name: Deploy — web
         id: deploy_web
         if: steps.svc.outputs.secret_profile == 'web'
@@ -406,7 +389,6 @@ jobs:
           secrets: |
             PRIVY_APP_ID=PRIVY_APP_ID:latest
 
-      # ── api-gateway: Privy + inter-service URLs ─────────────────
       - name: Deploy — api-gateway
         id: deploy_gateway
         if: steps.svc.outputs.secret_profile == 'gateway'
@@ -435,7 +417,6 @@ jobs:
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
 
-      # ── backend: DB + Privy + JWT + inter-service URLs ──────────
       - name: Deploy — backend
         id: deploy_backend
         if: steps.svc.outputs.secret_profile == 'backend'
@@ -466,7 +447,6 @@ jobs:
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
 
-      # ── ai-service: DB + Mistral + inter-service URLs ───────────
       - name: Deploy — ai-service
         id: deploy_ai
         if: steps.svc.outputs.secret_profile == 'ai'
@@ -494,7 +474,6 @@ jobs:
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
 
-      # ── spatial-service: DB + inter-service URLs ────────────────
       - name: Deploy — spatial-service
         id: deploy_spatial
         if: steps.svc.outputs.secret_profile == 'spatial'
@@ -521,7 +500,6 @@ jobs:
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
 
-      # ── Resolve URL from whichever deploy step ran ──────────────
       - name: Resolve deployed URL
         id: url
         run: |
@@ -545,7 +523,6 @@ jobs:
               echo "✅ Health check passed (200)"
               exit 0
             fi
-            # Accept redirect/not-found as alive until /health endpoints are added
             if [[ "$STATUS" =~ ^(301|302|404)$ ]]; then
               echo "✅ Service responding (status $STATUS) — add GET /health for stricter checks"
               exit 0
