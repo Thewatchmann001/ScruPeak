@@ -10,7 +10,14 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://web-prod-kqr3pbuu3a-uc.a.run.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Rate limiting

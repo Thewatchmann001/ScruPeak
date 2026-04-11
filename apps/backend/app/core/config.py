@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     
     # CORS
     CORS_ORIGINS: list = [
+        "https://web-prod-kqr3pbuu3a-uc.a.run.app",
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
