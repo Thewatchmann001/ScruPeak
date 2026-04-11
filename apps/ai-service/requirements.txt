@@ -2,4 +2,4 @@ fastapi
 uvicorn[standard]
 gunicorn
 httpx
-mistralai
+mistralai>=1.0.0
