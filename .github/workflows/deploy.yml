@@ -20,15 +20,16 @@ env:
   REGISTRY_REPO: scrupeak-services
   WORKLOAD_IDENTITY_PROVIDER: projects/1090857402667/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: scrupeak001@scrupeak01.iam.gserviceaccount.com
+  CLOUD_SQL_INSTANCE: scrupeak01:us-central1:scrupeak-db
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Services overview:
+# Services:
 #   apps/ai-service      → ai-service       (DB: yes, Privy: no)
-#   apps/api-gateway     → api-gateway      (DB: no,  Privy: yes - proxies auth)
+#   apps/api-gateway     → api-gateway      (DB: no,  Privy: yes)
 #   apps/backend         → backend          (DB: yes, Privy: yes)
 #   apps/spatial-service → spatial-service  (DB: yes, Privy: no)
-#   apps/web             → web              (DB: no,  Privy: yes - frontend)
-# Auth is handled by Privy — no separate auth service needed
+#   apps/web             → web              (DB: no,  Privy: yes)
+# Auth via Privy — no separate auth service
 # ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
@@ -114,8 +115,8 @@ jobs:
           fi
 
           JSON=$(printf '%s\n' "${CHANGED_SERVICES[@]}" | jq -R . | jq -s -c .)
-          echo "services=$JSON"                     >> $GITHUB_OUTPUT
-          echo "needs_migration=$NEEDS_MIGRATION"   >> $GITHUB_OUTPUT
+          echo "services=$JSON"                   >> $GITHUB_OUTPUT
+          echo "needs_migration=$NEEDS_MIGRATION" >> $GITHUB_OUTPUT
           echo "Services to deploy: $JSON"
           echo "Needs migration: $NEEDS_MIGRATION"
 
@@ -267,6 +268,7 @@ jobs:
             --region="${{ env.GCP_REGION }}" \
             --set-env-vars="NODE_ENV=${ENV}" \
             --set-secrets="DATABASE_URL=DATABASE_URL_${ENV_UPPER}:latest" \
+            --add-cloudsql-instances="${{ env.CLOUD_SQL_INSTANCE }}" \
             --command="python" \
             --args="-m,alembic,upgrade,head" \
             --task-timeout=10m \
@@ -365,6 +367,7 @@ jobs:
           echo "revision=$PREV" >> $GITHUB_OUTPUT
           echo "Previous revision: $PREV"
 
+      # ── web: Privy only, no DB ──────────────────────────────────
       - name: Deploy — web
         id: deploy_web
         if: steps.svc.outputs.secret_profile == 'web'
@@ -389,6 +392,7 @@ jobs:
           secrets: |
             PRIVY_APP_ID=PRIVY_APP_ID:latest
 
+      # ── api-gateway: Privy + inter-service URLs, no DB ─────────
       - name: Deploy — api-gateway
         id: deploy_gateway
         if: steps.svc.outputs.secret_profile == 'gateway'
@@ -417,6 +421,7 @@ jobs:
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
 
+      # ── backend: DB + Privy + JWT + Cloud SQL ───────────────────
       - name: Deploy — backend
         id: deploy_backend
         if: steps.svc.outputs.secret_profile == 'backend'
@@ -435,6 +440,7 @@ jobs:
             --timeout=${{ steps.svc.outputs.timeout }}
             --concurrency=${{ steps.svc.outputs.concurrency }}
             --port=${{ steps.svc.outputs.port }}
+            --add-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE }}
           env_vars: |
             NODE_ENV=${{ steps.svc.outputs.env }}
             GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
@@ -447,6 +453,7 @@ jobs:
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
 
+      # ── ai-service: DB + Mistral + Cloud SQL ────────────────────
       - name: Deploy — ai-service
         id: deploy_ai
         if: steps.svc.outputs.secret_profile == 'ai'
@@ -465,6 +472,7 @@ jobs:
             --timeout=${{ steps.svc.outputs.timeout }}
             --concurrency=${{ steps.svc.outputs.concurrency }}
             --port=${{ steps.svc.outputs.port }}
+            --add-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE }}
           env_vars: |
             NODE_ENV=${{ steps.svc.outputs.env }}
             GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
@@ -474,6 +482,7 @@ jobs:
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             SPATIAL_SERVICE_URL=SPATIAL_SERVICE_URL:latest
 
+      # ── spatial-service: DB + Cloud SQL ─────────────────────────
       - name: Deploy — spatial-service
         id: deploy_spatial
         if: steps.svc.outputs.secret_profile == 'spatial'
@@ -492,6 +501,7 @@ jobs:
             --timeout=${{ steps.svc.outputs.timeout }}
             --concurrency=${{ steps.svc.outputs.concurrency }}
             --port=${{ steps.svc.outputs.port }}
+            --add-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE }}
           env_vars: |
             NODE_ENV=${{ steps.svc.outputs.env }}
             GCP_PROJECT=${{ env.GCP_PROJECT_ID }}
@@ -500,6 +510,7 @@ jobs:
             CORE_SERVICE_URL=CORE_SERVICE_URL:latest
             AI_SERVICE_URL=AI_SERVICE_URL:latest
 
+      # ── Resolve URL ─────────────────────────────────────────────
       - name: Resolve deployed URL
         id: url
         run: |
