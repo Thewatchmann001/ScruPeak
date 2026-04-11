@@ -3,3 +3,4 @@ uvicorn[standard]
 gunicorn
 httpx
 mistralai>=1.0.0
+# force rebuild
