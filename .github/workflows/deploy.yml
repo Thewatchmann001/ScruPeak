@@ -65,13 +65,20 @@ jobs:
       - name: Detect changed services
         id: changed
         run: |
-          BEFORE="${{ github.event.before }}"
-          AFTER="${{ github.sha }}"
-
-          if [[ -n "$BEFORE" && "$BEFORE" != "0000000000000000000000000000000000000000" ]]; then
-            CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" 2>/dev/null || git ls-files)
+          # Handle direct pushes, merge commits and PR merges reliably
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.sha }}"
+            if [[ -z "$BEFORE" || "$BEFORE" == "0000000000000000000000000000000000000000" ]]; then
+              CHANGED=$(git ls-files)
+            else
+              # For merge commits use HEAD~1 which is more reliable than event.before
+              CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || \
+                        git diff --name-only "$BEFORE" "$AFTER" 2>/dev/null || \
+                        git ls-files)
+            fi
           else
-            CHANGED=$(git ls-files)
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-files)
           fi
 
           echo "Changed files:"
