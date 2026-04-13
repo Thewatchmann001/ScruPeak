@@ -293,11 +293,123 @@ class AgentCreate(BaseModel):
     ministry_registration_number: Optional[str] = None
     wallet_address: Optional[str] = None
 
+    # Personal
+    full_legal_name: Optional[str] = None
+    nin: Optional[str] = None
+    dob: Optional[datetime] = None
+    gender: Optional[str] = None
+    whatsapp_number: Optional[str] = None
+    secondary_phone: Optional[str] = None
+    residential_address: Optional[str] = None
+
+    # Professional
+    real_estate_license_number: Optional[str] = None
+    years_experience: Optional[int] = None
+    primary_region: Optional[str] = None
+    secondary_regions: Optional[str] = None
+    market_focus: Optional[str] = None
+
+    transactions_last_12_months: int = 0
+    is_independent: bool = True
+    agency_name: Optional[str] = None
+    agency_office_address: Optional[str] = None
+
+    has_surveyor_access: bool = False
+    has_disputed_history: bool = False
+    can_verify_authenticity: bool = False
+
+    # Banking
+    bank_name: Optional[str] = None
+    account_number: Optional[str] = None
+    account_name: Optional[str] = None
+    bank_branch_name: Optional[str] = None
+    swift_code: Optional[str] = None
+
+    # Office
+    office_address: Optional[str] = None
+    office_phone: Optional[str] = None
+    business_email: Optional[str] = None
+
+    # Compliance
+    reference1_name: Optional[str] = None
+    reference1_contact: Optional[str] = None
+    reference2_name: Optional[str] = None
+    reference2_contact: Optional[str] = None
+    background_check_auth: bool = False
+
+    # Agreement
+    digital_signature: Optional[str] = None
+
+    # KYC for Agents
+    id_document_url: Optional[str] = None
+    proof_of_address_url: Optional[str] = None
+    photo_straight_url: Optional[str] = None
+    photo_left_url: Optional[str] = None
+    photo_right_url: Optional[str] = None
+
 
 class AgentResponse(BaseModel):
     """Agent response schema"""
     id: UUID
     user_id: UUID
+
+    # Personal
+    full_legal_name: Optional[str] = None
+    nin: Optional[str] = None
+    dob: Optional[datetime] = None
+    gender: Optional[str] = None
+    whatsapp_number: Optional[str] = None
+    secondary_phone: Optional[str] = None
+    residential_address: Optional[str] = None
+    professional_photo_url: Optional[str] = None
+
+    # Professional
+    real_estate_license_number: Optional[str] = None
+    ministry_registration_number: Optional[str] = None
+    years_experience: Optional[int] = None
+    primary_region: Optional[str] = None
+    secondary_regions: Optional[str] = None
+    market_focus: Optional[str] = None
+    license_file_url: Optional[str] = None
+
+    transactions_last_12_months: int = 0
+    is_independent: bool = True
+    agency_name: Optional[str] = None
+    agency_office_address: Optional[str] = None
+
+    has_surveyor_access: bool = False
+    has_disputed_history: bool = False
+    can_verify_authenticity: bool = False
+
+    # Banking
+    bank_name: Optional[str] = None
+    account_number: Optional[str] = None
+    account_name: Optional[str] = None
+    bank_branch_name: Optional[str] = None
+    swift_code: Optional[str] = None
+
+    # Office
+    office_address: Optional[str] = None
+    office_phone: Optional[str] = None
+    business_email: Optional[str] = None
+
+    # Compliance
+    reference1_name: Optional[str] = None
+    reference1_contact: Optional[str] = None
+    reference2_name: Optional[str] = None
+    reference2_contact: Optional[str] = None
+    background_check_auth: bool = False
+
+    # Agreement
+    digital_signature: Optional[str] = None
+
+    # KYC for Agents
+    id_document_url: Optional[str] = None
+    proof_of_address_url: Optional[str] = None
+    photo_straight_url: Optional[str] = None
+    photo_left_url: Optional[str] = None
+    photo_right_url: Optional[str] = None
+
     ministry_registered: bool
     platform_verified: bool
     verified_at: Optional[datetime]

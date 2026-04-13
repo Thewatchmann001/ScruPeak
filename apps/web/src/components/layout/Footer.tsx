@@ -1,7 +1,23 @@
 import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Footer() {
+  const { user, isAuthenticated } = useAuth();
+
+  const platformLinks = [
+    { label: "Listings", href: "/marketplace" },
+  ];
+
+  if (isAuthenticated && (user?.role === 'owner' || user?.role === 'agent')) {
+    platformLinks.push({ label: "Dashboard", href: "/sell" });
+  }
+
+  if (isAuthenticated) {
+    platformLinks.push({ label: "Escrow", href: "/escrow" });
+    platformLinks.push({ label: "Verification", href: "/kyc" });
+  }
+
   return (
     <footer className="bg-white text-text py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
       <div className="max-w-7xl mx-auto">
@@ -28,12 +44,7 @@ export default function Footer() {
           {/* Platform Links */}
           <FooterColumn
             title="Platform"
-            links={[
-              { label: "Listings", href: "/marketplace" },
-              { label: "Dashboard", href: "/sell" },
-              { label: "Escrow", href: "/escrow" },
-              { label: "Verification", href: "/kyc" },
-            ]}
+            links={platformLinks}
           />
 
           {/* Company Links */}

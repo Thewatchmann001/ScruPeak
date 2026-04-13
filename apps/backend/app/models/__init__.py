@@ -81,6 +81,7 @@ class User(Base):
     kyc_verified_at = Column(DateTime)
     email_verified = Column(Boolean, default=False)
     avatar_url = Column(String(500))
+    has_pending_agent_application = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True, index=True)
     last_login = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -326,6 +327,57 @@ class Agent(Base):
     ministry_registered = Column(Boolean, default=False)
     ministry_registration_number = Column(String(100), unique=True, nullable=True)
     
+    # Detailed Agent Info
+    full_legal_name = Column(String(255))
+    nin = Column(String(50))
+    dob = Column(DateTime)
+    gender = Column(String(20))
+    whatsapp_number = Column(String(50))
+    secondary_phone = Column(String(50))
+    residential_address = Column(Text)
+    professional_photo_url = Column(String(500))
+
+    real_estate_license_number = Column(String(100))
+    years_experience = Column(Integer)
+    primary_region = Column(String(255))
+    secondary_regions = Column(Text)
+    market_focus = Column(String(255)) # Residential, Commercial, etc.
+    license_file_url = Column(String(500))
+
+    transactions_last_12_months = Column(Integer, default=0)
+    reference1_name = Column(String(255))
+    reference1_contact = Column(String(255))
+    reference2_name = Column(String(255))
+    reference2_contact = Column(String(255))
+
+    is_independent = Column(Boolean, default=True)
+    agency_name = Column(String(255))
+    agency_office_address = Column(Text)
+
+    has_surveyor_access = Column(Boolean, default=False)
+    has_disputed_history = Column(Boolean, default=False)
+    can_verify_authenticity = Column(Boolean, default=False)
+
+    bank_name = Column(String(255))
+    account_number = Column(String(100))
+    account_name = Column(String(255))
+    bank_branch_name = Column(String(255))
+    swift_code = Column(String(50))
+
+    office_address = Column(Text)
+    office_phone = Column(String(50))
+    business_email = Column(String(255))
+
+    background_check_auth = Column(Boolean, default=False)
+    digital_signature = Column(String(255))
+
+    # Integrated KYC for Agents
+    id_document_url = Column(String(500))
+    proof_of_address_url = Column(String(500))
+    photo_straight_url = Column(String(500))
+    photo_left_url = Column(String(500))
+    photo_right_url = Column(String(500))
+
     # Platform verification
     platform_verified = Column(Boolean, default=False)
     verified_at = Column(DateTime)

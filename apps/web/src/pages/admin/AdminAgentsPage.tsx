@@ -15,11 +15,24 @@ interface AgentApplication {
   wallet_address: string | null;
   created_at: string;
   kyc_verified: boolean;
+
+  // New Fields
+  full_legal_name?: string;
+  nin?: string;
+  dob?: string;
+  agency_name?: string;
+  years_experience?: number;
+  primary_region?: string;
+  office_phone?: string;
+  business_email?: string;
+  background_check_auth?: boolean;
+  digital_signature?: string;
 }
 
 export default function AdminAgentsPage() {
   const [agents, setAgents] = useState<AgentApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAgent, setSelectedAgent] = useState<AgentApplication | null>(null);
 
   useEffect(() => {
     fetchAgents();
@@ -72,6 +85,8 @@ export default function AdminAgentsPage() {
           No pending agent applications.
         </Card>
       ) : (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -86,7 +101,11 @@ export default function AdminAgentsPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {agents.map((agent) => (
-                  <tr key={agent.id} className="hover:bg-gray-50">
+                  <tr
+                    key={agent.id}
+                    className={`hover:bg-gray-50 cursor-pointer ${selectedAgent?.id === agent.id ? 'bg-blue-50' : ''}`}
+                    onClick={() => setSelectedAgent(agent)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">
@@ -134,6 +153,61 @@ export default function AdminAgentsPage() {
             </table>
           </div>
         </Card>
+        </div>
+
+        {/* Detail Panel */}
+        <div className="lg:col-span-1">
+          {selectedAgent ? (
+            <Card className="p-6 sticky top-8">
+              <h3 className="text-lg font-bold mb-4 border-b pb-2">Application Details</h3>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="text-gray-500">Full Legal Name</p>
+                  <p className="font-medium">{selectedAgent.full_legal_name || selectedAgent.name}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-500">NIN</p>
+                    <p className="font-medium">{selectedAgent.nin || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Experience</p>
+                    <p className="font-medium">{selectedAgent.years_experience} Years</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-500">Agency / Office</p>
+                  <p className="font-medium">{selectedAgent.agency_name || 'Independent'}</p>
+                  <p className="text-xs text-gray-400">{selectedAgent.office_phone}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Region</p>
+                  <p className="font-medium">{selectedAgent.primary_region || 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded border">
+                  <p className="text-xs text-gray-500 mb-1">Digital Signature</p>
+                  <p className="font-serif italic text-lg">{selectedAgent.digital_signature}</p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 p-2 rounded">
+                  <CheckCircle className="w-3 h-3" />
+                  Background Check Authorized
+                </div>
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700 mt-4"
+                  onClick={() => handleVerify(selectedAgent.id)}
+                  disabled={!selectedAgent.kyc_verified}
+                >
+                  Confirm & Verify Agent
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <Card className="p-12 text-center text-gray-400 border-dashed">
+              Select an application to view details
+            </Card>
+          )}
+        </div>
+      </div>
       )}
     </div>
   );
