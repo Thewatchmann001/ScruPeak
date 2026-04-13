@@ -31,6 +31,13 @@ const KycPage = () => {
   // ... (rest of state)
 
   useEffect(() => {
+    // Cleanup camera on unmount
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
+  useEffect(() => {
     if (authLoading) return; // Wait for auth check to complete
 
     if (!isAuthenticated) {
@@ -65,19 +72,22 @@ const KycPage = () => {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Explicitly play() to ensure video starts
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(e => console.error("Play error:", e));
-        };
+        await videoRef.current.play();
         setIsCameraActive(true);
         setLivenessStep(1);
       }
     } catch (err) {
       console.error("Camera access error:", err);
-      setError("Unable to access camera. Please allow camera permissions in your browser.");
+      setError("Unable to access camera. Please ensure you have given camera permissions and are using a compatible browser.");
     }
   };
 
@@ -85,30 +95,40 @@ const KycPage = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
-      setIsCameraActive(false);
+      videoRef.current.srcObject = null;
     }
+    setIsCameraActive(false);
   };
 
   const captureFrame = (step: 'straight' | 'left' | 'right') => {
-    if (videoRef.current) {
+    if (videoRef.current && videoRef.current.readyState === 4) {
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
       const ctx = canvas.getContext('2d');
       if (ctx) {
+        // Mirror the image if it's mirrored in the preview
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
         ctx.drawImage(videoRef.current, 0, 0);
         canvas.toBlob((blob) => {
-          setCapturedImages(prev => ({ ...prev, [step]: blob }));
-          
-          // Advance step
-          if (step === 'straight') setLivenessStep(2);
-          else if (step === 'left') setLivenessStep(3);
-          else if (step === 'right') {
-            setLivenessStep(0); // Done
-            stopCamera();
+          if (blob) {
+            setCapturedImages(prev => ({ ...prev, [step]: blob }));
+
+            // Advance step
+            if (step === 'straight') setLivenessStep(2);
+            else if (step === 'left') setLivenessStep(3);
+            else if (step === 'right') {
+              setLivenessStep(0); // Done
+              stopCamera();
+            }
+          } else {
+            setError("Failed to capture image. Please try again.");
           }
-        }, 'image/jpeg');
+        }, 'image/jpeg', 0.9);
       }
+    } else {
+      setError("Video stream not ready. Please wait a moment.");
     }
   };
 
@@ -312,18 +332,14 @@ const KycPage = () => {
                       type="button" 
                       onClick={() => {
                         if (livenessStep === 1) captureFrame('straight');
-                        else if (livenessStep === 2) captureFrame('left'); // User turned right, looking left from camera pov? Or user physically turns right?
-                        // "Turn Head Right" -> Capture left profile? Let's stick to prompt names.
-                        // Prompt: Turn Right -> Capture 'left' (relative to camera) or 'right' profile?
-                        // Let's map simple: Step 2 (Right) -> capture 'left' file?
-                        // Actually let's just match the state logic:
-                        // Step 2 = "Turn Head Right" -> Save as 'left' (since showing left cheek)?
-                        // Let's keep it simple: Step 2 captures 'left' image slot.
+                        else if (livenessStep === 2) captureFrame('left');
                         else if (livenessStep === 3) captureFrame('right');
                       }} 
-                      className="bg-primary hover:bg-primary/90 min-w-[120px]"
+                      className="bg-primary hover:bg-primary-hover min-w-[120px] font-bold shadow-md transform active:scale-95 transition-all"
                     >
-                      Capture Frame
+                      {livenessStep === 1 && "Capture Straight"}
+                      {livenessStep === 2 && "Capture Left Profile"}
+                      {livenessStep === 3 && "Capture Right Profile"}
                     </Button>
                   )}
                 </div>

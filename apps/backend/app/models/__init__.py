@@ -226,8 +226,6 @@ class Escrow(Base):
     seller_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
     
     amount = Column(Numeric(18, 2), nullable=False)
-    platform_fee_amount = Column(Numeric(18, 2))
-    seller_payout_amount = Column(Numeric(18, 2))
     status = Column(Enum(EscrowStatus), default=EscrowStatus.PENDING, nullable=False, index=True)
     
     # Blockchain

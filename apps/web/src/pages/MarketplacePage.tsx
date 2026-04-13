@@ -210,11 +210,11 @@ export default function MarketplacePage() {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #CBD5E0;
+          background: #E2E8F0;
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #A0AEC0;
+          background: #CBD5E1;
         }
       `}</style>
     </div>

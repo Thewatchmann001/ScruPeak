@@ -526,13 +526,8 @@ async def release_escrow_funds(
     if escrow.status != EscrowStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Escrow is not active, cannot release funds")
 
-    # Get seller with agent_profile eager loaded for payout logic
-    from sqlalchemy.orm import selectinload
-    seller_result = await db.execute(
-        select(User)
-        .options(selectinload(User.agent_profile))
-        .where(User.id == escrow.seller_id)
-    )
+    # Get seller
+    seller_result = await db.execute(select(User).where(User.id == escrow.seller_id))
     seller = seller_result.scalar_one_or_none()
     if not seller:
         raise HTTPException(status_code=404, detail="Seller not found")

@@ -66,7 +66,6 @@ class Settings(BaseSettings):
     
     # CORS
     CORS_ORIGINS: list = [
-        "https://web-prod-kqr3pbuu3a-uc.a.run.app",
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
@@ -137,9 +136,8 @@ class Settings(BaseSettings):
     MONIME_WEBHOOK_ID: Optional[str] = None
     MONIME_APP_URL: Optional[str] = None  # For building success/cancel URLs
     MONIME_ENABLE_RECEIPTS: bool = True
-    # The Escrow and Revenue account are the same. Funds stay here as revenue after payout.
+    MONIME_ESCROW_FLOAT_ACCOUNT_ID: Optional[str] = None
     MONIME_PLATFORM_REVENUE_ACCOUNT_ID: str = "fac-k6P8Ug3YTsFJFL44kH2GPpFfD13"
-    MONIME_ESCROW_FLOAT_ACCOUNT_ID: str = "fac-k6P8Ug3YTsFJFL44kH2GPpFfD13"
     
     class Config:
         env_file = ".env"
