@@ -65,6 +65,9 @@ export default function Navbar() {
              {isAuthenticated && (user?.role === 'owner' || user?.role === 'agent') && (
                <NavLink to="/sell">Dashboard</NavLink>
             )}
+            {isAuthenticated && user?.email === 'josephemsamah@gmail.com' && (
+               <NavLink to="/admin">Admin</NavLink>
+            )}
           </div>
 
           {/* Desktop Auth Buttons */}

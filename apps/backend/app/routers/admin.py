@@ -96,7 +96,23 @@ async def list_pending_agents(
             "ministry_registration_number": agent.ministry_registration_number,
             "wallet_address": agent.wallet_address,
             "created_at": agent.created_at,
-            "kyc_verified": user.kyc_verified
+            "kyc_verified": user.kyc_verified,
+
+            # New Agent Fields for Admin Review
+            "full_legal_name": agent.full_legal_name,
+            "nin": agent.nin,
+            "dob": agent.dob,
+            "agency_name": agent.agency_name,
+            "years_experience": agent.years_experience,
+            "primary_region": agent.primary_region,
+            "bank_name": agent.bank_name,
+            "account_number": agent.account_number,
+            "account_name": agent.account_name,
+            "office_address": agent.office_address,
+            "office_phone": agent.office_phone,
+            "business_email": agent.business_email,
+            "background_check_auth": agent.background_check_auth,
+            "digital_signature": agent.digital_signature
         })
     return data
 
@@ -166,11 +182,14 @@ async def verify_agent(
     agent.platform_verified = True  # type: ignore
     agent.verified_at = datetime.utcnow()  # type: ignore
     
-    # Update user role to AGENT if verified
+    # Update user role to AGENT and mark KYC as verified if agent is approved
     result_user = await db.execute(select(User).where(User.id == agent.user_id))
     user = result_user.scalars().first()
     if user:
         user.role = UserRole.AGENT
+        user.kyc_verified = True
+        user.kyc_verified_at = datetime.utcnow()
+        user.has_pending_agent_application = False
     
     await db.commit()
     
