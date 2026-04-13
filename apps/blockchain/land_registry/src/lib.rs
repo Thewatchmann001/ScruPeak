@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("ScruPeak111111111111111111111111111111111");
+declare_id!("CPtG4J9ANw3xCe3AvnfudapTJoKEoj2eo5pseEPHCynK");
 
 #[program]
 pub mod land_registry {
