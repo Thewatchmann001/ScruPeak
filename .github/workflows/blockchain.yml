@@ -57,7 +57,7 @@ jobs:
           avm use ${{ env.ANCHOR_VERSION }}
           echo "$HOME/.avm/bin" >> $GITHUB_PATH
 
-      - name: Install Node.js (for Anchor tests)
+      - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
@@ -74,11 +74,15 @@ jobs:
           solana config set --url ${{ env.SOLANA_RPC_URL }}
           echo "Deployer pubkey: $(solana-keygen pubkey ~/.config/solana/deployer.json)"
 
+      - name: Set up program keypair
+        run: |
+          mkdir -p apps/blockchain/target/deploy
+          echo '${{ secrets.SOLANA_PROGRAM_KEYPAIR }}' > apps/blockchain/target/deploy/land_registry-keypair.json
+
       - name: Check deployer balance
         run: |
           BALANCE=$(solana balance $(solana-keygen pubkey ~/.config/solana/deployer.json) --url ${{ env.SOLANA_RPC_URL }})
           echo "Deployer balance: $BALANCE"
-          # Airdrop if balance is low (devnet only)
           solana airdrop 1 $(solana-keygen pubkey ~/.config/solana/deployer.json) \
             --url ${{ env.SOLANA_RPC_URL }} 2>/dev/null || echo "ℹ️  Airdrop skipped"
 
@@ -149,6 +153,11 @@ jobs:
           solana config set --url ${{ env.SOLANA_RPC_URL }}
           echo "Deployer pubkey: $(solana-keygen pubkey ~/.config/solana/deployer.json)"
 
+      - name: Set up program keypair
+        run: |
+          mkdir -p apps/blockchain/target/deploy
+          echo '${{ secrets.SOLANA_PROGRAM_KEYPAIR }}' > apps/blockchain/target/deploy/land_registry-keypair.json
+
       - name: Airdrop SOL for deployment fees
         run: |
           solana airdrop 2 $(solana-keygen pubkey ~/.config/solana/deployer.json) \
@@ -166,8 +175,7 @@ jobs:
         run: |
           echo "▸ Deploying land_registry program to devnet..."
           anchor deploy --provider.cluster devnet 2>&1 | tee deploy.log
-          
-          # Extract program ID from deploy output
+
           PROGRAM_ID=$(grep -oP 'Program Id: \K\S+' deploy.log || \
                       solana-keygen pubkey target/deploy/land_registry-keypair.json)
           echo "program_id=$PROGRAM_ID" >> $GITHUB_OUTPUT
