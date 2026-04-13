@@ -205,14 +205,18 @@ export default function PremiumHero() {
           </div>
 
           <div className="text-center mt-12">
-            {!user && (
-              <button
-                onClick={() => navigate('/auth/login?redirect=/kyc')}
-                className="inline-block px-8 py-3 bg-slate-50 text-primary/90 font-bold rounded-lg border border-slate-200 hover:bg-primary/10 transition-colors"
-              >
-                Register Your Land Now
-              </button>
-            )}
+            <button
+              onClick={() => {
+                if (!user) {
+                  navigate('/auth/login?redirect=/apply-role');
+                } else {
+                  navigate('/apply-role');
+                }
+              }}
+              className="inline-block px-8 py-3 bg-slate-50 text-primary/90 font-bold rounded-lg border border-slate-200 hover:bg-primary/10 transition-colors"
+            >
+              Register Your Land Now
+            </button>
           </div>
         </div>
       </div>
