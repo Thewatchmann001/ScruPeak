@@ -253,7 +253,7 @@ const RoleApplicationPage = () => {
       {/* Landowner Card */}
       <Card
         className="hover:border-primary transition-all cursor-pointer group flex flex-col border-2 shadow-sm"
-        onClick={() => setView('seller_confirmation')}
+        onClick={() => navigate('/kyc')}
       >
         <CardHeader className="text-center pt-8">
           <div className="mx-auto p-4 bg-blue-50 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-colors w-16 h-16 flex items-center justify-center mb-4">

@@ -15,7 +15,7 @@ export const PremiumCTA = () => {
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <button
-            onClick={() => navigate('/auth/register')}
+            onClick={() => navigate('/apply-role')}
             className="px-8 py-3.5 bg-primary text-white font-bold rounded-md hover:bg-primary-hover transition-standard shadow-lg shadow-primary/20"
           >
             Get Started
