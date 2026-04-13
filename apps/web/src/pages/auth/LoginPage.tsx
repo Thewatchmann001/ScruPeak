@@ -29,9 +29,13 @@ export default function LoginPage() {
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
 
         <div className="relative z-10">
-          <Link to="/" className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            <span className="w-10 h-10 bg-white text-primary rounded-lg flex items-center justify-center font-black">SP</span>
-            ScruPeak
+          <Link to="/" className="text-3xl font-bold text-white tracking-tight flex items-center gap-2 group">
+            <img
+              src="/images/logo.jpg"
+              alt="ScruPeak Logo"
+              className="w-10 h-10 rounded-lg object-cover transform group-hover:scale-110 transition-all duration-300"
+            />
+            <span className="text-white">Scru<span className="opacity-80">Peak</span></span>
           </Link>
         </div>
 
@@ -67,10 +71,14 @@ export default function LoginPage() {
           animate={{ opacity: 1, x: 0 }}
           className="w-full max-w-md"
         >
-          <div className="mb-10 lg:hidden">
-            <Link to="/" className="text-2xl font-bold text-primary tracking-tight flex items-center gap-2">
-              <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center font-black">SP</span>
-              ScruPeak
+          <div className="mb-10 lg:hidden text-center">
+            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight">
+              <img
+                src="/images/logo.jpg"
+                alt="ScruPeak Logo"
+                className="w-10 h-10 rounded-lg object-cover"
+              />
+              <span className="text-text">Scru<span className="text-primary">Peak</span></span>
             </Link>
           </div>
 
