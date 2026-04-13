@@ -22,6 +22,7 @@ const Home = () => {
       {/* How It Works Section */}
       <motion.section
         {...fadeInUp}
+        id="features"
         className="py-24 bg-white border-t border-border"
       >
          <div className="max-w-7xl mx-auto px-6">
