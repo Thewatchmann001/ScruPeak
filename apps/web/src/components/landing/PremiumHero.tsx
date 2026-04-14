@@ -197,7 +197,7 @@ export default function PremiumHero() {
             )}
             
             <button
-              onClick={handleSearch}
+              onClick={() => navigate('/marketplace')}
               className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
             >
               Browse Marketplace

@@ -41,6 +41,9 @@ export interface Land {
   };
   status: "available" | "pending" | "sold" | "disputed";
   price?: number;
+  owner_name?: string;
+  owner_role?: string;
+  trust_score: number;
   documents: Document[];
   ulid: string;
   has_photo: boolean;

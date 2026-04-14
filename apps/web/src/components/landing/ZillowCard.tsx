@@ -56,6 +56,27 @@ export const ZillowCard: React.FC<ZillowCardProps> = ({ listing }) => {
           {listing.title}
         </div>
 
+        {/* Listing Person & Role */}
+        <div className="flex items-center gap-2 mt-1">
+          <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
+            {listing.owner_name?.charAt(0) || 'O'}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[11px] font-bold text-text truncate max-w-[150px]">
+              {listing.owner_name || 'Verified Seller'}
+            </span>
+            <span className="text-[9px] text-text-muted font-medium uppercase tracking-tighter">
+              {listing.owner_role || 'Landowner'}
+            </span>
+          </div>
+
+          {/* Trust Score Badge */}
+          <div className="ml-auto flex items-center gap-1 bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
+            <span className="text-[9px] font-black text-primary">{Math.round(listing.trust_score * 100)}%</span>
+            <span className="text-[8px] font-bold text-primary/70 uppercase">Score</span>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-2 mt-2">
           {listing.blockchain_verified && (
             <div className="px-2 py-1 bg-[#E3F2FD] text-[#1565C0] rounded text-[10px] font-bold uppercase flex items-center gap-1">

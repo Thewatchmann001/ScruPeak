@@ -3,18 +3,21 @@ Real estate agents router - agent verification, ratings, transactions
 """
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from uuid import UUID
 from datetime import datetime
+from typing import List
 import logging
 
 from app.core.database import get_db
 from app.models import Agent, User, UserRole
+from app.models.agent_application import AgentApplication, ApplicationStatus
 from app.schemas import AgentCreate, AgentResponse
+from app.schemas.agent_application import AgentApplicationCreate, AgentApplicationResponse
 from app.utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/agents", tags=["Agents"])
 
 
 @router.post(
@@ -166,6 +169,109 @@ async def get_agent_profile(
         )
     
     return agent
+
+@router.post("/apply", response_model=AgentApplicationResponse, status_code=201)
+async def submit_application(
+    data: AgentApplicationCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Submit agent application — no auth required, anyone can apply as long as they are signed in"""
+    application = AgentApplication(**data.model_dump())
+    db.add(application)
+    await db.commit()
+    await db.refresh(application)
+    return application
+
+@router.get("/applications", response_model=List[AgentApplicationResponse])
+async def list_applications(
+    status: str = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """List all applications — admin only (enforced on frontend)"""
+    query = select(AgentApplication)
+    if status:
+        query = query.where(AgentApplication.status == status)
+    query = query.order_by(AgentApplication.created_at.desc())
+    result = await db.execute(query)
+    return result.scalars().all()
+
+@router.put("/applications/{application_id}/approve")
+async def approve_application(
+    application_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """Approve agent application"""
+    result = await db.execute(
+        select(AgentApplication).where(AgentApplication.id == application_id)
+    )
+    application = result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    application.status = ApplicationStatus.APPROVED
+    application.reviewed_by = "josephemsamah@gmail.com"
+    application.reviewed_at = datetime.utcnow()
+
+    # Update user role to AGENT
+    user_result = await db.execute(
+        select(User).where(User.email == application.email)
+    )
+    user = user_result.scalar_one_or_none()
+    if user:
+        user.role = UserRole.AGENT
+        user.has_pending_agent_application = False
+        db.add(user)
+
+    await db.commit()
+    return {"message": "Application approved and user role updated", "id": str(application_id)}
+
+@router.put("/applications/{application_id}/reject")
+async def reject_application(
+    application_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """Reject agent application"""
+    result = await db.execute(
+        select(AgentApplication).where(AgentApplication.id == application_id)
+    )
+    application = result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    application.status = ApplicationStatus.REJECTED
+    application.reviewed_by = "josephemsamah@gmail.com"
+    application.reviewed_at = datetime.utcnow()
+    await db.commit()
+    return {"message": "Application rejected", "id": str(application_id)}
+
+@router.get("/applications/stats")
+async def application_stats(db: AsyncSession = Depends(get_db)):
+    """Get application counts by status"""
+    result = await db.execute(
+        select(AgentApplication.status, func.count(AgentApplication.id))
+        .group_by(AgentApplication.status)
+    )
+    stats = {row[0]: row[1] for row in result.all()}
+    return {
+        "pending": stats.get(ApplicationStatus.PENDING, 0),
+        "approved": stats.get(ApplicationStatus.APPROVED, 0),
+        "rejected": stats.get(ApplicationStatus.REJECTED, 0),
+        "total": sum(stats.values())
+    }
+
+@router.get("/me/role")
+async def get_my_role(email: str, db: AsyncSession = Depends(get_db)):
+    """Check if user has approved agent role by email"""
+    result = await db.execute(
+        select(AgentApplication).where(
+            AgentApplication.email == email,
+            AgentApplication.status == ApplicationStatus.APPROVED
+        )
+    )
+    application = result.scalar_one_or_none()
+    if application:
+        return {"role": "agent", "status": "approved"}
+    return {"role": "user", "status": "none"}
 
 
 @router.get(
