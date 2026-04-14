@@ -24,6 +24,7 @@ import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import VerifyEmailPage from '@/pages/auth/VerifyEmailPage';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminLandPage from '@/pages/admin/AdminLandPage';
 import AdminKycPage from '@/pages/admin/AdminKycPage';
@@ -63,8 +64,8 @@ function App() {
               <Route path="/land/:id" element={<LandDetailPage />} />
               <Route path="/map" element={<MapPage />} />
               <Route path="/insights" element={<MarketInsightsDashboard />} />
-              <Route path="/sell" element={<SellerDashboard />} />
-              <Route path="/apply-role" element={<RoleApplicationPage />} />
+              <Route path="/sell" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><SellerDashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><DashboardPage /></ProtectedRoute>} />
               <Route path="/kyc" element={<KycPage />} />
               <Route path="/chat" element={<ChatPage />} />
               

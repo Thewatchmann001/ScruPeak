@@ -170,6 +170,8 @@ class LandResponse(LandBase):
     parcel_id: Optional[str] = None
     grid_id: Optional[str] = None
     owner_id: UUID
+    owner_name: Optional[str] = None
+    owner_role: Optional[str] = None
     status: LandStatus
     blockchain_verified: bool
     blockchain_hash: Optional[str]

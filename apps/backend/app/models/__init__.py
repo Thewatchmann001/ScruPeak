@@ -499,6 +499,8 @@ class KycStatus(str, enum.Enum):
     REJECTED = "rejected"
 
 
+from app.models.agent_application import AgentApplication, ApplicationStatus
+
 class KycSubmission(Base):
     __tablename__ = "kyc_submissions"
     __table_args__ = (

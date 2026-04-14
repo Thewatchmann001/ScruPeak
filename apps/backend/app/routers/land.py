@@ -21,6 +21,74 @@ from app.utils.auth import get_current_user
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Land Management"])
 
+@router.get(
+    "",
+    response_model=PaginatedResponse,
+    summary="List and search land properties"
+)
+async def list_lands(
+    q: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    region: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Search land properties with filters.
+    Returns listings with owner info and trust scores.
+    """
+    # Base query joining Land and User
+    stmt = select(Land, User.name, User.role).join(User, Land.owner_id == User.id)
+
+    # Apply filters
+    if q:
+        stmt = stmt.where(Land.title.ilike(f"%{q}%") | Land.description.ilike(f"%{q}%"))
+    if status:
+        stmt = stmt.where(Land.status == status)
+    if region:
+        stmt = stmt.where(Land.region.ilike(f"%{region}%"))
+    if min_price:
+        stmt = stmt.where(Land.price >= min_price)
+    if max_price:
+        stmt = stmt.where(Land.price <= max_price)
+
+    stmt = stmt.order_by(desc(Land.created_at))
+
+    # Get total count for pagination
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total_count_res = await db.execute(count_stmt)
+    total_count = total_count_res.scalar() or 0
+
+    # Apply pagination
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(stmt)
+
+    items = []
+    for row in result.all():
+        land_obj, name, role = row
+        # Transform role to user-friendly string
+        role_label = "Owner" if role == UserRole.OWNER else "Agent" if role == UserRole.AGENT else "Seller"
+
+        # Merge land data with owner info
+        land_data = LandResponse.from_orm(land_obj)
+        land_dict = land_data.model_dump()
+        land_dict["owner_name"] = name
+        land_dict["owner_role"] = role_label
+        items.append(land_dict)
+
+    return {
+        "total": total_count,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total_count + page_size - 1) // page_size if total_count > 0 else 1,
+        "items": items,
+        "has_next": page * page_size < total_count,
+        "has_prev": page > 1
+    }
+
 @router.post(
     "",
     response_model=LandResponse,

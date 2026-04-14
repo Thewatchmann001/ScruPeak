@@ -62,7 +62,7 @@ export default function Navbar() {
                  <NavLink to="/apply-role">Be a Seller / Agent</NavLink>
                )
             )}
-             {isAuthenticated && (user?.role === 'owner' || user?.role === 'agent') && (
+             {isAuthenticated && (user?.role === 'agent' || user?.role === 'owner') && (
                <NavLink to="/sell">Dashboard</NavLink>
             )}
             {isAuthenticated && user?.email === 'josephemsamah@gmail.com' && (

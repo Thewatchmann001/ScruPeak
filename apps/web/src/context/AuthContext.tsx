@@ -15,7 +15,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
+  const { ready, authenticated, user: privyUser, login, logout, getAccessToken } = usePrivy();
+  const [backendUser, setBackendUser] = useState<any | null>(null);
+  const [isBackendLoading, setIsBackendLoading] = useState(false);
 
   const getToken = async () => {
     try {
@@ -31,16 +33,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (authenticated) {
-      getAccessToken().then(token => setAuthToken(token));
+      getAccessToken().then(async (token) => {
+        setAuthToken(token);
+        setIsBackendLoading(true);
+        try {
+          const response = await fetch('/api/v1/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setBackendUser(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch backend user", error);
+        } finally {
+          setIsBackendLoading(false);
+        }
+      });
     } else {
       setAuthToken(null);
+      setBackendUser(null);
     }
   }, [authenticated, getAccessToken]);
 
   return (
     <AuthContext.Provider value={{
-      user: authenticated ? user : null,
-      isLoading: !ready,
+      user: backendUser || (authenticated ? privyUser : null),
+      isLoading: !ready || isBackendLoading,
       isAuthenticated: authenticated,
       login,
       logout,
