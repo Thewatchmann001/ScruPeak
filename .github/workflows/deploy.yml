@@ -309,6 +309,7 @@ jobs:
     # FIXED: Removed needs.migrate.result check that was causing skip
     # The 'needs' dependency ensures proper ordering without blocking on skip
     if: |
+      always() &&
       github.event_name != 'pull_request' &&
       needs.detect-changes.outputs.services != '[]'
     environment: ${{ needs.detect-changes.outputs.environment }}
