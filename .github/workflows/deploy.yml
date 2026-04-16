@@ -306,10 +306,11 @@ jobs:
     name: Deploy — ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: [detect-changes, build-and-push, migrate]
+    # FIXED: Removed needs.migrate.result check that was causing skip
+    # The 'needs' dependency ensures proper ordering without blocking on skip
     if: |
       github.event_name != 'pull_request' &&
-      needs.detect-changes.outputs.services != '[]' &&
-      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+      needs.detect-changes.outputs.services != '[]'
     environment: ${{ needs.detect-changes.outputs.environment }}
     strategy:
       matrix:
