@@ -15,7 +15,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         appearance: {
           theme: 'light',
           accentColor: '#006AFF',
-          logo: 'https://web-prod-198638918293.us-central1.run.app/favicon.ico',
+          logo: 'https://web-prod-kqr3pbuu3a-uc.a.run.app/favicon.ico',
         },
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
