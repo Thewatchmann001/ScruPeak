@@ -6,17 +6,27 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(helmet());
-app.use(cors());
+// CORS — allow web frontend
+app.use(cors({
+  origin: [
+    'https://web-prod-kqr3pbuu3a-uc.a.run.app',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-privy-token'],
+}));
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(express.json());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
 });
 app.use(limiter);
 
@@ -28,43 +38,38 @@ app.get('/health', (req, res) => {
     services: {
       core: process.env.CORE_SERVICE_URL,
       spatial: process.env.SPATIAL_SERVICE_URL,
-      ai: process.env.AI_SERVICE_URL
+      ai: process.env.AI_SERVICE_URL,
     },
   });
 });
 
-// Service Configuration
+// Service configuration — use env vars, fallback to real URLs
 const services = {
-  core: process.env.CORE_SERVICE_URL || 'https://backend-prod-198638918293.us-central1.run.app',
-  spatial: process.env.SPATIAL_SERVICE_URL || 'https://spatial-service-prod-198638918293.us-central1.run.app',
-  ai: process.env.AI_SERVICE_URL || 'https://ai-service-prod-198638918293.us-central1.run.app',
+  core: process.env.CORE_SERVICE_URL || 'https://backend-prod-kqr3pbuu3a-uc.a.run.app',
+  spatial: process.env.SPATIAL_SERVICE_URL || 'https://spatial-service-prod-kqr3pbuu3a-uc.a.run.app',
+  ai: process.env.AI_SERVICE_URL || 'https://ai-service-prod-kqr3pbuu3a-uc.a.run.app',
 };
-console.log('Service Routes Configuration:', services);
+console.log('Service Routes:', services);
 
-// Proxy Routes
-
-// Core Service (Auth, Users, Land CRUD) - Maps /api/v1/...
+// Proxy routes
 app.use('/api/v1', proxy(services.core, {
-  proxyReqPathResolver: function (req) {
-    return '/api/v1' + req.url;
-  }
+  proxyReqPathResolver: (req) => '/api/v1' + req.url,
 }));
 
-// Spatial Service - Maps /api/spatial/... -> /...
+// Direct routes (frontend calls /land, /listings etc directly)
+app.use('/land', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/land' + req.url,
+}));
+
 app.use('/api/spatial', proxy(services.spatial, {
-  proxyReqPathResolver: function (req) {
-    return req.url; // Maps /api/spatial/register -> /register
-  }
+  proxyReqPathResolver: (req) => req.url,
 }));
 
-// AI Service - Maps /api/ai/... -> /...
 app.use('/api/ai', proxy(services.ai, {
-  proxyReqPathResolver: function (req) {
-    return req.url; // Maps /api/ai/valuation -> /valuation
-  }
+  proxyReqPathResolver: (req) => req.url,
 }));
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
