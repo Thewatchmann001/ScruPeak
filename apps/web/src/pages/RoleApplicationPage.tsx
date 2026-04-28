@@ -103,6 +103,7 @@ const RoleApplicationPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [livenessStep, setLivenessStep] = useState(0);
+  const [cameraBlocked, setCameraBlocked] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -112,12 +113,36 @@ const RoleApplicationPage = () => {
     }
   }, [isAuthenticated, user]);
 
+  const getCameraStream = async (): Promise<MediaStream> => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Camera API unavailable');
+    }
+
+    const attempts: MediaStreamConstraints[] = [
+      { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } },
+      { video: { facingMode: 'user' } },
+      { video: true }
+    ];
+
+    for (const constraints of attempts) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch {
+        // Try next fallback constraint.
+      }
+    }
+
+    throw new Error('Unable to initialize camera stream');
+  };
+
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
-      });
+      setError(null);
+      setCameraBlocked(false);
+      const stream = await getCameraStream();
       if (videoRef.current) {
+        videoRef.current.muted = true;
+        videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setIsCameraActive(true);
@@ -125,7 +150,8 @@ const RoleApplicationPage = () => {
       }
     } catch (err) {
       console.error("Camera access error:", err);
-      setError("Unable to access camera.");
+      setCameraBlocked(true);
+      setError("Camera could not start. Allow camera permission in your browser, then tap Start Liveness Check again.");
     }
   };
 
@@ -703,14 +729,25 @@ const RoleApplicationPage = () => {
 
                                 <div className="flex flex-col items-center gap-2">
                                     {!isCameraActive ? (
-                                        <Button
-                                            type="button"
-                                            onClick={startCamera}
-                                            className="bg-blue-600 hover:bg-blue-700"
-                                            variant="default"
-                                        >
-                                            {agentForm.photo_straight ? 'Redo Liveness Check' : 'Start Liveness Check'}
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                type="button"
+                                                onClick={startCamera}
+                                                className="bg-blue-600 hover:bg-blue-700"
+                                                variant="default"
+                                            >
+                                                {agentForm.photo_straight ? 'Redo Liveness Check' : 'Start Liveness Check'}
+                                            </Button>
+                                            {cameraBlocked && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={startCamera}
+                                                >
+                                                    Retry Camera Access
+                                                </Button>
+                                            )}
+                                        </div>
                                     ) : (
                                         <Button
                                             type="button"
@@ -730,6 +767,22 @@ const RoleApplicationPage = () => {
                                         <div className={`w-2 h-2 rounded-full ${agentForm.photo_left ? 'bg-green-500' : 'bg-slate-300'}`} />
                                         <div className={`w-2 h-2 rounded-full ${agentForm.photo_right ? 'bg-green-500' : 'bg-slate-300'}`} />
                                     </div>
+
+                                    <p className="text-xs text-slate-600 text-center max-w-sm">
+                                        {!isCameraActive && cameraBlocked && (
+                                            <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-1 font-semibold mb-2">
+                                                Camera permission blocked or unavailable
+                                            </span>
+                                        )}
+                                        <br />
+                                        {isCameraActive
+                                            ? livenessStep === 1
+                                                ? 'Look straight at the camera, then capture.'
+                                                : livenessStep === 2
+                                                    ? 'Turn your head left, then capture.'
+                                                    : 'Turn your head right, then capture.'
+                                            : 'Tap Start Liveness Check and allow camera access when prompted.'}
+                                    </p>
                                 </div>
                             </div>
                         </div>

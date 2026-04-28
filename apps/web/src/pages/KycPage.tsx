@@ -27,6 +27,7 @@ const KycPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [kycStatus, setKycStatus] = useState<string | null>(null);
+  const [cameraBlocked, setCameraBlocked] = useState(false);
 
   // ... (rest of state)
 
@@ -70,16 +71,36 @@ const KycPage = () => {
     );
   }
 
+  const getCameraStream = async (): Promise<MediaStream> => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Camera API unavailable');
+    }
+
+    const attempts: MediaStreamConstraints[] = [
+      { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } },
+      { video: { facingMode: 'user' } },
+      { video: true }
+    ];
+
+    for (const constraints of attempts) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch {
+        // Try next fallback constraint.
+      }
+    }
+
+    throw new Error('Unable to initialize camera stream');
+  };
+
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
+      setError(null);
+      setCameraBlocked(false);
+      const stream = await getCameraStream();
       if (videoRef.current) {
+        videoRef.current.muted = true;
+        videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setIsCameraActive(true);
@@ -87,7 +108,8 @@ const KycPage = () => {
       }
     } catch (err) {
       console.error("Camera access error:", err);
-      setError("Unable to access camera. Please ensure you have given camera permissions and are using a compatible browser.");
+      setCameraBlocked(true);
+      setError("Camera could not start. Allow camera permission in your browser, then tap Start Verification again.");
     }
   };
 
@@ -327,6 +349,16 @@ const KycPage = () => {
                     </Button>
                   )}
 
+                  {!isCameraActive && cameraBlocked && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={startCamera}
+                    >
+                      Retry Camera Access
+                    </Button>
+                  )}
+
                   {isCameraActive && (
                     <Button 
                       type="button" 
@@ -342,6 +374,25 @@ const KycPage = () => {
                       {livenessStep === 3 && "Capture Right Profile"}
                     </Button>
                   )}
+                </div>
+
+                <div className="w-full max-w-sm text-xs text-gray-600 space-y-1">
+                  {!isCameraActive && cameraBlocked && (
+                    <p className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-1 font-semibold">
+                      Camera permission blocked or unavailable
+                    </p>
+                  )}
+                  <p>
+                    <strong>Next step:</strong>{' '}
+                    {isCameraActive
+                      ? livenessStep === 1
+                        ? 'Look straight at the camera, then tap Capture Straight.'
+                        : livenessStep === 2
+                        ? 'Turn your head left, then tap Capture Left Profile.'
+                        : 'Turn your head right, then tap Capture Right Profile.'
+                      : 'Tap Start Verification and allow camera access when prompted.'}
+                  </p>
+                  <p>If preview is blank, refresh the page and confirm the browser has camera permission for this site.</p>
                 </div>
                 
                 {/* Progress Indicators */}
