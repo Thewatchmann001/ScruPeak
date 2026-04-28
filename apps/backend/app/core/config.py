@@ -74,6 +74,7 @@ class Settings(BaseSettings):
         "http://localhost:3005",
         "http://localhost:5173",
         "http://localhost:8000",
+        "https://web-prod-kqr3pbuu3a-uc.a.run.app",
     ]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["*"]
