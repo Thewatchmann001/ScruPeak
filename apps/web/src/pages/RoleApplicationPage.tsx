@@ -173,7 +173,7 @@ const RoleApplicationPage = () => {
     setLoading(true);
 
     try {
-      await api.post('/users/upgrade/seller');
+      await api.post('/api/v1/users/upgrade/seller');
       setSuccess('Successfully upgraded to Seller (Owner) role! You can now list your land.');
       await checkAuth();
       setTimeout(() => {
@@ -230,7 +230,10 @@ const RoleApplicationPage = () => {
       formData.set('years_experience', String(parseInt(agentForm.years_experience) || 0));
       formData.set('transactions_last_12_months', String(parseInt(agentForm.transactions_last_12_months) || 0));
 
-      await api.post('/agents/register', formData, {
+      // Backend requires office_address; use agency office when available, fallback to residential address.
+      formData.set('office_address', agentForm.agency_office_address || agentForm.residential_address);
+
+      await api.post('/api/v1/agents/register', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
       });
 

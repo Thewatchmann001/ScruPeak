@@ -17,7 +17,7 @@ from app.models import User, KycSubmission, KycStatus
 from app.utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/kyc", tags=["KYC"])
+router = APIRouter(tags=["KYC"])
 
 # Configuration
 UPLOAD_DIR = Path("uploads/kyc")
