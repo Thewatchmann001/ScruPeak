@@ -20,7 +20,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-privy-token'],
 }));
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "connect-src": ["'self'", "https://auth.privy.io", "https://api.privy.io", "https://api-gateway-prod-1090857402667.us-central1.run.app", "https://explorer-api.walletconnect.com", "https://mainnet.rpc.privy.systems/"],
+      "frame-ancestors": ["'self'", "https://web-prod-1090857402667.us-central1.run.app", "https://auth.privy.io"],
+    },
+  },
+}));
 app.use(express.json());
 
 // Rate limiting
@@ -45,9 +54,9 @@ app.get('/health', (req, res) => {
 
 // Service configuration — use env vars, fallback to real URLs
 const services = {
-  core: process.env.CORE_SERVICE_URL || 'https://backend-prod-kqr3pbuu3a-uc.a.run.app',
-  spatial: process.env.SPATIAL_SERVICE_URL || 'https://spatial-service-prod-kqr3pbuu3a-uc.a.run.app',
-  ai: process.env.AI_SERVICE_URL || 'https://ai-service-prod-kqr3pbuu3a-uc.a.run.app',
+  core: process.env.CORE_SERVICE_URL || 'https://backend-prod-1090857402667.us-central1.run.app',
+  spatial: process.env.SPATIAL_SERVICE_URL || 'https://spatial-service-prod-1090857402667.us-central1.run.app',
+  ai: process.env.AI_SERVICE_URL || 'https://ai-service-prod-1090857402667.us-central1.run.app',
 };
 console.log('Service Routes:', services);
 

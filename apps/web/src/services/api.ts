@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { ApiError } from "@/types";
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api-gateway-prod-kqr3pbuu3a-uc.a.run.app';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api-gateway-prod-1090857402667.us-central1.run.app';
 
 class ApiClient {
   private client: AxiosInstance;

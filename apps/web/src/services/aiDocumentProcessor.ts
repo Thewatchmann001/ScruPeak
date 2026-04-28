@@ -74,7 +74,7 @@ export class AIDocumentProcessor {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${this.apiBaseUrl}/api/v1/documents/process`,
+        `${this.apiBaseUrl}/documents/process`,
         formData,
         {
           headers: {

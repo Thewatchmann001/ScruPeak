@@ -3,7 +3,7 @@ import { Land, LandClassification, PaginatedResponse } from '@/types';
 
 export const landService = {
   getClassifications: async () => {
-    return api.get<LandClassification[]>('/api/v1/registry/classifications');
+    return api.get<LandClassification[]>('/registry/classifications');
   },
 
   search: async (params: {
@@ -22,7 +22,7 @@ export const landService = {
       }
     });
     
-    return api.get<PaginatedResponse<Land>>(`/api/v1/land?${queryParams.toString()}`);
+    return api.get<PaginatedResponse<Land>>(`/land?${queryParams.toString()}`);
   },
 
   getTaskStatus: async (taskId: string) => {
@@ -31,11 +31,11 @@ export const landService = {
       status: string;
       result?: any;
       error?: string;
-    }>(`/api/v1/tasks/${taskId}`);
+    }>(`/tasks/${taskId}`);
   },
 
   publishNotice: async (landId: string) => {
-    return api.post<Land>(`/api/v1/land/${landId}/publish-notice`, {});
+    return api.post<Land>(`/land/${landId}/publish-notice`, {});
   },
 
   lodgeObjection: async (landId: string, reason: string, evidenceUrl?: string) => {
@@ -44,7 +44,7 @@ export const landService = {
     if (evidenceUrl) params.append('evidence_url', evidenceUrl);
     
     return api.post<{ message: string, dispute_id: string }>(
-      `/api/v1/land/${landId}/objection?${params.toString()}`, 
+      `/land/${landId}/objection?${params.toString()}`,
       {}
     );
   }

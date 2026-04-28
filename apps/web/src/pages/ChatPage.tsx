@@ -37,14 +37,14 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!chatId) return;
-    api.get<ChatMessage[]>(`/api/v1/chat/${chatId}`).then((res) => {
+    api.get<ChatMessage[]>(`/chat/${chatId}`).then((res) => {
       setMessages(res.data || []);
-      api.post(`/api/v1/chat/${encodeURIComponent(chatId)}/read`, {});
+      api.post(`/chat/${encodeURIComponent(chatId)}/read`, {});
     }).catch(() => {});
   }, [chatId]);
 
   useEffect(() => {
-    api.get(`/api/v1/chat/conversations/me`).then((res) => {
+    api.get(`/chat/conversations/me`).then((res) => {
       setConversations(res.data?.items || []);
     }).catch(() => {});
   }, []);
@@ -101,11 +101,11 @@ export default function ChatPage() {
     if (!chatId) return;
     const form = new FormData();
     form.append("file", file);
-    await api.post(`/api/v1/chat/${encodeURIComponent(chatId)}/attachments?kind=${kind}`, form, {
+    await api.post(`/chat/${encodeURIComponent(chatId)}/attachments?kind=${kind}`, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     // Refresh messages
-    const res = await api.get<ChatMessage[]>(`/api/v1/chat/${chatId}`);
+    const res = await api.get<ChatMessage[]>(`/chat/${chatId}`);
     setMessages(res.data || []);
   };
 

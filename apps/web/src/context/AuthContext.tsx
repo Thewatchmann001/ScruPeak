@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { setAuthToken } from '@/services/api';
+import { api, setAuthToken } from '@/services/api';
 
 interface AuthContextType {
   user: any | null;
@@ -37,12 +37,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setAuthToken(token);
         setIsBackendLoading(true);
         try {
-          const response = await fetch('/api/v1/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setBackendUser(data);
+          // Use our ApiClient instead of direct fetch to ensure correct URL and proxying
+          const response = await api.get('/users/me');
+          if (response.data) {
+            setBackendUser(response.data);
           }
         } catch (error) {
           console.error("Failed to fetch backend user", error);
