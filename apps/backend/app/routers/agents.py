@@ -17,7 +17,7 @@ from app.schemas.agent_application import AgentApplicationCreate, AgentApplicati
 from app.utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/agents", tags=["Agents"])
+router = APIRouter(tags=["Agents"])
 
 
 @router.post(

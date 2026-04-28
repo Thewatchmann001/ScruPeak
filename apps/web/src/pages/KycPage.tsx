@@ -47,7 +47,7 @@ const KycPage = () => {
 
     const checkStatus = async () => {
       try {
-        const response = await api.get('/kyc/status');
+        const response = await api.get('/api/v1/kyc/status');
         if (response.data) {
           setKycStatus(response.data.status);
         }
@@ -163,7 +163,7 @@ const KycPage = () => {
     formData.append('photo_right', capturedImages.right, 'right.jpg');
 
     try {
-      await api.post('/kyc/submit', formData, {
+      await api.post('/api/v1/kyc/submit', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -295,8 +295,8 @@ const KycPage = () => {
                      <div className="absolute inset-x-0 bottom-4 text-center">
                        <span className="inline-block px-4 py-2 bg-black/60 text-white rounded-full text-sm font-bold backdrop-blur-sm">
                          {livenessStep === 1 && "Look Straight Ahead"}
-                         {livenessStep === 2 && "Turn Head Right"}
-                         {livenessStep === 3 && "Turn Head Left"}
+                         {livenessStep === 2 && "Turn Head Left"}
+                         {livenessStep === 3 && "Turn Head Right"}
                        </span>
                      </div>
                    </div>

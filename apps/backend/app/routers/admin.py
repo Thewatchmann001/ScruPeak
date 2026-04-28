@@ -24,7 +24,7 @@ from app.services.payout_service import PayoutService
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
+router = APIRouter(tags=["Admin"])
 
 
 @router.get(
@@ -483,6 +483,45 @@ async def approve_kyc_submission(
         "submission_id": str(submission_id),
         "status": "approved",
         "user_role": user.role if user else None
+    }
+
+
+@router.post(
+    "/kyc/submissions/{submission_id}/reject",
+    status_code=status.HTTP_200_OK,
+    summary="Reject KYC Submission"
+)
+async def reject_kyc_submission(
+    submission_id: UUID,
+    reason: Optional[str] = None,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Reject KYC submission and keep user unverified"""
+    result = await db.execute(
+        select(KycSubmission).where(KycSubmission.id == submission_id)
+    )
+    submission = result.scalars().first()
+
+    if not submission:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Submission not found"
+        )
+
+    submission.status = KycStatus.REJECTED
+    submission.reviewed_at = datetime.utcnow()
+    submission.reviewed_by = current_user.id
+    submission.rejection_reason = reason
+
+    await db.commit()
+
+    logger.info(f"KYC submission {submission_id} rejected by {current_user.id}")
+
+    return {
+        "submission_id": str(submission_id),
+        "status": "rejected",
+        "reason": reason
     }
 
 
