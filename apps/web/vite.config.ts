@@ -13,11 +13,21 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
+    headers: {
+      'Content-Security-Policy': "frame-ancestors 'self' https://auth.privy.io https://embedded.privy.io",
+      'X-Frame-Options': 'ALLOWALL',
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+    },
+  },
+  preview: {
+    headers: {
+      'Content-Security-Policy': "frame-ancestors 'self' https://auth.privy.io https://embedded.privy.io",
+      'X-Frame-Options': 'ALLOWALL',
     },
   },
 })

@@ -6,6 +6,17 @@ import { PrivyProvider } from '@privy-io/react-auth';
 
 const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID || 'cmmxpr19800000cl51l48f0yv';
 
+// Get the correct origin for embedded wallets
+const getPrivyAppOrigin = () => {
+  // For production GCP
+  if (window.location.hostname === 'web-prod-1090857402667.us-central1.run.app' || 
+      window.location.hostname.includes('run.app')) {
+    return window.location.origin;
+  }
+  // For local development
+  return window.location.origin;
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <PrivyProvider
@@ -19,6 +30,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         },
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
+        },
+        // Properly configure iframe settings
+        fundingMethodConfig: {
+          moonpay: {
+            useSandbox: false,
+          },
         },
       }}
     >
