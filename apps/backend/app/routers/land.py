@@ -69,15 +69,48 @@ async def list_lands(
     items = []
     for row in result.all():
         land_obj, name, role = row
-        # Transform role to user-friendly string
-        role_label = "Owner" if role == UserRole.OWNER else "Agent" if role == UserRole.AGENT else "Seller"
+        try:
+            role_label = "Owner" if role == UserRole.OWNER else "Agent" if role == UserRole.AGENT else "Seller"
 
-        # Merge land data with owner info
-        land_data = LandResponse.from_orm(land_obj)
-        land_dict = land_data.model_dump()
-        land_dict["owner_name"] = name
-        land_dict["owner_role"] = role_label
-        items.append(land_dict)
+            # Build payload defensively to avoid runtime serialization failures
+            # caused by unexpected values in production data.
+            items.append({
+                "id": land_obj.id,
+                "ulid": land_obj.ulid,
+                "parcel_id": land_obj.parcel_id,
+                "grid_id": land_obj.grid_id,
+                "owner_id": land_obj.owner_id,
+                "owner_name": name,
+                "owner_role": role_label,
+                "title": land_obj.title,
+                "description": land_obj.description,
+                "size_sqm": land_obj.size_sqm,
+                "price": land_obj.price,
+                "region": land_obj.region,
+                "district": land_obj.district,
+                "latitude": land_obj.latitude,
+                "longitude": land_obj.longitude,
+                "has_survey_plan": bool(land_obj.has_survey_plan),
+                "has_chief_letter": bool(land_obj.has_chief_letter),
+                "has_agreement": bool(land_obj.has_agreement),
+                "spousal_consent": bool(land_obj.spousal_consent),
+                "surveyor_id": land_obj.surveyor_id,
+                "status": land_obj.status,
+                "blockchain_verified": bool(land_obj.blockchain_verified),
+                "blockchain_hash": land_obj.blockchain_hash,
+                "trust_score": float(land_obj.trust_score or 0.0),
+                "trust_rating": land_obj.trust_rating,
+                "trust_factors": land_obj.trust_factors or {},
+                "created_at": land_obj.created_at,
+                "updated_at": land_obj.updated_at,
+                "approved_by": land_obj.approved_by,
+                "rejection_reason": land_obj.rejection_reason,
+                "approval_date": land_obj.approval_date
+            })
+        except Exception as e:
+            logger.exception(f"Failed to serialize land listing {getattr(land_obj, 'id', 'unknown')}: {e}")
+            # Skip malformed records rather than failing the whole endpoint.
+            continue
 
     return {
         "total": total_count,
