@@ -248,8 +248,40 @@ const RoleApplicationPage = () => {
     }
   };
 
+  const renderHowItWorks = () => (
+    <div className="max-w-5xl mx-auto mb-16">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-slate-900">How It Works</h2>
+        <p className="text-slate-500">Become a verified partner in three simple steps</p>
+      </div>
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="relative flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 font-bold text-lg">1</div>
+          <h3 className="font-bold text-slate-900 mb-2 text-lg">Choose Your Role</h3>
+          <p className="text-sm text-slate-600 leading-relaxed">Select <strong>Landowner</strong> if you sell your own land, or <strong>Agent</strong> if you are a professional representing clients.</p>
+          <div className="hidden md:block absolute top-12 -right-4 text-slate-300">
+            <ChevronRight size={24} />
+          </div>
+        </div>
+        <div className="relative flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 font-bold text-lg">2</div>
+          <h3 className="font-bold text-slate-900 mb-2 text-lg">Verify Identity</h3>
+          <p className="text-sm text-slate-600 leading-relaxed">Complete a quick KYC check with your ID and a liveness scan to ensure the security of all marketplace transactions.</p>
+          <div className="hidden md:block absolute top-12 -right-4 text-slate-300">
+            <ChevronRight size={24} />
+          </div>
+        </div>
+        <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 font-bold text-lg">3</div>
+          <h3 className="font-bold text-slate-900 mb-2 text-lg">Start Listing</h3>
+          <p className="text-sm text-slate-600 leading-relaxed">Once verified, you get full access to the dashboard to list properties, manage leads, and close secure escrow deals.</p>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderSelection = () => (
-    <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mt-8">
+    <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
       {/* Landowner Card */}
       <Card
         className="hover:border-primary transition-all cursor-pointer group flex flex-col border-2 shadow-sm"
@@ -938,7 +970,12 @@ const RoleApplicationPage = () => {
             )}
 
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {view === 'selection' && renderSelection()}
+                {view === 'selection' && (
+                  <>
+                    {renderHowItWorks()}
+                    {renderSelection()}
+                  </>
+                )}
                 {view === 'seller_confirmation' && renderSellerConfirmation()}
                 {view === 'agent_form' && renderAgentForm()}
             </div>

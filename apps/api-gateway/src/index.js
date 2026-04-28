@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 // CORS — allow web frontend
 app.use(cors({
   origin: [
-    'https://web-prod-kqr3pbuu3a-uc.a.run.app',
+    'https://web-prod-1090857402667.us-central1.run.app',
     'http://localhost:5173',
     'http://localhost:3000',
   ],
