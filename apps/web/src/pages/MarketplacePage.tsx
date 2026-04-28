@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { landService } from '@/services/landService';
 import { Land, PaginatedResponse } from '@/types';
 import { ZillowCard } from '@/components/landing/ZillowCard';
-import { MapPinOff, SearchX, Filter, Search, Map as MapIcon, List, Grid, ChevronDown } from 'lucide-react';
+import { MapPinOff, Filter, Search, Map as MapIcon, List, Grid, ChevronDown } from 'lucide-react';
 import { InteractiveMap } from '@/components/map/InteractiveMap';
 
 export default function MarketplacePage() {
   const [lands, setLands] = useState<Land[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -17,19 +17,20 @@ export default function MarketplacePage() {
   useEffect(() => {
     const fetchLands = async () => {
       setLoading(true);
-      setError(null);
       try {
         const response = await landService.search({
           q: searchQuery,
           page,
           page_size: 12
         });
-        const data = response.data as unknown as PaginatedResponse<Land>; 
-        setLands(data.items);
-        setTotalPages(data.total_pages);
+        const data = response.data as unknown as PaginatedResponse<Land>;
+        setLands(Array.isArray(data?.items) ? data.items : []);
+        setTotalPages(data?.total_pages || 1);
       } catch (err) {
         console.error('Failed to fetch lands:', err);
-        setError('Failed to load lands. Please try again.');
+        // Don't surface a hard error — just leave the list empty
+        setLands([]);
+        setTotalPages(1);
       } finally {
         setLoading(false);
       }
@@ -136,11 +137,6 @@ export default function MarketplacePage() {
                     <div key={i} className="h-[380px] bg-white border border-border rounded-xl animate-pulse" />
                   ))}
                 </div>
-              ) : error ? (
-                <div className="py-20 text-center">
-                  <SearchX className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-20" />
-                  <p className="text-text-secondary font-medium">Failed to load listings.</p>
-                </div>
               ) : (
                 <div className={`grid ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-6`}>
                   {lands.map((land) => (
@@ -150,9 +146,11 @@ export default function MarketplacePage() {
                   {lands.length === 0 && (
                     <div className="py-24 text-center col-span-full">
                       <MapPinOff className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
-                      <h3 className="text-xl font-bold text-text mb-2">No Properties Found</h3>
+                      <h3 className="text-xl font-bold text-text mb-2">No Listings at the Moment</h3>
                       <p className="text-text-secondary max-w-sm mx-auto">
-                        Try adjusting your search filters to find what you're looking for.
+                        {searchQuery
+                          ? 'No properties match your search. Try a different keyword or district.'
+                          : 'There are no properties listed yet. Check back soon.'}
                       </p>
                     </div>
                   )}
