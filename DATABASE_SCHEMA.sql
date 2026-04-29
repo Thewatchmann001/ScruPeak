@@ -78,6 +78,28 @@ CREATE TABLE agents (
     INDEX idx_platform_verified (platform_verified)
 );
 
+-- ==================== AGENT APPLICATIONS TABLE ====================
+CREATE TABLE agent_applications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id VARCHAR(100),
+    full_name VARCHAR(200) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(200) NOT NULL,
+    years_experience INT DEFAULT 0,
+    license_number VARCHAR(100),
+    operating_districts JSONB DEFAULT '[]'::jsonb,
+    bio TEXT,
+    id_document_type VARCHAR(50),
+    id_document_number VARCHAR(100),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    reviewed_by VARCHAR(200),
+    reviewed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    INDEX idx_agent_applications_user_id (user_id),
+    INDEX idx_agent_applications_status (status)
+);
+
 -- ==================== LAND TABLE ====================
 CREATE TABLE land (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
