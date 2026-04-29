@@ -66,8 +66,40 @@ app.use('/api/v1', proxy(services.core, {
 }));
 
 // Direct routes (frontend calls /land, /listings etc directly)
+app.use('/users', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/users' + req.url,
+}));
+
+app.use('/kyc', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/kyc' + req.url,
+}));
+
+app.use('/agents', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/agents' + req.url,
+}));
+
 app.use('/land', proxy(services.core, {
   proxyReqPathResolver: (req) => '/api/v1/land' + req.url,
+}));
+
+app.use('/registry', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/registry' + req.url,
+}));
+
+app.use('/tasks', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/tasks' + req.url,
+}));
+
+app.use('/chat', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/chat' + req.url,
+}));
+
+app.use('/payments', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/payments' + req.url,
+}));
+
+app.use('/documents', proxy(services.core, {
+  proxyReqPathResolver: (req) => '/api/v1/documents' + req.url,
 }));
 
 app.use('/api/spatial', proxy(services.spatial, {

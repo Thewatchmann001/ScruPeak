@@ -934,7 +934,12 @@ const RoleApplicationPage = () => {
                             disabled={loading || !agentForm.certify_accuracy}
                             className="bg-primary hover:bg-primary/90 px-12 py-7 text-xl font-bold shadow-xl"
                         >
-                            {loading ? 'Submitting Application...' : 'Apply for Agent Verification'}
+                            {loading ? (
+                                <div className="flex items-center gap-3">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+                                    <span>AI Audit in Progress...</span>
+                                </div>
+                            ) : 'Apply for Agent Verification'}
                         </Button>
                     </CardFooter>
                 </Card>

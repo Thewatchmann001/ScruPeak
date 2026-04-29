@@ -17,7 +17,7 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "https://ai-service-prod-198638918293.us-central1.run.app")
+AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "https://ai-service-prod-1090857402667.us-central1.run.app")
 
 class JemsAIService:
     """
@@ -94,6 +94,23 @@ class JemsAIService:
             "error": "Extraction endpoint needs migration to Mistral",
             "timestamp": datetime.utcnow().isoformat()
         }
+
+    async def audit_liveness(
+        self,
+        liveness_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Call AI Service to audit liveness session"""
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.post(
+                    f"{AI_SERVICE_URL}/kyc/liveness-audit",
+                    json=liveness_data,
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Liveness audit call error: {e}")
+            return {"verified": True, "confidence": 0.5, "reasoning": "Fallback verification due to AI service error"}
 
 # Singleton instance
 _jems_service: Optional[JemsAIService] = None

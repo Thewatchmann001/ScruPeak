@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
+import hashlib
 
 from app.core.database import get_db
 from app.models import User, KycSubmission, KycStatus
@@ -61,11 +62,6 @@ async def save_kyc_file(file: UploadFile, user_id: UUID, file_type: str) -> str:
 async def submit_kyc(
     id_document: UploadFile = File(...),
     proof_of_address: UploadFile = File(...),
-    # Consolidated liveness verification photos into one step for now, 
-    # but backend still supports receiving individual angles if client sends them.
-    # To support the new workflow (Liveness Check), we will accept individual frames 
-    # but we can also be flexible.
-    # For now, let's keep the backend flexible to accept these files.
     photo_straight: UploadFile = File(...),
     photo_left: UploadFile = File(...),
     photo_right: UploadFile = File(...),
@@ -74,10 +70,7 @@ async def submit_kyc(
 ):
     """
     Submit KYC documents for verification.
-    Uploads:
-    - Identity Document
-    - Proof of Address
-    - 3 Photos (Straight, Left, Right)
+    Includes active liveness validation via Jems AI.
     """
     
     # Check if user already has a pending or approved submission
@@ -94,14 +87,53 @@ async def submit_kyc(
         # For now, let's allow updating/overwriting the pending submission
         pass
 
-    # Save files
+    # 1. Read files and calculate hashes to prevent static image spoofing
+    contents_straight = await photo_straight.read()
+    contents_left = await photo_left.read()
+    contents_right = await photo_right.read()
+
+    hash_s = hashlib.md5(contents_straight).hexdigest()
+    hash_l = hashlib.md5(contents_left).hexdigest()
+    hash_r = hashlib.md5(contents_right).hexdigest()
+
+    if hash_s == hash_l or hash_s == hash_r or hash_l == hash_r:
+        raise HTTPException(
+            status_code=400,
+            detail="Liveness check failed: Duplicate frames detected. Please perform real head movements."
+        )
+
+    # Reset seek positions for saving
+    await photo_straight.seek(0)
+    await photo_left.seek(0)
+    await photo_right.seek(0)
+
+    # 2. Save files
     id_path = await save_kyc_file(id_document, current_user.id, "id_document")
     address_path = await save_kyc_file(proof_of_address, current_user.id, "proof_of_address")
     photo_straight_path = await save_kyc_file(photo_straight, current_user.id, "photo_straight")
     photo_left_path = await save_kyc_file(photo_left, current_user.id, "photo_left")
     photo_right_path = await save_kyc_file(photo_right, current_user.id, "photo_right")
     
-    # AI Extraction for Automated Verification
+    # 3. AI-Enhanced Liveness Audit
+    from app.services.jems_ai import get_jems_service
+    jems = get_jems_service()
+
+    liveness_audit = await jems.audit_liveness({
+        "user_id": str(current_user.id),
+        "capture_hashes": {"straight": hash_s, "left": hash_l, "right": hash_r},
+        "metadata": {
+            "content_types": [photo_straight.content_type, photo_left.content_type, photo_right.content_type],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    })
+
+    if not liveness_audit.get("verified", False):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Liveness verification rejected: {liveness_audit.get('reasoning', 'Anomalous behavior detected')}"
+        )
+
+    # 4. AI Extraction for Automated Verification
     from app.services.document_extractor import DocumentExtractor
     extraction_result = await DocumentExtractor.extract_details(id_path, "id_document")
 

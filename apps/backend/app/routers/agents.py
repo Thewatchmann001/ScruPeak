@@ -8,6 +8,7 @@ from uuid import UUID
 from datetime import datetime
 from typing import List
 import logging
+import hashlib
 
 from app.core.database import get_db
 from app.models import Agent, User, UserRole
@@ -84,6 +85,49 @@ async def register_agent(
             status_code=status.HTTP_409_CONFLICT,
             detail="User already registered as agent"
         )
+
+    # 1. Read files and calculate hashes to prevent static image spoofing (Liveness Check)
+    contents_straight = await photo_straight.read()
+    contents_left = await photo_left.read() if photo_left else b""
+    contents_right = await photo_right.read() if photo_right else b""
+
+    hash_s = hashlib.md5(contents_straight).hexdigest()
+    hash_l = hashlib.md5(contents_left).hexdigest() if contents_left else None
+    hash_r = hashlib.md5(contents_right).hexdigest() if contents_right else None
+
+    # Mandatory check for all 3 angles for Agent verification
+    if not hash_l or not hash_r:
+         raise HTTPException(status_code=400, detail="Agents must provide all 3 liveness angles (Straight, Left, Right)")
+
+    if hash_s == hash_l or hash_s == hash_r or hash_l == hash_r:
+        raise HTTPException(
+            status_code=400,
+            detail="Liveness check failed: Duplicate frames detected. Please perform real head movements."
+        )
+
+    # 2. AI-Enhanced Liveness Audit
+    from app.services.jems_ai import get_jems_service
+    jems = get_jems_service()
+
+    liveness_audit = await jems.audit_liveness({
+        "user_id": str(current_user.id),
+        "capture_hashes": {"straight": hash_s, "left": hash_l, "right": hash_r},
+        "metadata": {
+            "type": "agent_onboarding",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    })
+
+    if not liveness_audit.get("verified", False):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Liveness verification rejected: {liveness_audit.get('reasoning', 'Anomalous behavior detected')}"
+        )
+
+    # Reset seek positions for subsequent use if needed (though we currently use simulated URLs)
+    await photo_straight.seek(0)
+    if photo_left: await photo_left.seek(0)
+    if photo_right: await photo_right.seek(0)
     
     # In a real production app, we would upload these to Cloud Storage (GCS/S3)
     # For this implementation, we simulate the URLs

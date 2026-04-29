@@ -354,9 +354,19 @@ const KycPage = () => {
             </div>
 
             <div className="pt-4">
-              <Button type="submit" className="w-full md:w-auto" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit Verification Request'}
+              <Button type="submit" className="w-full md:w-auto py-6 px-10 text-lg font-bold" disabled={loading}>
+                {loading ? (
+                    <div className="flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                        <span>Processing Liveness Audit...</span>
+                    </div>
+                ) : 'Submit Verification Request'}
               </Button>
+              {loading && (
+                  <p className="text-xs text-slate-500 mt-2 italic">
+                      ScruPeak AI is analyzing your liveness patterns for security.
+                  </p>
+              )}
             </div>
           </form>
         </CardContent>
