@@ -144,23 +144,43 @@ const RoleApplicationPage = () => {
         videoRef.current.muted = true;
         videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
         
-        // Wait for video metadata to load
-        await new Promise<void>((resolve) => {
-          if (videoRef.current) {
-            if (videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
-              resolve();
-            } else {
-              const handleLoadedMetadata = () => {
-                videoRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
-                resolve();
-              };
-              videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
-            }
+        // Wait for video to be ready to play
+        await new Promise<void>((resolve, reject) => {
+          const video = videoRef.current;
+          if (!video) {
+            reject(new Error('Video element not found'));
+            return;
+          }
+
+          const handleCanPlay = () => {
+            video.removeEventListener('canplay', handleCanPlay);
+            video.removeEventListener('error', handleError);
+            resolve();
+          };
+
+          const handleError = (e: Event) => {
+            video.removeEventListener('canplay', handleCanPlay);
+            video.removeEventListener('error', handleError);
+            reject(new Error('Video failed to load'));
+          };
+
+          if (video.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+            resolve();
+          } else {
+            video.addEventListener('canplay', handleCanPlay);
+            video.addEventListener('error', handleError);
+            
+            // Fallback timeout
+            setTimeout(() => {
+              video.removeEventListener('canplay', handleCanPlay);
+              video.removeEventListener('error', handleError);
+              resolve(); // Proceed anyway
+            }, 3000);
           }
         });
         
+        await videoRef.current.play();
         setIsCameraActive(true);
         setLivenessStep(1);
       }
@@ -181,29 +201,60 @@ const RoleApplicationPage = () => {
   };
 
   const captureFrame = (step: 'photo_straight' | 'photo_left' | 'photo_right') => {
-    if (videoRef.current && videoRef.current.readyState === 4 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(videoRef.current, 0, 0);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            setAgentForm(prev => ({ ...prev, [step]: blob }));
-            if (step === 'photo_straight') setLivenessStep(2);
-            else if (step === 'photo_left') setLivenessStep(3);
-            else if (step === 'photo_right') {
-              setLivenessStep(0);
-              stopCamera();
-            }
-          }
-        }, 'image/jpeg', 0.9);
-      }
-    } else {
+    if (!videoRef.current || !isCameraActive) {
+      setError("Camera is not active. Please start the camera first.");
+      return;
+    }
+
+    const video = videoRef.current;
+    
+    // Check if video is ready
+    if (video.readyState < 2) { // HAVE_CURRENT_DATA
       setError("Video stream not ready. Please wait a moment and try again.");
+      return;
+    }
+
+    // Ensure we have valid dimensions
+    const width = video.videoWidth || video.offsetWidth || 640;
+    const height = video.videoHeight || video.offsetHeight || 480;
+
+    if (width <= 0 || height <= 0) {
+      setError("Unable to capture image. Video dimensions not available.");
+      return;
+    }
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        setError("Unable to create canvas context for image capture.");
+        return;
+      }
+
+      // Mirror the image back to normal (since video is mirrored in CSS)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setAgentForm(prev => ({ ...prev, [step]: blob }));
+          if (step === 'photo_straight') setLivenessStep(2);
+          else if (step === 'photo_left') setLivenessStep(3);
+          else if (step === 'photo_right') {
+            setLivenessStep(0);
+            stopCamera();
+          }
+        } else {
+          setError("Failed to capture image. Please try again.");
+        }
+      }, 'image/jpeg', 0.9);
+    } catch (err) {
+      console.error("Capture error:", err);
+      setError("Failed to capture image. Please try again.");
     }
   };
 
@@ -217,7 +268,7 @@ const RoleApplicationPage = () => {
     setLoading(true);
 
     try {
-      await api.post('/api/v1/users/upgrade/seller');
+      await api.post('/api/v1/users/upgrade/seller', {});
       setSuccess('Successfully upgraded to Seller (Owner) role! You can now list your land.');
       await checkAuth();
       setTimeout(() => {
@@ -719,10 +770,16 @@ const RoleApplicationPage = () => {
 
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative w-full max-w-xs aspect-square bg-slate-900 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto">
-                                    {isCameraActive ? (
-                                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                                    <video
+                                        ref={videoRef}
+                                        autoPlay
+                                        playsInline
+                                        muted
+                                        className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity duration-200 ${isCameraActive ? 'opacity-100' : 'opacity-0'}`}
+                                    />
+
+                                    {!isCameraActive && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
                                             {agentForm.photo_right ? (
                                                 <div className="text-green-600 flex flex-col items-center">
                                                     <CheckCircle2 size={48} />

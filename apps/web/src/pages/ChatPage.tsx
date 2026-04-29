@@ -44,7 +44,7 @@ export default function ChatPage() {
   }, [chatId]);
 
   useEffect(() => {
-    api.get(`/api/v1/chat/conversations/me`).then((res) => {
+    api.get<{ items: any[] }>(`/api/v1/chat/conversations/me`).then((res) => {
       setConversations(res.data?.items || []);
     }).catch(() => {});
   }, []);

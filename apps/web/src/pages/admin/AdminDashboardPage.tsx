@@ -45,7 +45,8 @@ export default function AdminDashboardPage() {
           users_count: 152,
           lands_count: 45,
           active_sessions: 12,
-          pending_kyc: 5
+          pending_kyc: 5,
+          pending_agents: 0
         });
       } catch (error) {
         console.error('Failed to fetch admin stats', error);

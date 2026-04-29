@@ -48,7 +48,7 @@ const KycPage = () => {
 
     const checkStatus = async () => {
       try {
-        const response = await api.get('/api/v1/kyc/status');
+        const response = await api.get<{ status: string }>('/api/v1/kyc/status');
         if (response.data) {
           setKycStatus(response.data.status);
         }
@@ -102,23 +102,43 @@ const KycPage = () => {
         videoRef.current.muted = true;
         videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
         
-        // Wait for video metadata to load
-        await new Promise<void>((resolve) => {
-          if (videoRef.current) {
-            if (videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
-              resolve();
-            } else {
-              const handleLoadedMetadata = () => {
-                videoRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
-                resolve();
-              };
-              videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
-            }
+        // Wait for video to be ready to play
+        await new Promise<void>((resolve, reject) => {
+          const video = videoRef.current;
+          if (!video) {
+            reject(new Error('Video element not found'));
+            return;
+          }
+
+          const handleCanPlay = () => {
+            video.removeEventListener('canplay', handleCanPlay);
+            video.removeEventListener('error', handleError);
+            resolve();
+          };
+
+          const handleError = (e: Event) => {
+            video.removeEventListener('canplay', handleCanPlay);
+            video.removeEventListener('error', handleError);
+            reject(new Error('Video failed to load'));
+          };
+
+          if (video.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+            resolve();
+          } else {
+            video.addEventListener('canplay', handleCanPlay);
+            video.addEventListener('error', handleError);
+            
+            // Fallback timeout
+            setTimeout(() => {
+              video.removeEventListener('canplay', handleCanPlay);
+              video.removeEventListener('error', handleError);
+              resolve(); // Proceed anyway
+            }, 3000);
           }
         });
         
+        await videoRef.current.play();
         setIsCameraActive(true);
         setLivenessStep(1);
       }
@@ -139,34 +159,62 @@ const KycPage = () => {
   };
 
   const captureFrame = (step: 'straight' | 'left' | 'right') => {
-    if (videoRef.current && videoRef.current.readyState === 4 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Mirror the image if it's mirrored in the preview
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(videoRef.current, 0, 0);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            setCapturedImages(prev => ({ ...prev, [step]: blob }));
+    if (!videoRef.current || !isCameraActive) {
+      setError("Camera is not active. Please start the camera first.");
+      return;
+    }
 
-            // Advance step
-            if (step === 'straight') setLivenessStep(2);
-            else if (step === 'left') setLivenessStep(3);
-            else if (step === 'right') {
-              setLivenessStep(0); // Done
-              stopCamera();
-            }
-          } else {
-            setError("Failed to capture image. Please try again.");
-          }
-        }, 'image/jpeg', 0.9);
-      }
-    } else {
+    const video = videoRef.current;
+    
+    // Check if video is ready
+    if (video.readyState < 2) { // HAVE_CURRENT_DATA
       setError("Video stream not ready. Please wait a moment and try again.");
+      return;
+    }
+
+    // Ensure we have valid dimensions
+    const width = video.videoWidth || video.offsetWidth || 640;
+    const height = video.videoHeight || video.offsetHeight || 480;
+
+    if (width <= 0 || height <= 0) {
+      setError("Unable to capture image. Video dimensions not available.");
+      return;
+    }
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        setError("Unable to create canvas context for image capture.");
+        return;
+      }
+
+      // Mirror the image back to normal (since video is mirrored in CSS)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setCapturedImages(prev => ({ ...prev, [step]: blob }));
+
+          // Advance step
+          if (step === 'straight') setLivenessStep(2);
+          else if (step === 'left') setLivenessStep(3);
+          else if (step === 'right') {
+            setLivenessStep(0); // Done
+            stopCamera();
+          }
+        } else {
+          setError("Failed to capture image. Please try again.");
+        }
+      }, 'image/jpeg', 0.9);
+    } catch (err) {
+      console.error("Capture error:", err);
+      setError("Failed to capture image. Please try again.");
     }
   };
 
@@ -325,34 +373,41 @@ const KycPage = () => {
               </p>
 
               <div className="border rounded-xl p-6 bg-gray-50 flex flex-col items-center gap-4">
-                {isCameraActive ? (
-                   <div className="relative w-full max-w-sm aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
-                     <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
-                     
-                     {/* Overlay Instructions */}
-                     <div className="absolute inset-x-0 bottom-4 text-center">
-                       <span className="inline-block px-4 py-2 bg-black/60 text-white rounded-full text-sm font-bold backdrop-blur-sm">
-                         {livenessStep === 1 && "Look Straight Ahead"}
-                         {livenessStep === 2 && "Turn Head Left"}
-                         {livenessStep === 3 && "Turn Head Right"}
-                       </span>
-                     </div>
-                   </div>
-                ) : (
-                   <div className="w-full max-w-sm aspect-video bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                     {capturedImages.straight && capturedImages.left && capturedImages.right ? (
-                       <div className="text-center text-green-600">
-                         <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
-                         <span className="font-medium">Verification Complete</span>
-                       </div>
-                     ) : (
-                       <div className="text-center text-gray-500">
-                         <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                         <span>Camera Inactive</span>
-                       </div>
-                     )}
-                   </div>
-                )}
+                <div className="relative w-full max-w-sm aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity duration-200 ${isCameraActive ? 'opacity-100' : 'opacity-0'}`}
+                  />
+
+                  {!isCameraActive && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-200/90 text-center p-4">
+                      {capturedImages.straight && capturedImages.left && capturedImages.right ? (
+                        <div className="text-center text-green-600">
+                          <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
+                          <span className="font-medium">Verification Complete</span>
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-500">
+                          <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <span>Camera Inactive</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isCameraActive && (
+                    <div className="absolute inset-x-0 bottom-4 text-center">
+                      <span className="inline-block px-4 py-2 bg-black/60 text-white rounded-full text-sm font-bold backdrop-blur-sm">
+                        {livenessStep === 1 && "Look Straight Ahead"}
+                        {livenessStep === 2 && "Turn Head Left"}
+                        {livenessStep === 3 && "Turn Head Right"}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex gap-4">
                   {!isCameraActive && (
