@@ -145,6 +145,22 @@ const RoleApplicationPage = () => {
         videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        
+        // Wait for video metadata to load
+        await new Promise<void>((resolve) => {
+          if (videoRef.current) {
+            if (videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+              resolve();
+            } else {
+              const handleLoadedMetadata = () => {
+                videoRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+                resolve();
+              };
+              videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+            }
+          }
+        });
+        
         setIsCameraActive(true);
         setLivenessStep(1);
       }
@@ -165,7 +181,7 @@ const RoleApplicationPage = () => {
   };
 
   const captureFrame = (step: 'photo_straight' | 'photo_left' | 'photo_right') => {
-    if (videoRef.current && videoRef.current.readyState === 4) {
+    if (videoRef.current && videoRef.current.readyState === 4 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
@@ -186,6 +202,8 @@ const RoleApplicationPage = () => {
           }
         }, 'image/jpeg', 0.9);
       }
+    } else {
+      setError("Video stream not ready. Please wait a moment and try again.");
     }
   };
 
