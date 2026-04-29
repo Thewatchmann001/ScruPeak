@@ -40,7 +40,7 @@ export default function AdminAgentsPage() {
 
   const fetchAgents = async () => {
     try {
-      const response = await api.get('/admin/agents/pending');
+      const response = await api.get<AgentApplication[]>('/admin/agents/pending');
       setAgents(response.data);
     } catch (error) {
       console.error('Failed to fetch pending agents', error);
@@ -52,7 +52,7 @@ export default function AdminAgentsPage() {
 
   const handleVerify = async (agentId: string) => {
     try {
-      await api.post(`/admin/agents/${agentId}/verify`);
+      await api.post(`/admin/agents/${agentId}/verify`, {});
       toast.success('Agent verified successfully');
       // Refresh list
       fetchAgents();

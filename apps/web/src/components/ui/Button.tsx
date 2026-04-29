@@ -13,11 +13,13 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         link: "text-primary underline-offset-4 hover:underline",
+        danger: "bg-red-600 text-white hover:bg-red-700",
       },
       size: {
         sm: "h-9 px-3",
         md: "h-10 px-4",
         lg: "h-12 px-6",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {
