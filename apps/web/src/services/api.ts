@@ -68,7 +68,21 @@ class ApiClient {
   delete<T>(url: string, config = {}) {
     return this.client.delete<T>(url, config);
   }
+
+  getErrorMessage(error: AxiosError<ApiError> | unknown) {
+    if (!error || typeof error !== 'object') {
+      return 'Unknown API error';
+    }
+
+    if (axios.isAxiosError(error)) {
+      const apiError = error.response?.data as ApiError | undefined;
+      return apiError?.message || error.message || 'Request failed';
+    }
+
+    return (error as Error).message || 'Unknown error occurred';
+  }
 }
 
 export const api = new ApiClient();
 export const setAuthToken = (token: string | null) => api.setAuthToken(token);
+export const getApiErrorMessage = (error: AxiosError<ApiError> | unknown) => api.getErrorMessage(error);
