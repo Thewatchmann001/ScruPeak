@@ -17,12 +17,14 @@ export function FeaturedListings() {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const response = await api.get<any>("/land?page_size=6");
+        const response = await api.get<any>("/land", {
+          params: { page_size: 6 }
+        });
         const items = response.data.items || [];
         setFeaturedProperties(items);
       } catch (err) {
         console.error("Failed to fetch listings:", err);
-        setError("Failed to load listings");
+        setError("Failed to load listings. Please refresh the page.");
       } finally {
         setLoading(false);
       }
@@ -54,7 +56,12 @@ export function FeaturedListings() {
           </Link>
         </div>
 
-        {featuredProperties.length === 0 ? (
+        {error ? (
+          <div className="bg-red-50 rounded-xl p-12 text-center border border-red-200">
+            <p className="text-red-700 font-semibold">{error}</p>
+            <p className="text-sm text-red-500 mt-2">Unable to load hot properties right now.</p>
+          </div>
+        ) : featuredProperties.length === 0 ? (
           <div className="bg-surface rounded-xl p-12 text-center border border-border">
             <p className="text-text-muted">No listings available at the moment.</p>
           </div>

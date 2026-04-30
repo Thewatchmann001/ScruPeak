@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { setAuthToken } from '@/services/api';
+import { api, setAuthToken } from '@/services/api';
 
 interface AuthContextType {
   user: any | null;
@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { ready, authenticated, user: privyUser, login, logout, getAccessToken } = usePrivy();
   const [backendUser, setBackendUser] = useState<any | null>(null);
   const [isBackendLoading, setIsBackendLoading] = useState(false);
+  const [authSyncing, setAuthSyncing] = useState(true);
 
   const getToken = async () => {
     try {
@@ -28,38 +29,61 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const checkAuth = async () => {
-      // Handled automatically by Privy
+    // Handled automatically by Privy
   };
 
   useEffect(() => {
-    if (authenticated) {
-      getAccessToken().then(async (token) => {
+    let cancelled = false;
+
+    const syncBackendUser = async () => {
+      if (!ready) return;
+      setIsBackendLoading(true);
+      setAuthSyncing(true);
+
+      if (!authenticated) {
+        setAuthToken(null);
+        setBackendUser(null);
+        setIsBackendLoading(false);
+        setAuthSyncing(false);
+        return;
+      }
+
+      try {
+        const token = await getAccessToken();
         setAuthToken(token);
-        setIsBackendLoading(true);
-        try {
-          const response = await fetch('/api/v1/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setBackendUser(data);
-          }
-        } catch (error) {
-          console.error("Failed to fetch backend user", error);
-        } finally {
-          setIsBackendLoading(false);
+
+        if (!token) {
+          throw new Error('Unable to obtain Privy token');
         }
-      });
-    } else {
-      setAuthToken(null);
-      setBackendUser(null);
-    }
-  }, [authenticated, getAccessToken]);
+
+        const response = await api.get('/api/v1/users/me');
+        if (!cancelled) {
+          setBackendUser(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to synchronize backend user', error);
+        if (!cancelled) {
+          setBackendUser(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsBackendLoading(false);
+          setAuthSyncing(false);
+        }
+      }
+    };
+
+    syncBackendUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, authenticated, getAccessToken]);
 
   return (
     <AuthContext.Provider value={{
       user: backendUser || (authenticated ? privyUser : null),
-      isLoading: !ready || isBackendLoading,
+      isLoading: !ready || isBackendLoading || authSyncing,
       isAuthenticated: authenticated,
       login,
       logout,

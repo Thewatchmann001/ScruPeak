@@ -15,14 +15,9 @@ export const landService = {
     page?: number;
     page_size?: number;
   }) => {
-    const queryParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, value.toString());
-      }
+    return api.get<PaginatedResponse<Land>>('/api/v1/land', {
+      params,
     });
-    
-    return api.get<PaginatedResponse<Land>>(`/api/v1/land?${queryParams.toString()}`);
   },
 
   getTaskStatus: async (taskId: string) => {

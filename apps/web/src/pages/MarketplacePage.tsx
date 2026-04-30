@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { landService } from '@/services/landService';
+import { getApiErrorMessage } from '@/services/api';
+import { useToast } from '@/context/ToastProvider';
 import { Land, PaginatedResponse } from '@/types';
 import { ZillowCard } from '@/components/landing/ZillowCard';
 import { MapPinOff, Filter, Search, Map as MapIcon, List, Grid, ChevronDown } from 'lucide-react';
@@ -13,10 +15,13 @@ export default function MarketplacePage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'map' | 'list'>('grid');
+  const [apiError, setApiError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchLands = async () => {
       setLoading(true);
+      setApiError(null);
       try {
         const response = await landService.search({
           q: searchQuery,
@@ -27,8 +32,10 @@ export default function MarketplacePage() {
         setLands(Array.isArray(data?.items) ? data.items : []);
         setTotalPages(data?.total_pages || 1);
       } catch (err) {
-        console.error('Failed to fetch lands:', err);
-        // Don't surface a hard error — just leave the list empty
+        const message = getApiErrorMessage(err);
+        console.error('Failed to fetch lands:', message, err);
+        setApiError(message);
+        showToast(`Unable to load properties: ${message}`, 'error');
         setLands([]);
         setTotalPages(1);
       } finally {
@@ -136,6 +143,18 @@ export default function MarketplacePage() {
                   {[1, 2, 3, 4, 5, 6].map(i => (
                     <div key={i} className="h-[380px] bg-white border border-border rounded-xl animate-pulse" />
                   ))}
+                </div>
+              ) : apiError ? (
+                <div className="py-24 text-center col-span-full bg-red-50 border border-red-200 rounded-3xl p-10">
+                  <MapPinOff className="w-16 h-16 text-red-500 mx-auto mb-4 opacity-80" />
+                  <h3 className="text-xl font-bold text-red-700 mb-2">Unable to load listings</h3>
+                  <p className="text-red-600 max-w-md mx-auto mb-4">{apiError}</p>
+                  <button
+                    onClick={() => setPage(1)}
+                    className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark transition-standard"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : (
                 <div className={`grid ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-6`}>
