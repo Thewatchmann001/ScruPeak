@@ -1,8 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastProvider';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import PremiumHero from '@/components/landing/PremiumHero';
 import { FeaturedListings } from '@/components/landing/FeaturedListings';
 import { PremiumCTA } from '@/components/landing/PremiumCTA';
@@ -56,17 +57,18 @@ function App() {
         <div className="flex flex-col min-h-screen">
           <Navbar />
           <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/marketplace" element={<MarketplacePage />} />
-              <Route path="/land/:id" element={<LandDetailPage />} />
-              <Route path="/map" element={<MapPage />} />
-              <Route path="/insights" element={<MarketInsightsDashboard />} />
-              <Route path="/sell" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><SellerDashboard /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><DashboardPage /></ProtectedRoute>} />
-              <Route path="/apply-role" element={<RoleApplicationPage />} />
-              <Route path="/kyc" element={<KycPage />} />
-              <Route path="/chat" element={<ChatPage />} />
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/marketplace" element={<MarketplacePage />} />
+                <Route path="/land/:id" element={<LandDetailPage />} />
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/insights" element={<MarketInsightsDashboard />} />
+                <Route path="/sell" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><SellerDashboard /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><DashboardPage /></ProtectedRoute>} />
+                <Route path="/apply-role" element={<RoleApplicationPage />} />
+                <Route path="/kyc" element={<KycPage />} />
+                <Route path="/chat" element={<ChatPage />} />
               
               {/* Feature Pages */}
               <Route path="/escrow" element={<EscrowPage />} />
@@ -121,6 +123,7 @@ function App() {
               <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
               <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
             </Routes>
+            </ErrorBoundary>
           </main>
           <Footer />
         </div>

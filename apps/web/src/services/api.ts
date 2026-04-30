@@ -15,6 +15,13 @@ class ApiClient {
       },
     });
 
+    this.client.interceptors.request.use((config) => {
+      if (!config.headers?.Authorization && config.url?.startsWith('/api/v1')) {
+        console.warn(`[API] Sending authenticated request without Authorization header: ${config.url}`);
+      }
+      return config;
+    });
+
     // Response interceptor to handle errors
     this.client.interceptors.response.use(
       (response) => response,
@@ -26,7 +33,6 @@ class ApiClient {
           originalRequest._retry = true;
           // In Privy, session management is automated.
           // If we get a 401, we should potentially trigger a re-login or redirect.
-          // For now, we'll just redirect to login if we can't refresh.
           window.location.href = "/auth/login";
         }
         return Promise.reject(error);
@@ -66,4 +72,3 @@ class ApiClient {
 
 export const api = new ApiClient();
 export const setAuthToken = (token: string | null) => api.setAuthToken(token);
-// Sat Apr 18 03:31:40 PM UTC 2026
