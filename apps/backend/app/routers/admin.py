@@ -202,6 +202,86 @@ async def verify_agent(
     }
 
 
+@router.post(
+    "/landowners/{user_id}/verify",
+    status_code=status.HTTP_200_OK,
+    summary="Verify landowner"
+)
+async def verify_landowner(
+    user_id: UUID,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Verify landowner account - grants access to dashboard"""
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update user role to OWNER (landowner) and mark KYC as verified
+    user.role = UserRole.OWNER
+    user.kyc_verified = True
+    user.kyc_verified_at = datetime.utcnow()
+    
+    await db.commit()
+    
+    logger.info(f"Landowner verified: {user_id}")
+    
+    return {
+        "user_id": str(user_id),
+        "role": UserRole.OWNER,
+        "kyc_verified": True,
+        "message": "Landowner verified and can now access dashboard"
+    }
+
+
+@router.post(
+    "/agents/{agent_id}/reject",
+    status_code=status.HTTP_200_OK,
+    summary="Reject agent application"
+)
+async def reject_agent(
+    agent_id: UUID,
+    reason: Optional[str] = None,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Reject agent application"""
+    result = await db.execute(
+        select(Agent).where(Agent.id == agent_id)
+    )
+    agent = result.scalars().first()
+    
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agent not found"
+        )
+    
+    # Update user to remove pending application
+    result_user = await db.execute(select(User).where(User.id == agent.user_id))
+    user = result_user.scalars().first()
+    if user:
+        user.has_pending_agent_application = False
+    
+    await db.commit()
+    
+    logger.info(f"Agent rejected: {agent_id}. Reason: {reason}")
+    
+    return {
+        "agent_id": str(agent_id),
+        "status": "rejected",
+        "reason": reason,
+        "message": "Agent application rejected"
+    }
+
+
 @router.get(
     "/audit-logs",
     summary="Get audit logs"

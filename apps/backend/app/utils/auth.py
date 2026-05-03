@@ -115,19 +115,23 @@ async def get_current_user(
         # Just-In-Time Provisioning for ScruPeak users
         try:
             name = payload.get("name") or email.split('@')[0] if email else "New ScruPeak User"
+            
+            # Check if this is the admin email
+            admin_role = UserRole.ADMIN if email == "josephemsamah@gmail.com" else UserRole.BUYER
 
             user = User(
                 id=uuid_pkg.uuid4(),
                 email=email or f"{user_id}@scrupeak-user.com",
                 name=name,
-                role=UserRole.BUYER,
+                role=admin_role,
                 is_active=True,
-                email_verified=True
+                email_verified=True,
+                kyc_verified=True if admin_role == UserRole.ADMIN else False  # Auto-verify admin
             )
             db.add(user)
             await db.commit()
             await db.refresh(user)
-            logger.info(f"Provisioned new user: {email}")
+            logger.info(f"Provisioned new user: {email} (role: {admin_role})")
         except Exception as e:
             await db.rollback()
             logger.error(f"User provisioning failed: {e}")

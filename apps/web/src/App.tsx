@@ -86,34 +86,46 @@ function App() {
               <Route path="/licenses" element={<LicensesPage />} />
 
               <Route path="/admin" element={
-                <AdminLayout>
-                  <AdminDashboardPage />
-                </AdminLayout>
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <AdminDashboardPage />
+                  </AdminLayout>
+                </ProtectedRoute>
               } />
               <Route path="/admin/agents" element={
-                <AdminLayout>
-                  <AdminAgentsPage />
-                </AdminLayout>
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <AdminAgentsPage />
+                  </AdminLayout>
+                </ProtectedRoute>
               } />
               <Route path="/admin/users" element={
-                <AdminLayout>
-                  <AdminUsersPage />
-                </AdminLayout>
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <AdminUsersPage />
+                  </AdminLayout>
+                </ProtectedRoute>
               } />
               <Route path="/admin/lands" element={
-                <AdminLayout>
-                  <AdminLandPage />
-                </AdminLayout>
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <AdminLandPage />
+                  </AdminLayout>
+                </ProtectedRoute>
               } />
               <Route path="/admin/kyc" element={
-                <AdminLayout>
-                  <AdminKycPage />
-                </AdminLayout>
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <AdminKycPage />
+                  </AdminLayout>
+                </ProtectedRoute>
               } />
               <Route path="/admin/tax" element={
-                <AdminLayout>
-                  <AdminTaxPage />
-                </AdminLayout>
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <AdminTaxPage />
+                  </AdminLayout>
+                </ProtectedRoute>
               } />
 
               {/* Auth Routes */}

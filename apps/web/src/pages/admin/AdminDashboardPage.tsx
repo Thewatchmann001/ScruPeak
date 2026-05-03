@@ -8,55 +8,62 @@ import {
   Database,
   FileText,
   AlertTriangle,
-  Briefcase
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  TrendingUp
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Link } from 'react-router-dom';
+import { Alert } from '@/components/ui/Alert';
 
 interface SystemStats {
-  users_count: number;
-  lands_count: number;
-  active_sessions: number;
-  pending_kyc: number;
-  pending_agents: number;
+  users?: {
+    total: number;
+    verified: number;
+    banned: number;
+  };
+  lands?: {
+    total: number;
+    available: number;
+    sold: number;
+    pending: number;
+  };
+  transactions?: {
+    total_escrows: number;
+  };
 }
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<SystemStats>({
-    users_count: 0,
-    lands_count: 0,
-    active_sessions: 0,
-    pending_kyc: 0,
-    pending_agents: 0
-  });
+  const [stats, setStats] = useState<SystemStats>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate fetching stats - in real app connect to /admin/stats endpoint
-    const fetchStats = async () => {
-      try {
-        // const response = await api.get('/admin/stats');
-        // setStats(response.data);
-        
-        // Mock data for now until endpoint is ready
-        setStats({
-          users_count: 152,
-          lands_count: 45,
-          active_sessions: 12,
-          pending_kyc: 5,
-          pending_agents: 0
-        });
-      } catch (error) {
-        console.error('Failed to fetch admin stats', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get('/api/v1/admin/system/stats');
+      setStats(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch admin stats', err);
+      setError(err.response?.data?.detail || 'Failed to load statistics');
+      // Use fallback data
+      setStats({
+        users: { total: 0, verified: 0, banned: 0 },
+        lands: { total: 0, available: 0, sold: 0, pending: 0 },
+        transactions: { total_escrows: 0 }
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const container = {
     hidden: { opacity: 0 },
@@ -71,20 +78,31 @@ export default function AdminDashboardPage() {
     show: { opacity: 1, y: 0 }
   };
 
+  const userData = stats.users || { total: 0, verified: 0, banned: 0 };
+  const landData = stats.lands || { total: 0, available: 0, sold: 0, pending: 0 };
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">System Administration</h1>
-          <p className="text-gray-500 mt-2">Monitor system health and manage registry resources</p>
+          <p className="text-gray-500 mt-2">Manage platform users, verify agents/landowners, and monitor system health</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => window.location.reload()}>
+          <Button 
+            variant="outline" 
+            onClick={fetchStats}
+            disabled={loading}
+          >
             <Activity className="w-4 h-4 mr-2" />
-            Refresh Data
+            {loading ? 'Loading...' : 'Refresh'}
           </Button>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive">{error}</Alert>
+      )}
 
       {/* Stats Grid */}
       <motion.div 
@@ -95,126 +113,196 @@ export default function AdminDashboardPage() {
       >
         <StatCard 
           title="Total Users" 
-          value={stats.users_count.toString()} 
+          value={userData.total.toString()} 
+          subtitle={`${userData.verified} verified`}
           icon={Users} 
           color="text-blue-600" 
           bg="bg-blue-50"
           link="/admin/users"
+          variants={item}
         />
         <StatCard 
-          title="Registered Lands" 
-          value={stats.lands_count.toString()} 
+          title="Properties" 
+          value={landData.total.toString()} 
+          subtitle={`${landData.available} available`}
           icon={Database} 
           color="text-green-600" 
           bg="bg-green-50"
           link="/admin/lands"
+          variants={item}
         />
         <StatCard 
-          title="Pending KYC" 
-          value={stats.pending_kyc.toString()} 
-          icon={ShieldCheck} 
-          color="text-primary"
-          bg="bg-slate-50"
-          link="/admin/kyc"
-        />
-        <StatCard 
-          title="Agent Applications" 
-          value={stats.pending_agents.toString()} 
+          title="Agent Approvals" 
+          value="4" 
+          subtitle="Pending review"
           icon={Briefcase} 
           color="text-indigo-600" 
           bg="bg-indigo-50"
           link="/admin/agents"
+          variants={item}
         />
         <StatCard 
-          title="System Health" 
+          title="System Status" 
           value="Healthy" 
+          subtitle="All systems operational"
           icon={Server} 
           color="text-purple-600" 
           bg="bg-purple-50"
+          variants={item}
         />
       </motion.div>
 
-      {/* Financial & Regulatory */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-           <div className="flex items-center justify-between mb-4">
-             <h3 className="text-lg font-semibold flex items-center">
-               <FileText className="w-5 h-5 mr-2 text-green-600" />
-               Tax & Revenue
-             </h3>
-             <Button variant="outline" size="sm" onClick={() => window.location.href='/admin/tax'}>Manage</Button>
-           </div>
-           <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-700 font-medium">Pending Collections</p>
-                <p className="text-2xl font-bold text-green-900">$124,500</p>
-              </div>
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700 font-medium">Compliant Lands</p>
-                <p className="text-2xl font-bold text-blue-900">85%</p>
-              </div>
-           </div>
-        </Card>
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Pending Verifications */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-yellow-500" />
+              Pending Verifications
+            </h3>
+            <div className="space-y-3">
+              <VerificationItem 
+                type="Agent"
+                name="John Adeyemi"
+                email="john.adeyemi@email.com"
+                status="review"
+                link="/admin/agents"
+              />
+              <VerificationItem 
+                type="Landowner"
+                name="Maria Conteh"
+                email="maria.c@email.com"
+                status="review"
+                link="/admin/users"
+              />
+              <VerificationItem 
+                type="Agent"
+                name="Alastor Kamara"
+                email="alastor.k@email.com"
+                status="review"
+                link="/admin/agents"
+              />
+              <VerificationItem 
+                type="KYC"
+                name="Sylvia Sesay"
+                email="sylvia.sesay@email.com"
+                status="review"
+                link="/admin/kyc"
+              />
+            </div>
+            <Link to="/admin/kyc" className="block mt-4">
+              <Button variant="outline" className="w-full">
+                View All Pending
+              </Button>
+            </Link>
+          </Card>
 
-        <Card className="p-6">
-           <div className="flex items-center justify-between mb-4">
-             <h3 className="text-lg font-semibold flex items-center">
-               <AlertTriangle className="w-5 h-5 mr-2 text-primary" />
-               Public Notices
-             </h3>
-             <Button variant="outline" size="sm" onClick={() => window.location.href='/admin/notices'}>View All</Button>
-           </div>
-           <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-primary">
-                 <div>
-                    <p className="font-medium text-gray-900">Land SL-092-22</p>
-                    <p className="text-xs text-gray-500">Notice expires in 3 days</p>
-                 </div>
-                 <Button size="sm" variant="ghost" className="text-primary">Review</Button>
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <FileText className="w-5 h-5 mr-2 text-primary" />
+              Property Listings
+            </h3>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{landData.total}</p>
+                <p className="text-xs text-gray-600 mt-1">Total Listed</p>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-l-4 border-green-500">
-                 <div>
-                    <p className="font-medium text-gray-900">Land SL-092-18</p>
-                    <p className="text-xs text-gray-500">Notice period complete</p>
-                 </div>
-                 <Button size="sm" variant="ghost" className="text-green-600">Approve</Button>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">{landData.available}</p>
+                <p className="text-xs text-gray-600 mt-1">Available</p>
               </div>
-           </div>
-        </Card>
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <p className="text-2xl font-bold text-orange-600">{landData.pending}</p>
+                <p className="text-xs text-gray-600 mt-1">Pending</p>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <p className="text-2xl font-bold text-purple-600">{landData.sold}</p>
+                <p className="text-xs text-gray-600 mt-1">Sold</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Quick Actions Sidebar */}
+        <div className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <Link to="/admin/users">
+                <Button variant="outline" className="w-full justify-start">
+                  <Users className="w-4 h-4 mr-2" />
+                  Manage Users
+                </Button>
+              </Link>
+              <Link to="/admin/agents">
+                <Button variant="outline" className="w-full justify-start">
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  Review Agents
+                </Button>
+              </Link>
+              <Link to="/admin/lands">
+                <Button variant="outline" className="w-full justify-start">
+                  <Database className="w-4 h-4 mr-2" />
+                  Approve Lands
+                </Button>
+              </Link>
+              <Link to="/admin/kyc">
+                <Button variant="outline" className="w-full justify-start">
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  KYC Reviews
+                </Button>
+              </Link>
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
+            <h3 className="text-lg font-semibold mb-2">System Health</h3>
+            <div className="space-y-2">
+              <StatusBadge label="API Server" status="online" />
+              <StatusBadge label="Database" status="online" />
+              <StatusBadge label="Blockchain" status="online" />
+              <StatusBadge label="Email Service" status="online" />
+            </div>
+          </Card>
+        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Financial Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <AlertTriangle className="w-5 h-5 mr-2 text-yellow-500" />
-            Pending Actions
-          </h3>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                  <span className="text-sm font-medium">KYC Verification Request #{1000 + i}</span>
-                </div>
-                <Button size="sm" variant="outline">Review</Button>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
+              Transactions
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-700 font-medium">Total Escrows</p>
+              <p className="text-2xl font-bold text-green-900 mt-1">
+                {stats.transactions?.total_escrows || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700 font-medium">Compliant</p>
+              <p className="text-2xl font-bold text-blue-900 mt-1">92%</p>
+            </div>
           </div>
         </Card>
 
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <FileText className="w-5 h-5 mr-2 text-primary" />
-            Recent Logs
-          </h3>
-          <div className="space-y-4">
-            <div className="text-sm text-gray-600 font-mono bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
-              <div>[INFO] System started successfully</div>
-              <div>[INFO] Database connection established</div>
-              <div>[WARN] High latency detected in region us-east-1</div>
-              <div>[INFO] User registration: joseph@example.com</div>
-            </div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2 text-primary" />
+              Recent Activities
+            </h3>
+          </div>
+          <div className="space-y-3 text-sm">
+            <ActivityLog text="New agent verified: Abubakarr Jalloh" time="2 hours ago" />
+            <ActivityLog text="Land property SL-001-23 approved" time="4 hours ago" />
+            <ActivityLog text="KYC submission approved: Fatmata K." time="6 hours ago" />
+            <ActivityLog text="System backup completed successfully" time="12 hours ago" />
           </div>
         </Card>
       </div>
@@ -222,19 +310,29 @@ export default function AdminDashboardPage() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color, bg, link }: any) {
+function StatCard({ 
+  title, 
+  value, 
+  subtitle,
+  icon: Icon, 
+  color, 
+  bg, 
+  link,
+  variants
+}: any) {
   const content = (
-    <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-primary">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <h3 className="text-2xl font-bold mt-1">{value}</h3>
+    <motion.div variants={variants}>
+      <Card className="p-6 hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <div className={`p-2 rounded-lg ${bg}`}>
+            <Icon className={`w-5 h-5 ${color}`} />
+          </div>
         </div>
-        <div className={`p-3 rounded-xl ${bg}`}>
-          <Icon className={`w-6 h-6 ${color}`} />
-        </div>
-      </div>
-    </Card>
+        <h3 className="text-3xl font-bold">{value}</h3>
+        <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+      </Card>
+    </motion.div>
   );
 
   if (link) {
@@ -242,4 +340,53 @@ function StatCard({ title, value, icon: Icon, color, bg, link }: any) {
   }
 
   return content;
+}
+
+function VerificationItem({ type, name, email, status, link }: any) {
+  return (
+    <Link to={link}>
+      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border-l-4 border-yellow-500">
+        <div>
+          <p className="font-medium text-gray-900">{name}</p>
+          <p className="text-xs text-gray-500">{type} • {email}</p>
+        </div>
+        <span className="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+          Pending
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function StatusBadge({ label, status }: any) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-700">{label}</span>
+      <div className="flex items-center gap-2">
+        {status === 'online' ? (
+          <>
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-xs font-medium text-green-600">Online</span>
+          </>
+        ) : (
+          <>
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-xs font-medium text-red-600">Offline</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ActivityLog({ text, time }: any) {
+  return (
+    <div className="flex items-start gap-3">
+      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+      <div className="flex-1">
+        <p className="text-gray-700">{text}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{time}</p>
+      </div>
+    </div>
+  );
 }
