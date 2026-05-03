@@ -32,10 +32,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Handled automatically by Privy
   };
 
-  useEffect(() => {
+    useEffect(() => {
     let cancelled = false;
 
-    const syncBackendUser = async () => {
+    const syncBackendUser = async (retries = 3) => {
       if (!ready) return;
       setIsBackendLoading(true);
       setAuthSyncing(true);
@@ -56,19 +56,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           throw new Error('Unable to obtain Privy token');
         }
 
+        // Add a small delay to ensure backend has processed the login if it was just created
         const response = await api.get('/api/v1/users/me');
         if (!cancelled) {
           setBackendUser(response.data);
+          console.log("Backend user synchronized:", response.data.email, "Role:", response.data.role);
         }
       } catch (error) {
-        console.error('Failed to synchronize backend user', error);
+        console.error(`Failed to synchronize backend user (Retries left: ${retries})`, error);
+        if (retries > 0 && !cancelled) {
+          setTimeout(() => syncBackendUser(retries - 1), 2000);
+          return;
+        }
         if (!cancelled) {
           setBackendUser(null);
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && retries === 0) {
           setIsBackendLoading(false);
           setAuthSyncing(false);
+        } else if (!cancelled && retries === 3) {
+           // Initial success
+           setIsBackendLoading(false);
+           setAuthSyncing(false);
         }
       }
     };
@@ -79,6 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       cancelled = true;
     };
   }, [ready, authenticated, getAccessToken]);
+
 
   return (
     <AuthContext.Provider value={{

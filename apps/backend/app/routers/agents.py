@@ -185,9 +185,10 @@ async def submit_application(
 @router.get("/applications", response_model=List[AgentApplicationResponse])
 async def list_applications(
     status: str = None,
+    current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
-    """List all applications — admin only (enforced on frontend)"""
+    """List all applications — admin only"""
     query = select(AgentApplication)
     if status:
         query = query.where(AgentApplication.status == status)
@@ -198,6 +199,7 @@ async def list_applications(
 @router.put("/applications/{application_id}/approve")
 async def approve_application(
     application_id: UUID,
+    current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Approve agent application"""
@@ -209,8 +211,9 @@ async def approve_application(
         raise HTTPException(status_code=404, detail="Application not found")
 
     application.status = ApplicationStatus.APPROVED
-    application.reviewed_by = "josephemsamah@gmail.com"
+    application.reviewed_by = current_user.email
     application.reviewed_at = datetime.utcnow()
+
 
     # Update user role to AGENT
     user_result = await db.execute(
@@ -228,6 +231,7 @@ async def approve_application(
 @router.put("/applications/{application_id}/reject")
 async def reject_application(
     application_id: UUID,
+    current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Reject agent application"""
@@ -239,18 +243,22 @@ async def reject_application(
         raise HTTPException(status_code=404, detail="Application not found")
 
     application.status = ApplicationStatus.REJECTED
-    application.reviewed_by = "josephemsamah@gmail.com"
+    application.reviewed_by = current_user.email
     application.reviewed_at = datetime.utcnow()
     await db.commit()
     return {"message": "Application rejected", "id": str(application_id)}
 
 @router.get("/applications/stats")
-async def application_stats(db: AsyncSession = Depends(get_db)):
+async def application_stats(
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
     """Get application counts by status"""
     result = await db.execute(
         select(AgentApplication.status, func.count(AgentApplication.id))
         .group_by(AgentApplication.status)
     )
+
     stats = {row[0]: row[1] for row in result.all()}
     return {
         "pending": stats.get(ApplicationStatus.PENDING, 0),

