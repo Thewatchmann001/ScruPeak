@@ -62,11 +62,11 @@ export default function Navbar() {
                  <NavLink to="/apply-role">Be a Seller / Agent</NavLink>
                )
             )}
-             {isAuthenticated && (user?.role === 'agent' || user?.role === 'owner') && (
-               <NavLink to="/sell">Dashboard</NavLink>
+             {isAuthenticated && (user?.role === 'agent' || user?.role === 'owner') && user?.kyc_verified && (
+               <NavLink to="/dashboard">Dashboard</NavLink>
             )}
-            {isAuthenticated && user?.email === 'josephemsamah@gmail.com' && (
-               <NavLink to="/admin">Admin</NavLink>
+            {isAuthenticated && user?.role === 'admin' && (
+               <NavLink to="/admin">Admin Panel</NavLink>
             )}
           </div>
 
@@ -156,8 +156,8 @@ export default function Navbar() {
           {isAuthenticated && user?.role === 'buyer' && (
              <MobileNavLink to="/apply-role" onClick={() => setIsMenuOpen(false)}>Be a Seller / Agent</MobileNavLink>
           )}
-           {isAuthenticated && (user?.role === 'owner' || user?.role === 'agent') && (
-             <MobileNavLink to="/sell" onClick={() => setIsMenuOpen(false)}>Seller Dashboard</MobileNavLink>
+           {isAuthenticated && (user?.role === 'owner' || user?.role === 'agent') && user?.kyc_verified && (
+             <MobileNavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</MobileNavLink>
           )}
           {isAuthenticated && user?.role === 'admin' && (
              <MobileNavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin Panel</MobileNavLink>
