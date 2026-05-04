@@ -70,7 +70,27 @@ async def list_lands(
     for row in result.all():
         land_obj, name, role = row
         try:
-            role_label = "Owner" if role == UserRole.OWNER else "Agent" if role == UserRole.AGENT else "Seller"
+            # Map role to display label
+            role_labels = {
+                UserRole.OWNER: "Owner",
+                UserRole.AGENT: "Agent",
+                UserRole.SELLER: "Seller",
+                UserRole.ADMIN: "Admin",
+                UserRole.GOVERNMENT_OFFICIAL: "Government Official",
+                UserRole.SURVEYOR: "Licensed Surveyor",
+                UserRole.LAWYER: "Lawyer",
+                UserRole.NOTARY: "Notary",
+                UserRole.APPRAISER: "Appraiser",
+                UserRole.TITLE_COMPANY: "Title Company",
+                UserRole.MEDIATOR: "Mediator",
+                UserRole.ARBITRATOR: "Arbitrator",
+                UserRole.AUDITOR: "Auditor",
+                UserRole.COMPLIANCE_OFFICER: "Compliance Officer",
+                UserRole.INSURANCE_AGENT: "Insurance Agent",
+                UserRole.LENDER: "Lender",
+                UserRole.ACCOUNTANT: "Accountant"
+            }
+            role_label = role_labels.get(role, "Seller")
 
             # Build payload defensively to avoid runtime serialization failures
             # caused by unexpected values in production data.
