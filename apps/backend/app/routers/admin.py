@@ -118,6 +118,48 @@ async def list_pending_agents(
 
 
 
+@router.get(
+    "/landowners/pending",
+    response_model=List[UserResponse],
+    summary="List pending landowner applications"
+)
+async def list_pending_landowners(
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """List users who have applied to become landowners."""
+    result = await db.execute(
+        select(User).where(User.has_pending_landowner_application == True)
+    )
+    return result.scalars().all()
+
+
+@router.post(
+    "/landowners/{user_id}/reject",
+    status_code=status.HTTP_200_OK,
+    summary="Reject landowner application"
+)
+async def reject_landowner(
+    user_id: UUID,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Reject a landowner application and clear pending status."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    user.has_pending_landowner_application = False
+    await db.commit()
+    return {
+        "user_id": str(user_id),
+        "message": "Landowner application rejected"
+    }
+
+
 @router.post(
     "/users/{user_id}/kyc/approve",
     status_code=status.HTTP_200_OK,
@@ -228,6 +270,7 @@ async def verify_landowner(
     user.role = UserRole.OWNER
     user.kyc_verified = True
     user.kyc_verified_at = datetime.utcnow()
+    user.has_pending_landowner_application = False
     
     await db.commit()
     

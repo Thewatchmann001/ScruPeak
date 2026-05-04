@@ -268,18 +268,18 @@ const RoleApplicationPage = () => {
     setLoading(true);
 
     try {
-      await api.post('/api/v1/users/upgrade/seller', {});
-      setSuccess('Successfully upgraded to Seller (Owner) role! You can now list your land.');
+      await api.post('/api/v1/users/apply/seller', {});
+      setSuccess('Your landowner application has been submitted for admin review.');
       await checkAuth();
       setTimeout(() => {
         navigate('/sell');
       }, 2000);
     } catch (err: any) {
       console.error(err);
-      if (err.response?.status === 400 && err.response?.data?.detail?.includes('KYC')) {
-        setError('KYC Verification is required to become a seller. Please complete KYC first.');
+      if (err.response?.status === 409) {
+        setError('You already have a pending landowner application.');
       } else {
-        setError(err.response?.data?.detail || 'Failed to upgrade to seller role.');
+        setError(err.response?.data?.detail || 'Failed to submit landowner application.');
       }
     } finally {
       setLoading(false);

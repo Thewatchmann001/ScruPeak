@@ -173,10 +173,23 @@ async def get_agent_profile(
 @router.post("/apply", response_model=AgentApplicationResponse, status_code=201)
 async def submit_application(
     data: AgentApplicationCreate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Submit agent application — no auth required, anyone can apply as long as they are signed in"""
-    application = AgentApplication(**data.model_dump())
+    """Submit agent application — user must be signed in and registered."""
+    if current_user.has_pending_agent_application:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Agent application already pending"
+        )
+
+    application_data = data.model_dump()
+    application_data['user_id'] = str(current_user.id)
+    application_data['email'] = current_user.email
+
+    application = AgentApplication(**application_data)
+    current_user.has_pending_agent_application = True
+    db.add(current_user)
     db.add(application)
     await db.commit()
     await db.refresh(application)

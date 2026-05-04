@@ -9,7 +9,7 @@ import logging
 from typing import Optional
 
 from app.core.database import get_db
-from app.models import User, Agent
+from app.models import User, Agent, UserRole
 from app.schemas import UserResponse, UserUpdate, PaginatedResponse
 from app.utils.auth import get_current_user, hash_password, verify_password
 
@@ -96,6 +96,38 @@ async def get_user(
 
 
 @router.post(
+    "/apply/seller",
+    response_model=UserResponse,
+    summary="Apply to become a landowner (seller)"
+)
+async def apply_seller(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Apply to become a landowner. Applications are sent to the admin dashboard for review.
+    """
+    if current_user.role != UserRole.BUYER:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only buyers can apply to become landowners"
+        )
+
+    if current_user.has_pending_landowner_application:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Landowner application already pending"
+        )
+
+    current_user.has_pending_landowner_application = True
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+    logger.info(f"Landowner application submitted: {current_user.id}")
+    return current_user
+
+
+@router.post(
     "/upgrade/seller",
     response_model=UserResponse,
     summary="Upgrade to seller role"
@@ -114,7 +146,6 @@ async def upgrade_to_seller(
             detail="KYC verification required to become a seller"
         )
     
-    from app.models import UserRole
     if current_user.role == UserRole.BUYER:
         current_user.role = UserRole.OWNER
         await db.commit()
