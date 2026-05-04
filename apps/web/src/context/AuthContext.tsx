@@ -6,6 +6,9 @@ interface AuthContextType {
   user: any | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isPrivyAuthenticated: boolean;
+  authError: string | null;
+  privyUser: any | null;
   login: () => void;
   logout: () => void;
   getToken: () => Promise<string | null>;
@@ -19,6 +22,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [backendUser, setBackendUser] = useState<any | null>(null);
   const [isBackendLoading, setIsBackendLoading] = useState(false);
   const [authSyncing, setAuthSyncing] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const getToken = async () => {
     try {
@@ -43,6 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!authenticated) {
         setAuthToken(null);
         setBackendUser(null);
+        setAuthError(null);
         setIsBackendLoading(false);
         setAuthSyncing(false);
         return;
@@ -60,10 +65,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const response = await api.get('/api/v1/users/me');
         if (!cancelled) {
           setBackendUser(response.data);
+          setAuthError(null);
           console.log("Backend user synchronized:", response.data.email, "Role:", response.data.role);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Failed to synchronize backend user (Retries left: ${retries})`, error);
+        if (!cancelled) {
+          if (error?.response?.status === 404 || error?.response?.status === 401) {
+            setAuthError('Account not registered. Please sign up to continue.');
+            setBackendUser(null);
+            setIsBackendLoading(false);
+            setAuthSyncing(false);
+            return;
+          }
+        }
         if (retries > 0 && !cancelled) {
           setTimeout(() => syncBackendUser(retries - 1), 2000);
           return;
@@ -93,9 +108,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user: backendUser || (authenticated ? privyUser : null),
+      user: backendUser,
       isLoading: !ready || isBackendLoading || authSyncing,
-      isAuthenticated: authenticated,
+      isAuthenticated: authenticated && !!backendUser,
+      isPrivyAuthenticated: authenticated,
+      authError,
+      privyUser,
       login,
       logout,
       getToken,

@@ -14,10 +14,10 @@ from app.schemas import (
     RefreshTokenRequest, ErrorResponse, ForgotPasswordRequest,
     ResetPasswordRequest
 )
-from app.models import User
+from app.models import User, UserRole
 from app.utils.auth import (
     hash_password, verify_password, jwt_handler,
-    create_tokens_for_user
+    create_tokens_for_user, get_current_privy_user
 )
 from app.services.email import send_verification_email, send_reset_password_email
 
@@ -83,11 +83,59 @@ async def register(
 
 
 @router.post(
+    "/privy-register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid Privy token"},
+        409: {"model": ErrorResponse, "description": "Email already registered"}
+    }
+)
+async def privy_register(
+    privy_payload: dict = Depends(get_current_privy_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Register a new backend user from a validated Privy account."""
+    email = privy_payload.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Privy token missing required email claim"
+        )
+
+    result = await db.execute(
+        select(User).where(User.email == email)
+    )
+    if result.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered"
+        )
+
+    name = privy_payload.get("name") or email.split('@')[0]
+    role = UserRole.ADMIN if email == "josephemsamah@gmail.com" else UserRole.BUYER
+
+    new_user = User(
+        email=email,
+        name=name,
+        role=role,
+        is_active=True,
+        email_verified=True,
+        kyc_verified=True if role == UserRole.ADMIN else False
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    logger.info(f"New Privy user registered: {email} (role: {role})")
+    return new_user
+
+
+@router.post(
     "/login",
     response_model=TokenResponse,
     responses={
-        401: {"model": ErrorResponse, "description": "Invalid credentials"},
-        404: {"model": ErrorResponse, "description": "User not found"}
+        401: {"model": ErrorResponse, "description": "Invalid credentials or user not registered"}
     }
 )
 async def login(
@@ -111,8 +159,8 @@ async def login(
     if not user:
         logger.warning(f"Login attempt with non-existent email: {credentials.email}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not registered. Please sign up before logging in."
         )
     
     # Verify password

@@ -66,14 +66,10 @@ security = HTTPBearer()
 jwt_handler = JWTHandler()
 
 
-async def get_current_user(
-    credentials: Any = Depends(security),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    """
-    Dependency to get current authenticated user from Privy JWT token
-    """
-    # Verify via Privy
+async def get_current_privy_user(
+    credentials: Any = Depends(security)
+) -> Dict[str, Any]:
+    """Verify the Privy token and return raw Privy claims."""
     try:
         payload = await verify_privy_token(credentials)
     except HTTPException as e:
@@ -85,68 +81,58 @@ async def get_current_user(
             detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    user_id = payload.get("sub")
-    if user_id is None:
+
+    if not payload.get("email"):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token claims",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Privy token missing required email claim"
         )
-    
-    # ScruPeak uses email as the primary stable identifier for Privy users
+
+    return payload
+
+
+async def get_current_user(
+    credentials: Any = Depends(security),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Dependency to get current authenticated user from Privy JWT token.
+    Requires the user to have previously registered in the backend.
+    """
+    payload = await get_current_privy_user(credentials)
+
     email = payload.get("email")
+    user_id = payload.get("sub")
     if not email:
-        # Fallback to lookup by privy_id if we add that column,
-        # or use sub as a string if it's a UUID (unlikely for did:privy)
-        pass
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Privy token missing required email claim"
+        )
 
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
-    
-    if user is None:
-        # Just-In-Time Provisioning for ScruPeak users
-        try:
-            name = payload.get("name") or email.split('@')[0] if email else "New ScruPeak User"
-            
-            # Check if this is the admin email
-            admin_role = UserRole.ADMIN if email == "josephemsamah@gmail.com" else UserRole.BUYER
 
-            user = User(
-                id=uuid_pkg.uuid4(),
-                email=email or f"{user_id}@scrupeak-user.com",
-                name=name,
-                role=admin_role,
-                is_active=True,
-                email_verified=True,
-                kyc_verified=True if admin_role == UserRole.ADMIN else False  # Auto-verify admin
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-            logger.info(f"Provisioned new user: {email} (role: {admin_role})")
-        except Exception as e:
-            await db.rollback()
-            logger.error(f"User provisioning failed: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found and provisioning failed",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-    else:
-        # User exists - check for forced admin upgrade
-        if email == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
-            user.role = UserRole.ADMIN
-            user.kyc_verified = True
-            logger.info(f"Upgraded existing user {email} to ADMIN")
-    
+    if user is None:
+        logger.warning(f"Login attempt for Privy user without backend record: {email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not registered. Please sign up before logging in.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Existing user is found - maintain admin auto-upgrade if needed
+    if email == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
+        user.role = UserRole.ADMIN
+        user.kyc_verified = True
+        logger.info(f"Upgraded existing user {email} to ADMIN")
+
     # Update last login on authentication
     try:
         user.last_login = datetime.utcnow()
@@ -157,13 +143,12 @@ async def get_current_user(
         logger.warning(f"Failed to update last_login for {email}: {e}")
         await db.rollback()
 
-    
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
         )
-    
+
     return user
 
 
