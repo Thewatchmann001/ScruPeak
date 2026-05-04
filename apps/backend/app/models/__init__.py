@@ -26,6 +26,25 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin"
     SELLER = "seller"
 
+    # Professional roles
+    GOVERNMENT_OFFICIAL = "government_official"
+    APPRAISER = "appraiser"
+    SURVEYOR = "surveyor"
+    TITLE_COMPANY = "title_company"
+    LAWYER = "lawyer"
+    NOTARY = "notary"
+
+    # Compliance & Resolution
+    MEDIATOR = "mediator"
+    ARBITRATOR = "arbitrator"
+    AUDITOR = "auditor"
+    COMPLIANCE_OFFICER = "compliance_officer"
+
+    # Finance
+    INSURANCE_AGENT = "insurance_agent"
+    LENDER = "lender"
+    ACCOUNTANT = "accountant"
+
 
 class LandStatus(str, enum.Enum):
     """Land property status"""
@@ -234,6 +253,10 @@ class Escrow(Base):
     escrow_contract_address = Column(String(255), index=True)  # Solana contract
     transaction_signature = Column(String(255), unique=True, index=True)  # Solana tx signature
     
+    # Amounts and Split
+    platform_fee_amount = Column(Numeric(18, 2))
+    seller_payout_amount = Column(Numeric(18, 2))
+
     # Dates
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     activated_at = Column(DateTime)

@@ -41,11 +41,11 @@ async def verify_privy_token(
             )
 
         # Verify the token
-        # Note: Privy uses ES256
+        # Privy commonly uses ES256, but can also use RS256
         payload = jwt.decode(
             token,
             jwks,
-            algorithms=["ES256"],
+            algorithms=["ES256", "RS256"],
             audience=PRIVY_APP_ID,
             issuer="privy.io"
         )
