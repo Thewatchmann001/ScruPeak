@@ -14,7 +14,7 @@ from app.models import Agent, User, UserRole
 from app.models.agent_application import AgentApplication, ApplicationStatus
 from app.schemas import AgentCreate, AgentResponse
 from app.schemas.agent_application import AgentApplicationCreate, AgentApplicationResponse
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_user, get_current_admin
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Agents"])

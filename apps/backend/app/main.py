@@ -158,12 +158,15 @@ def create_app() -> FastAPI:
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError):
         """Handle validation errors"""
+        request_id = getattr(request.state, "request_id", "unknown")
+        logger.error(f"[{request_id}] Validation error (ValueError): {str(exc)}")
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "status_code": 400,
                 "message": "Validation error",
-                "detail": str(exc)
+                "detail": str(exc),
+                "request_id": request_id
             }
         )
     
