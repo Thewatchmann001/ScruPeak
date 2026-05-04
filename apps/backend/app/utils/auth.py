@@ -116,8 +116,9 @@ async def get_current_user(
         try:
             name = payload.get("name") or email.split('@')[0] if email else "New ScruPeak User"
             
-            # Check if this is the admin email
-            admin_role = UserRole.ADMIN if email == "josephemsamah@gmail.com" else UserRole.BUYER
+            # Check if this is the admin email (Case-insensitive)
+            is_admin = email and email.lower() == "josephemsamah@gmail.com"
+            admin_role = UserRole.ADMIN if is_admin else UserRole.BUYER
 
             user = User(
                 id=uuid_pkg.uuid4(),
@@ -126,7 +127,7 @@ async def get_current_user(
                 role=admin_role,
                 is_active=True,
                 email_verified=True,
-                kyc_verified=True if admin_role == UserRole.ADMIN else False  # Auto-verify admin
+                kyc_verified=True if is_admin else False  # Auto-verify admin
             )
             db.add(user)
             await db.commit()
@@ -134,17 +135,19 @@ async def get_current_user(
             logger.info(f"Provisioned new user: {email} (role: {admin_role})")
         except Exception as e:
             await db.rollback()
-            logger.error(f"User provisioning failed: {e}")
+            logger.error(f"User provisioning failed for {email}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found and provisioning failed",
                 headers={"WWW-Authenticate": "Bearer"},
             )
     else:
-        # User exists - check for forced admin upgrade
-        if email == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
+        # User exists - check for forced admin upgrade (Case-insensitive)
+        if email and email.lower() == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
             user.role = UserRole.ADMIN
             user.kyc_verified = True
+            db.add(user) # Explicitly add to session for update
+            await db.commit()
             logger.info(f"Upgraded existing user {email} to ADMIN")
     
     # Update last login on authentication

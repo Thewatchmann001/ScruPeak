@@ -24,6 +24,7 @@ class UserRole(str, enum.Enum):
     OWNER = "owner"
     AGENT = "agent"
     ADMIN = "admin"
+    SELLER = "seller"
 
 
 class LandStatus(str, enum.Enum):
