@@ -18,6 +18,14 @@ import ulid as ulid_pkg
 from app.core.database import Base
 
 
+class UserStatus(str, enum.Enum):
+    """User verification status"""
+    UNVERIFIED = "unverified"
+    PENDING_VERIFICATION = "pending_verification"
+    VERIFIED = "verified"
+    REJECTED = "rejected"
+
+
 class UserRole(str, enum.Enum):
     """User roles in the system"""
     BUYER = "buyer"
@@ -85,10 +93,13 @@ class User(Base):
     __table_args__ = (
         Index('idx_users_email', 'email', unique=True),
         Index('idx_users_role', 'role'),
+        Index('idx_users_status', 'status'),
         Index('idx_users_kyc_verified', 'kyc_verified'),
         Index('idx_users_created_at', 'created_at'),
-        # CheckConstraint("email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'", 
-        #                name='email_format_check'),
+        CheckConstraint(
+            "(role NOT IN ('owner', 'agent')) OR (status = 'verified')",
+            name='enforce_verified_role'
+        ),
     )
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
@@ -97,6 +108,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     password_hash = Column(String(255), nullable=True)
     role = Column(Enum(UserRole), default=UserRole.BUYER, nullable=False, index=True)
+    status = Column(Enum(UserStatus), default=UserStatus.UNVERIFIED, nullable=False, index=True)
     kyc_verified = Column(Boolean, default=False, index=True)
     kyc_verified_at = Column(DateTime)
     email_verified = Column(Boolean, default=False)
@@ -107,6 +119,23 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    def __setattr__(self, name, value):
+        """Make AUTO_ADMIN immutable for role and status"""
+        from app.core.config import get_settings
+        settings = get_settings()
+
+        # Avoid recursion or instrumentation issues during __init__
+        if name in ['role', 'status']:
+            email = getattr(self, 'email', None)
+            if email and email.lower() == settings.SUPER_ADMIN_EMAIL.lower():
+                # If already set to ADMIN/VERIFIED, block changes
+                if name == 'role' and getattr(self, 'role', None) == UserRole.ADMIN:
+                    return
+                if name == 'status' and getattr(self, 'status', None) == UserStatus.VERIFIED:
+                    return
+
+        super().__setattr__(name, value)
+
     # Relationships
     lands = relationship("Land", back_populates="owner", foreign_keys="Land.owner_id")
     documents = relationship("Document", back_populates="owner")
@@ -524,6 +553,7 @@ class KycStatus(str, enum.Enum):
 
 
 from app.models.agent_application import AgentApplication, ApplicationStatus
+from app.models.role_application import RoleApplication
 
 class KycSubmission(Base):
     __tablename__ = "kyc_submissions"

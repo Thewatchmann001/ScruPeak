@@ -16,7 +16,9 @@ from app.schemas import (
     LandCreate, LandUpdate, LandResponse, LandDetailResponse,
     LandSearchFilters, PaginatedResponse, MarketInsightsResponse
 )
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_user, require_verified_landowner, require_verified_agent
+from shapely.geometry import Polygon, mapping
+import json
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Land Management"])
@@ -157,6 +159,7 @@ async def create_land(
     district: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
+    boundary_wkt: str = Form(..., description="WKT representation of the boundary polygon"),
     spousal_consent: bool = Form(False),
     surveyor_id: Optional[UUID] = Form(None),
     
@@ -166,26 +169,39 @@ async def create_land(
     land_photo: Optional[UploadFile] = File(None), # NEW
     spousal_consent_doc: Optional[UploadFile] = File(None),
     
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user), # Generic auth first
     db: AsyncSession = Depends(get_db)
 ):
     """
     Create new land property listing with mandatory document uploads.
-    Includes Survey Plan and Title Deed verification.
+    Visibility is direct: immediately AVAILABLE and public.
     """
     
-    # 1. Check Permissions
+    # 1. Strict Role & Status Enforcement
+    from app.models import UserStatus
     if current_user.role not in [UserRole.OWNER, UserRole.AGENT, UserRole.ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only registered Sellers, Agents, and Admins can list land properties."
-        )
+         raise HTTPException(status_code=403, detail="Only Landowners and Agents can list land.")
 
-    if not current_user.kyc_verified and current_user.role != UserRole.ADMIN:
-         # For testing/dev, we might allow non-kyc if requested,
-         # but spec says KYC is a legal weapon.
-         # For now, let's keep it strict but allow override via environment if needed
-         pass
+    if current_user.role != UserRole.ADMIN and current_user.status != UserStatus.VERIFIED:
+         raise HTTPException(status_code=403, detail="Your account must be VERIFIED to list land.")
+
+    # 2. Geospatial Validation
+    try:
+        from shapely import wkt
+        poly = wkt.loads(boundary_wkt)
+        if not isinstance(poly, Polygon):
+            raise ValueError("Boundary must be a Polygon.")
+        if not poly.is_valid:
+            raise ValueError("Invalid polygon geometry.")
+
+        # Verify coordinates are within sane bounds (Sierra Leone roughly 7-10N, -13--10W)
+        # But we'll allow standard WGS84 bounds
+        for x, y in poly.exterior.coords:
+            if not (-180 <= x <= 180 and -90 <= y <= 90):
+                raise ValueError(f"Invalid coordinates: {x}, {y}")
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Geospatial validation failed: {str(e)}")
     
     # 2. Save Documents (Mock implementation - usually upload to S3/Cloudinary)
     # In real app, use a proper file storage service
@@ -232,7 +248,7 @@ async def create_land(
         district=district,
         latitude=latitude,
         longitude=longitude,
-        status=LandStatus.PENDING_APPROVAL,
+        status=LandStatus.AVAILABLE, # Direct visibility
         
         # Validation Flags
         has_survey_plan=True,
@@ -243,7 +259,8 @@ async def create_land(
         
         # Spatial
         grid_id=str(grid_id),
-        location=f"POINT({longitude} {latitude})"
+        location=f"POINT({longitude} {latitude})",
+        boundary=f"SRID=4326;{boundary_wkt}"
     )
     
     db.add(new_land)

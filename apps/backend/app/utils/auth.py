@@ -116,15 +116,20 @@ async def get_current_user(
         try:
             name = payload.get("name") or email.split('@')[0] if email else "New ScruPeak User"
             
+            from app.models import UserStatus
+            from app.core.config import get_settings
+            settings = get_settings()
             # Check if this is the admin email (Case-insensitive)
-            is_admin = email and email.lower() == "josephemsamah@gmail.com"
+            is_admin = email and email.lower() == settings.SUPER_ADMIN_EMAIL.lower()
             admin_role = UserRole.ADMIN if is_admin else UserRole.BUYER
+            admin_status = UserStatus.VERIFIED if is_admin else UserStatus.UNVERIFIED
 
             user = User(
                 id=uuid_pkg.uuid4(),
                 email=email or f"{user_id}@scrupeak-user.com",
                 name=name,
                 role=admin_role,
+                status=admin_status,
                 is_active=True,
                 email_verified=True,
                 kyc_verified=True if is_admin else False  # Auto-verify admin
@@ -143,12 +148,17 @@ async def get_current_user(
             )
     else:
         # User exists - check for forced admin upgrade (Case-insensitive)
-        if email and email.lower() == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
-            user.role = UserRole.ADMIN
-            user.kyc_verified = True
-            db.add(user) # Explicitly add to session for update
-            await db.commit()
-            logger.info(f"Upgraded existing user {email} to ADMIN")
+        from app.models import UserStatus
+        from app.core.config import get_settings
+        settings = get_settings()
+        if email and email.lower() == settings.SUPER_ADMIN_EMAIL.lower():
+            if user.role != UserRole.ADMIN or user.status != UserStatus.VERIFIED:
+                user.role = UserRole.ADMIN
+                user.status = UserStatus.VERIFIED
+                user.kyc_verified = True
+                db.add(user) # Explicitly add to session for update
+                await db.commit()
+                logger.info(f"Upgraded/Corrected existing user {email} to ADMIN (VERIFIED)")
     
     # Update last login on authentication
     try:
@@ -167,6 +177,15 @@ async def get_current_user(
             detail="User account is inactive"
         )
     
+    # Strictly enforce: LANDOWNER and AGENT roles must be VERIFIED
+    from app.models import UserStatus
+    if user.role in [UserRole.OWNER, UserRole.AGENT] and user.status != UserStatus.VERIFIED:
+        # Silently downgrade or block? Block is safer per instructions.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied. Your {user.role.value} status is {user.status.value}. Please wait for verification."
+        )
+
     return user
 
 
@@ -185,10 +204,39 @@ async def get_optional_user(
 async def get_current_admin(
     current_user: User = Depends(get_current_user),
 ) -> User:
+    from app.core.config import get_settings
+    settings = get_settings()
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
+        )
+    if current_user.email.lower() != settings.SUPER_ADMIN_EMAIL.lower():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Only AUTO_ADMIN can access this resource."
+        )
+    return current_user
+
+async def require_verified_landowner(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    from app.models import UserStatus
+    if current_user.role != UserRole.OWNER or current_user.status != UserStatus.VERIFIED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verified Landowner access required"
+        )
+    return current_user
+
+async def require_verified_agent(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    from app.models import UserStatus
+    if current_user.role != UserRole.AGENT or current_user.status != UserStatus.VERIFIED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verified Agent access required"
         )
     return current_user
 
