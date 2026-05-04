@@ -123,6 +123,9 @@ class Settings(BaseSettings):
     PRIVY_APP_ID: str = "cmmxpr19800000cl51l48f0yv"
     PRIVY_APP_SECRET: str = ""
 
+    # Identity Control
+    SUPER_ADMIN_EMAIL: str = "josephemsamah@gmail.com"
+
     # DeepSeek AI (Fallback Layer)
     DEEPSEEK_API_KEY: Optional[str] = None
     DEEPSEEK_ENABLED: bool = True  # Enable if API key is provided

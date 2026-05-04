@@ -7,7 +7,7 @@ import asyncio
 import logging
 from app.core.database import engine, Base, AsyncSessionLocal
 from app.core.config import get_settings
-from app.models import User, UserRole, Land, LandStatus
+from app.models import User, UserRole, UserStatus, Land, LandStatus
 # Import auth utils for password hashing
 from app.utils.auth import hash_password
 
@@ -40,31 +40,42 @@ async def seed_demo_data():
                 print("[*] Database already has data, skipping seed")
                 return
             
-            # Create demo users
+            # Create core users
             demo_users = [
                 User(
+                    email=get_settings().SUPER_ADMIN_EMAIL,
+                    name="AUTO_ADMIN",
+                    phone="+232 000 000 000",
+                    password_hash=hash_password("admin_pass_change_me"),
+                    role=UserRole.ADMIN,
+                    status=UserStatus.VERIFIED,
+                    kyc_verified=True,
+                ),
+                User(
                     email="owner@demo.com",
-                    full_name="John Owner",
+                    name="John Owner",
                     phone="+234 701 234 5678",
-                    password_hash="demo_hash_1",  # In prod, use proper hashing
+                    password_hash=hash_password("demo_pass_1"),
                     role=UserRole.OWNER,
-                    is_verified=True,
+                    status=UserStatus.VERIFIED,
+                    kyc_verified=True,
                 ),
                 User(
                     email="buyer@demo.com",
-                    full_name="Jane Buyer",
+                    name="Jane Buyer",
                     phone="+234 702 234 5678",
-                    password_hash="demo_hash_2",
+                    password_hash=hash_password("demo_pass_2"),
                     role=UserRole.BUYER,
-                    is_verified=True,
+                    status=UserStatus.UNVERIFIED,
                 ),
                 User(
                     email="agent@demo.com",
-                    full_name="Mike Agent",
+                    name="Mike Agent",
                     phone="+234 703 234 5678",
-                    password_hash="demo_hash_3",
+                    password_hash=hash_password("demo_pass_3"),
                     role=UserRole.AGENT,
-                    is_verified=True,
+                    status=UserStatus.VERIFIED,
+                    kyc_verified=True,
                 ),
             ]
             

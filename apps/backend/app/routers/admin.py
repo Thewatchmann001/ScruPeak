@@ -12,7 +12,8 @@ from typing import Optional, List
 from app.core.database import get_db
 from app.models import (
     User, UserRole, Agent, Land, Escrow, EscrowStatus, 
-    PaymentTransaction, KycSubmission, KycStatus, LandStatus
+    PaymentTransaction, KycSubmission, KycStatus, LandStatus,
+    UserStatus, RoleApplication, AuditLog
 )
 from app.models.title_verification import TitleVerification, VerificationStatus
 from app.routers.payments import generate_payment_url, PaymentMethod
@@ -145,6 +146,17 @@ async def approve_kyc(
     # Note: Role upgrade is now handled separately via role application flow
     # user.role = UserRole.AGENT
     
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="approve_kyc_legacy",
+        resource_type="User",
+        resource_id=user.id,
+        changes={"kyc_verified": True},
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     
     logger.info(f"KYC approved for user: {user_id}")
@@ -187,10 +199,22 @@ async def verify_agent(
     user = result_user.scalars().first()
     if user:
         user.role = UserRole.AGENT
+        user.status = UserStatus.VERIFIED
         user.kyc_verified = True
         user.kyc_verified_at = datetime.utcnow()
         user.has_pending_agent_application = False
     
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="verify_agent",
+        resource_type="Agent",
+        resource_id=agent.id,
+        changes={"platform_verified": True},
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     
     logger.info(f"Agent verified: {agent_id}")
@@ -226,9 +250,21 @@ async def verify_landowner(
     
     # Update user role to OWNER (landowner) and mark KYC as verified
     user.role = UserRole.OWNER
+    user.status = UserStatus.VERIFIED
     user.kyc_verified = True
     user.kyc_verified_at = datetime.utcnow()
     
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="verify_landowner",
+        resource_type="User",
+        resource_id=user.id,
+        changes={"role": UserRole.OWNER, "status": UserStatus.VERIFIED},
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     
     logger.info(f"Landowner verified: {user_id}")
@@ -270,6 +306,17 @@ async def reject_agent(
     if user:
         user.has_pending_agent_application = False
     
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="reject_agent",
+        resource_type="Agent",
+        resource_id=agent.id,
+        changes={"reason": reason},
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     
     logger.info(f"Agent rejected: {agent_id}. Reason: {reason}")
@@ -414,6 +461,17 @@ async def approve_land(
         land.trust_rating = ts_result["rating"]
         land.trust_factors = ts_result["factors"]
         
+        # Audit log
+        audit = AuditLog(
+            user_id=current_user.id,
+            action="approve_land",
+            resource_type="Land",
+            resource_id=land.id,
+            changes={"status": LandStatus.AVAILABLE, "parcel_id": new_parcel_id},
+            status="success"
+        )
+        db.add(audit)
+
         await db.commit()
         await db.refresh(land)
         
@@ -466,6 +524,17 @@ async def reject_land(
     land.approved_by = current_user.id # Reviewed by
     land.approval_date = datetime.utcnow() # Decision date
     
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="reject_land",
+        resource_type="Land",
+        resource_id=land.id,
+        changes={"status": LandStatus.REJECTED, "reason": reason},
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     
     logger.info(f"Land {land_id} rejected by {current_user.id}. Reason: {reason}")
@@ -554,7 +623,20 @@ async def approve_kyc_submission(
         user.kyc_verified_at = datetime.utcnow()
         if user.role == UserRole.BUYER:
              user.role = UserRole.OWNER
-    
+             # If role changed to OWNER, status must be VERIFIED
+             user.status = UserStatus.VERIFIED
+
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="approve_kyc_submission",
+        resource_type="KycSubmission",
+        resource_id=submission.id,
+        changes={"status": KycStatus.APPROVED, "user_id": str(user.id) if user else None},
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     
     logger.info(f"KYC submission {submission_id} approved by {current_user.id}")
@@ -563,6 +645,86 @@ async def approve_kyc_submission(
         "submission_id": str(submission_id),
         "status": "approved",
         "user_role": user.role if user else None
+    }
+
+
+@router.post(
+    "/verify-role",
+    status_code=status.HTTP_200_OK,
+    summary="Verify user role application"
+)
+async def verify_role_application(
+    application_id: UUID,
+    approved: bool,
+    reason: Optional[str] = None,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    AUTO_ADMIN only: Approve or reject a role application.
+    """
+    result = await db.execute(
+        select(RoleApplication).where(RoleApplication.id == application_id)
+    )
+    application = result.scalars().first()
+
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Role application not found"
+        )
+
+    if application.status != UserStatus.PENDING_VERIFICATION:
+         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Application is in {application.status.value} state."
+        )
+
+    user_result = await db.execute(select(User).where(User.id == application.user_id))
+    user = user_result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    action = "approve" if approved else "reject"
+
+    if approved:
+        application.status = UserStatus.VERIFIED
+        user.role = application.requested_role
+        user.status = UserStatus.VERIFIED
+        user.kyc_verified = True # Role verification implies identity verification
+    else:
+        application.status = UserStatus.REJECTED
+        application.rejection_reason = reason
+        user.status = UserStatus.REJECTED
+
+    application.reviewed_by = current_user.id
+    application.reviewed_at = datetime.utcnow()
+
+    # Mandatory Audit Logging
+    audit = AuditLog(
+        user_id=current_user.id,
+        action=f"role_verification_{action}",
+        resource_type="RoleApplication",
+        resource_id=application.id,
+        changes={
+            "requested_role": application.requested_role.value,
+            "user_id": str(user.id),
+            "approved": approved,
+            "reason": reason
+        },
+        status="success"
+    )
+    db.add(audit)
+
+    await db.commit()
+
+    logger.info(f"Admin {current_user.email} {action}ed role {application.requested_role.value} for user {user.email}")
+
+    return {
+        "message": f"Application {action}ed successfully.",
+        "user_role": user.role.value,
+        "user_status": user.status.value
     }
 
 
@@ -593,6 +755,17 @@ async def reject_kyc_submission(
     submission.reviewed_at = datetime.utcnow()
     submission.reviewed_by = current_user.id
     submission.rejection_reason = reason
+
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="reject_kyc_submission",
+        resource_type="KycSubmission",
+        resource_id=submission.id,
+        changes={"status": KycStatus.REJECTED, "reason": reason},
+        status="success"
+    )
+    db.add(audit)
 
     await db.commit()
 
@@ -634,6 +807,17 @@ async def freeze_escrow(
     escrow.status = EscrowStatus.CANCELLED
     # We should ideally log the reason in an audit log or a notes field
     
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="freeze_escrow",
+        resource_type="Escrow",
+        resource_id=escrow.id,
+        changes={"status": EscrowStatus.CANCELLED, "reason": reason},
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     logger.info(f"Escrow {escrow_id} frozen/cancelled by Admin {current_user.id}. Reason: {reason}")
     
@@ -689,6 +873,21 @@ async def release_escrow_funds(
     escrow.status = EscrowStatus.COMPLETED
     escrow.completed_at = datetime.utcnow()
     
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="release_escrow_funds",
+        resource_type="Escrow",
+        resource_id=escrow.id,
+        changes={
+            "status": EscrowStatus.COMPLETED,
+            "platform_fee_amount": str(escrow.platform_fee_amount),
+            "seller_payout_amount": str(escrow.seller_payout_amount)
+        },
+        status="success"
+    )
+    db.add(audit)
+
     await db.commit()
     logger.info(f"Escrow {escrow_id} force-released by Admin {current_user.id}. Split: Fee={escrow.platform_fee_amount}, Payout={escrow.seller_payout_amount}")
     
