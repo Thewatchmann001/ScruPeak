@@ -41,11 +41,15 @@ class ApiClient {
   }
 
   // Call this after Privy is ready to inject token
-  setAuthToken(token: string | null) {
+  setAuthToken(token: string | null, email?: string) {
     if (token) {
       this.client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      if (email) {
+        this.client.defaults.headers.common['X-Privy-Email'] = email;
+      }
     } else {
       delete this.client.defaults.headers.common['Authorization'];
+      delete this.client.defaults.headers.common['X-Privy-Email'];
     }
   }
 
@@ -84,5 +88,5 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
-export const setAuthToken = (token: string | null) => api.setAuthToken(token);
+export const setAuthToken = (token: string | null, email?: string) => api.setAuthToken(token, email);
 export const getApiErrorMessage = (error: AxiosError<ApiError> | unknown) => api.getErrorMessage(error);

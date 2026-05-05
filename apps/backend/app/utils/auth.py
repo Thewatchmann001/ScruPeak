@@ -9,7 +9,7 @@ import jwt
 import logging
 import uuid as uuid_pkg
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status, Security
+from fastapi import Depends, HTTPException, status, Security, Request
 from fastapi.security import HTTPBearer
 from typing import Any
 
@@ -67,6 +67,7 @@ jwt_handler = JWTHandler()
 
 
 async def get_current_privy_user(
+    request: Request,
     credentials: Any = Depends(security)
 ) -> Dict[str, Any]:
     """Verify the Privy token and return raw Privy claims."""
@@ -89,16 +90,23 @@ async def get_current_privy_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    email = payload.get("email")
+    if not email:
+        email = request.headers.get("X-Privy-Email")
+        if email:
+            payload["email"] = email
+
     if not payload.get("email"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Privy token missing required email claim"
+            detail="Privy token missing required email claim and X-Privy-Email header is not set"
         )
 
     return payload
 
 
 async def get_current_user(
+    request: Request,
     credentials: Any = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> User:
@@ -106,7 +114,7 @@ async def get_current_user(
     Dependency to get current authenticated user from Privy JWT token.
     Requires the user to have previously registered in the backend.
     """
-    payload = await get_current_privy_user(credentials)
+    payload = await get_current_privy_user(request, credentials)
 
     email = payload.get("email")
     user_id = payload.get("sub")
@@ -153,13 +161,14 @@ async def get_current_user(
 
 
 async def get_optional_user(
+    request: Request,
     credentials: Optional[Any] = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> Optional[User]:
     if credentials is None:
         return None
     try:
-        return await get_current_user(credentials, db)
+        return await get_current_user(request, credentials, db)
     except Exception:
         return None
 

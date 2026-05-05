@@ -55,7 +55,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         const token = await getAccessToken();
-        setAuthToken(token);
+        const email = privyUser?.email?.address;
+        setAuthToken(token, email);
 
         if (!token) {
           throw new Error('Unable to obtain Privy token');

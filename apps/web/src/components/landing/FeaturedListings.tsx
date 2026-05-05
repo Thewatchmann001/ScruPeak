@@ -17,7 +17,7 @@ export function FeaturedListings() {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const response = await api.get<any>("/land", {
+        const response = await api.get<any>("/api/v1/land", {
           params: { page_size: 6 }
         });
         const items = response.data.items || [];
