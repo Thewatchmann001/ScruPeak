@@ -171,7 +171,7 @@ async def list_users(
     """List all users with pagination and filtering (admin only)"""
     
     # Check admin privilege
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can list users"
@@ -284,7 +284,7 @@ async def verify_user(
 ):
     """Verify user account (admin only)"""
     
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can verify users"
@@ -319,7 +319,7 @@ async def ban_user(
 ):
     """Ban user account (admin only)"""
     
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can ban users"
@@ -362,7 +362,7 @@ async def unban_user(
 ):
     """Unban user account (admin only)"""
     
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can unban users"

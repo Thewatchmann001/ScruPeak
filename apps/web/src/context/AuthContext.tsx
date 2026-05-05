@@ -67,6 +67,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!cancelled) {
           setBackendUser(response.data);
           setAuthError(null);
+          setIsBackendLoading(false);
+          setAuthSyncing(false);
           console.log("Backend user synchronized:", response.data.email, "Role:", response.data.role);
         }
       } catch (error: any) {
@@ -86,15 +88,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         if (!cancelled) {
           setBackendUser(null);
-        }
-      } finally {
-        if (!cancelled && retries === 0) {
           setIsBackendLoading(false);
           setAuthSyncing(false);
-        } else if (!cancelled && retries === 3) {
-           // Initial success
-           setIsBackendLoading(false);
-           setAuthSyncing(false);
         }
       }
     };

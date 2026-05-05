@@ -135,13 +135,21 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Existing user is found - maintain admin auto-upgrade if needed
+    # Guard: reject inactive accounts BEFORE any write so nothing gets committed
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+
+    # Auto-upgrade the designated admin email on every authenticated request.
+    # This is a persistent guard — it corrects any DB drift instantly.
     if email == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
         user.role = UserRole.ADMIN
         user.kyc_verified = True
         logger.info(f"Upgraded existing user {email} to ADMIN")
 
-    # Update last login on authentication
+    # Persist last_login (and any role upgrade above) in a single commit.
     try:
         user.last_login = datetime.utcnow()
         db.add(user)
@@ -150,12 +158,6 @@ async def get_current_user(
     except Exception as e:
         logger.warning(f"Failed to update last_login for {email}: {e}")
         await db.rollback()
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive"
-        )
 
     return user
 

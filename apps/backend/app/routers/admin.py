@@ -351,46 +351,69 @@ async def get_system_stats(
     current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get comprehensive system statistics"""
-    
-    # Count users
-    users_result = await db.execute(select(User))
-    all_users = users_result.scalars().all()
-    total_users = len(all_users)
-    
-    # Count verified users
-    verified_users = len([u for u in all_users if u.kyc_verified])
-    banned_users = len([u for u in all_users if hasattr(u, 'is_banned') and u.is_banned])
-    
-    # Count lands
-    lands_result = await db.execute(select(Land))
-    all_lands = lands_result.scalars().all()
-    total_lands = len(all_lands)
-    
-    # Count properties by status
-    available = len([l for l in all_lands if l.status == "available"])
-    sold = len([l for l in all_lands if l.status == "sold"])
-    pending = len([l for l in all_lands if l.status == "pending"])
-    
-    # Count transactions/escrows
-    escrows_result = await db.execute(select(Escrow))
-    total_escrows = len(escrows_result.scalars().all())
-    
+    """Get comprehensive system statistics using aggregate queries (no full table scans)."""
+
+    # --- Users ---
+    total_users_r = await db.execute(select(func.count()).select_from(User))
+    total_users = total_users_r.scalar() or 0
+
+    verified_users_r = await db.execute(
+        select(func.count()).select_from(User).where(User.kyc_verified == True)
+    )
+    verified_users = verified_users_r.scalar() or 0
+
+    # Pending landowner applications count (useful for admin overview)
+    pending_landowners_r = await db.execute(
+        select(func.count()).select_from(User).where(User.has_pending_landowner_application == True)
+    )
+    pending_landowners = pending_landowners_r.scalar() or 0
+
+    # Pending agent applications count
+    pending_agents_r = await db.execute(
+        select(func.count()).select_from(Agent).where(Agent.platform_verified == False)
+    )
+    pending_agents = pending_agents_r.scalar() or 0
+
+    # --- Lands (by status) ---
+    total_lands_r = await db.execute(select(func.count()).select_from(Land))
+    total_lands = total_lands_r.scalar() or 0
+
+    available_r = await db.execute(
+        select(func.count()).select_from(Land).where(Land.status == LandStatus.AVAILABLE)
+    )
+    available = available_r.scalar() or 0
+
+    pending_r = await db.execute(
+        select(func.count()).select_from(Land).where(Land.status == LandStatus.PENDING_APPROVAL)
+    )
+    pending = pending_r.scalar() or 0
+
+    from app.models import LandStatus as LS
+    sold_r = await db.execute(
+        select(func.count()).select_from(Land).where(Land.status == LS.SOLD)
+    )
+    sold = sold_r.scalar() or 0
+
+    # --- Escrows ---
+    escrows_r = await db.execute(select(func.count()).select_from(Escrow))
+    total_escrows = escrows_r.scalar() or 0
+
     return {
         "users": {
             "total": total_users,
             "verified": verified_users,
-            "banned": banned_users
+            "pending_landowners": pending_landowners,
+            "pending_agents": pending_agents,
         },
         "lands": {
             "total": total_lands,
             "available": available,
             "sold": sold,
-            "pending": pending
+            "pending": pending,
         },
         "transactions": {
-            "total_escrows": total_escrows
-        }
+            "total_escrows": total_escrows,
+        },
     }
 
 
@@ -534,19 +557,16 @@ async def list_kyc_submissions(
     db: AsyncSession = Depends(get_db)
 ):
     """List KYC submissions, optionally filtered by status"""
-    query = select(KycSubmission)
+    query = select(KycSubmission, User).join(User, KycSubmission.user_id == User.id, isouter=True)
     
     if status:
         query = query.where(KycSubmission.status == status)
     
     result = await db.execute(query)
-    submissions = result.scalars().all()
     
     # Enrich with user info
     enriched = []
-    for sub in submissions:
-        user_result = await db.execute(select(User).where(User.id == sub.user_id))
-        user = user_result.scalars().first()
+    for sub, user in result.all():
         enriched.append({
             "id": str(sub.id),
             "user_id": str(sub.user_id),
