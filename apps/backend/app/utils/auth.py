@@ -221,3 +221,67 @@ async def create_tokens_for_user(user: User):
         "expires_in": 3600,
         "user": user
     }
+
+
+async def require_verified_landowner(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if current_user.role not in (UserRole.LANDOWNER, UserRole.ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Landowner access required"
+        )
+    if not current_user.kyc_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="KYC verification required"
+        )
+    return current_user
+
+
+async def require_verified_agent(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if current_user.role not in (UserRole.AGENT, UserRole.ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Agent access required"
+        )
+    if not current_user.kyc_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Agent account not KYC verified"
+        )
+    return current_user
+
+
+async def require_verified_landowner(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if current_user.role not in (UserRole.LANDOWNER, UserRole.ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Landowner access required"
+        )
+    if not current_user.kyc_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="KYC verification required"
+        )
+    return current_user
+
+
+async def require_verified_agent(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if current_user.role not in (UserRole.AGENT, UserRole.ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Agent access required"
+        )
+    if not current_user.kyc_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Agent account not KYC verified"
+        )
+    return current_user
