@@ -3,7 +3,8 @@ import { api } from '@/services/api';
 import { User } from '@/types';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Loader2, Trash2, Edit, Shield } from 'lucide-react';
+import { Loader2, Trash2, Edit, Shield, Ban, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -14,19 +15,36 @@ export default function AdminUsersPage() {
   }, []);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const response = await api.get<User[]>('/users'); // Assuming endpoint exists
-      setUsers(response.data);
+      const response = await api.get('/api/v1/admin/users');
+      // /api/v1/admin/users returns a List[UserResponse] directly, not paginated
+      setUsers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to fetch users', error);
-      // Mock data if endpoint fails
-      setUsers([
-        { id: '1', name: 'Admin User', email: 'admin@scrupeak.com', role: 'admin', kyc_verified: true, created_at: '2024-01-01' },
-        { id: '2', name: 'John Doe', email: 'john@example.com', role: 'buyer', kyc_verified: false, created_at: '2024-02-15' },
-        { id: '3', name: 'Jane Smith', email: 'jane@example.com', role: 'owner', kyc_verified: true, created_at: '2024-03-10' },
-      ] as any);
+      toast.error('Failed to fetch users');
+      setUsers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBan = async (userId: string, isBanned: boolean) => {
+    const action = isBanned ? 'unban' : 'ban';
+    let reason = undefined;
+    if (!isBanned) {
+      reason = window.prompt('Provide a reason for banning this user:') || undefined;
+    }
+    
+    try {
+      await api.put(`/api/v1/users/${userId}/${action}`, null, {
+        params: reason ? { reason } : {}
+      });
+      toast.success(`User ${action}ned successfully`);
+      fetchUsers();
+    } catch (error) {
+      console.error(`Failed to ${action} user`, error);
+      toast.error(`Failed to ${action} user`);
     }
   };
 
@@ -94,11 +112,12 @@ export default function AdminUsersPage() {
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-primary hover:text-primary-700 mr-3">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button className="text-red-600 hover:text-red-900">
-                      <Trash2 className="w-4 h-4" />
+                    <button 
+                      onClick={() => handleBan(user.id, (user as any).is_banned)} 
+                      className={`${(user as any).is_banned ? 'text-green-600 hover:text-green-900' : 'text-red-600 hover:text-red-900'}`}
+                      title={(user as any).is_banned ? "Unban User" : "Ban User"}
+                    >
+                      {(user as any).is_banned ? <CheckCircle className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
                     </button>
                   </td>
                 </tr>

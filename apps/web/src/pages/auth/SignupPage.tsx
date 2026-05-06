@@ -5,17 +5,46 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect } from 'react';
+import { api, setAuthToken } from '@/services/api';
+import { useEffect, useState } from 'react';
 
 export default function SignupPage() {
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isPrivyAuthenticated, authError, getToken, user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (!isPrivyAuthenticated || user || registering) {
+      return;
+    }
+
+    if (authError?.includes('Please sign up')) {
+      setRegistering(true);
+      setRegisterError(null);
+
+      (async () => {
+        try {
+          const token = await getToken();
+          if (!token) {
+            throw new Error('Unable to obtain Privy token');
+          }
+          setAuthToken(token);
+          await api.post('/api/v1/auth/privy-register', {});
+        } catch (err: any) {
+          setRegisterError(err.response?.data?.detail || err.message || 'Signup failed');
+        } finally {
+          setRegistering(false);
+        }
+      })();
+    }
+  }, [authError, getToken, isPrivyAuthenticated, registering, user]);
 
   return (
     <div className="min-h-screen flex font-sans bg-white">
@@ -83,10 +112,14 @@ export default function SignupPage() {
           <Button
             onClick={login}
             className="w-full h-12 bg-primary text-white font-bold rounded-lg shadow-lg shadow-primary/20 hover:bg-primary-hover transition-standard text-lg"
-            disabled={isLoading}
+            disabled={isLoading || registering}
           >
-            {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Sign Up with Privy"}
+            {isLoading || registering ? <Loader2 className="w-6 h-6 animate-spin" /> : "Sign Up with Privy"}
           </Button>
+
+          {registerError && (
+            <p className="mt-4 text-sm text-red-600">{registerError}</p>
+          )}
 
           <p className="mt-10 text-center text-sm font-medium text-text-secondary">
             Already have an account?{' '}

@@ -114,6 +114,7 @@ class User(Base):
     email_verified = Column(Boolean, default=False)
     avatar_url = Column(String(500))
     has_pending_agent_application = Column(Boolean, default=False)
+    has_pending_landowner_application = Column(Boolean, default=False, index=True)
     is_active = Column(Boolean, default=True, index=True)
     last_login = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)

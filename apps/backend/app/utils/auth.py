@@ -9,7 +9,7 @@ import jwt
 import logging
 import uuid as uuid_pkg
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status, Security
+from fastapi import Depends, HTTPException, status, Security, Request
 from fastapi.security import HTTPBearer
 from typing import Any
 
@@ -66,14 +66,11 @@ security = HTTPBearer()
 jwt_handler = JWTHandler()
 
 
-async def get_current_user(
-    credentials: Any = Depends(security),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    """
-    Dependency to get current authenticated user from Privy JWT token
-    """
-    # Verify via Privy
+async def get_current_privy_user(
+    request: Request,
+    credentials: Any = Depends(security)
+) -> Dict[str, Any]:
+    """Verify the Privy token and return raw Privy claims."""
     try:
         payload = await verify_privy_token(credentials)
     except HTTPException as e:
@@ -85,82 +82,74 @@ async def get_current_user(
             detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    user_id = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token claims",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # ScruPeak uses email as the primary stable identifier for Privy users
+
     email = payload.get("email")
     if not email:
-        # Fallback to lookup by privy_id if we add that column,
-        # or use sub as a string if it's a UUID (unlikely for did:privy)
-        pass
+        email = request.headers.get("X-Privy-Email")
+        if email:
+            payload["email"] = email
+
+    if not payload.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Privy token missing required email claim and X-Privy-Email header is not set"
+        )
+
+    return payload
+
+
+async def get_current_user(
+    request: Request,
+    credentials: Any = Depends(security),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Dependency to get current authenticated user from Privy JWT token.
+    Requires the user to have previously registered in the backend.
+    """
+    payload = await get_current_privy_user(request, credentials)
+
+    email = payload.get("email")
+    user_id = payload.get("sub")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Privy token missing required email claim"
+        )
 
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
-    
-    if user is None:
-        # Just-In-Time Provisioning for ScruPeak users
-        try:
-            name = payload.get("name") or email.split('@')[0] if email else "New ScruPeak User"
-            
-            from app.models import UserStatus
-            from app.core.config import get_settings
-            settings = get_settings()
-            # Check if this is the admin email (Case-insensitive)
-            is_admin = email and email.lower() == settings.SUPER_ADMIN_EMAIL.lower()
-            admin_role = UserRole.ADMIN if is_admin else UserRole.BUYER
-            admin_status = UserStatus.VERIFIED if is_admin else UserStatus.UNVERIFIED
 
-            user = User(
-                id=uuid_pkg.uuid4(),
-                email=email or f"{user_id}@scrupeak-user.com",
-                name=name,
-                role=admin_role,
-                status=admin_status,
-                is_active=True,
-                email_verified=True,
-                kyc_verified=True if is_admin else False  # Auto-verify admin
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-            logger.info(f"Provisioned new user: {email} (role: {admin_role})")
-        except Exception as e:
-            await db.rollback()
-            logger.error(f"User provisioning failed for {email}: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found and provisioning failed",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-    else:
-        # User exists - check for forced admin upgrade (Case-insensitive)
-        from app.models import UserStatus
-        from app.core.config import get_settings
-        settings = get_settings()
-        if email and email.lower() == settings.SUPER_ADMIN_EMAIL.lower():
-            if user.role != UserRole.ADMIN or user.status != UserStatus.VERIFIED:
-                user.role = UserRole.ADMIN
-                user.status = UserStatus.VERIFIED
-                user.kyc_verified = True
-                db.add(user) # Explicitly add to session for update
-                await db.commit()
-                logger.info(f"Upgraded/Corrected existing user {email} to ADMIN (VERIFIED)")
-    
-    # Update last login on authentication
+    if user is None:
+        logger.warning(f"Login attempt for Privy user without backend record: {email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not registered. Please sign up before logging in.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Guard: reject inactive accounts BEFORE any write so nothing gets committed
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+
+    # Auto-upgrade the designated admin email on every authenticated request.
+    # This is a persistent guard — it corrects any DB drift instantly.
+    if email == "josephemsamah@gmail.com" and user.role != UserRole.ADMIN:
+        user.role = UserRole.ADMIN
+        user.kyc_verified = True
+        logger.info(f"Upgraded existing user {email} to ADMIN")
+
+    # Persist last_login (and any role upgrade above) in a single commit.
     try:
         user.last_login = datetime.utcnow()
         db.add(user)
@@ -170,33 +159,18 @@ async def get_current_user(
         logger.warning(f"Failed to update last_login for {email}: {e}")
         await db.rollback()
 
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive"
-        )
-    
-    # Strictly enforce: LANDOWNER and AGENT roles must be VERIFIED
-    from app.models import UserStatus
-    if user.role in [UserRole.OWNER, UserRole.AGENT] and user.status != UserStatus.VERIFIED:
-        # Silently downgrade or block? Block is safer per instructions.
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Access denied. Your {user.role.value} status is {user.status.value}. Please wait for verification."
-        )
-
     return user
 
 
 async def get_optional_user(
+    request: Request,
     credentials: Optional[Any] = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> Optional[User]:
     if credentials is None:
         return None
     try:
-        return await get_current_user(credentials, db)
+        return await get_current_user(request, credentials, db)
     except Exception:
         return None
 
@@ -204,39 +178,10 @@ async def get_optional_user(
 async def get_current_admin(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    from app.core.config import get_settings
-    settings = get_settings()
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
-        )
-    if current_user.email.lower() != settings.SUPER_ADMIN_EMAIL.lower():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Only AUTO_ADMIN can access this resource."
-        )
-    return current_user
-
-async def require_verified_landowner(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    from app.models import UserStatus
-    if current_user.role != UserRole.OWNER or current_user.status != UserStatus.VERIFIED:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Verified Landowner access required"
-        )
-    return current_user
-
-async def require_verified_agent(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    from app.models import UserStatus
-    if current_user.role != UserRole.AGENT or current_user.status != UserStatus.VERIFIED:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Verified Agent access required"
         )
     return current_user
 

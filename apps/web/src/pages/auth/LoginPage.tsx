@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
 
 export default function LoginPage() {
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isLoading, authError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -93,9 +93,18 @@ export default function LoginPage() {
             {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Sign In with Privy"}
           </Button>
 
+          {authError && (
+            <p className="mt-4 text-sm text-red-600">
+              {authError}{' '}
+              <Link to="/auth/register" className="font-semibold underline">
+                Sign up now
+              </Link>
+            </p>
+          )}
+
           <p className="mt-10 text-center text-sm font-medium text-text-secondary">
             Don't have an account?{' '}
-            <button onClick={login} className="text-primary font-bold hover:underline">Sign up</button>
+            <Link to="/auth/register" className="text-primary font-bold hover:underline">Sign up</Link>
           </p>
         </motion.div>
       </div>

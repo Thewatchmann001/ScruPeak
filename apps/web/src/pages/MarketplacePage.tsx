@@ -32,6 +32,14 @@ export default function MarketplacePage() {
         setLands(Array.isArray(data?.items) ? data.items : []);
         setTotalPages(data?.total_pages || 1);
       } catch (err) {
+        const status = (err as any)?.response?.status;
+        if (status === 404 || status === 204) {
+          setApiError(null);
+          setLands([]);
+          setTotalPages(1);
+          return;
+        }
+
         const message = getApiErrorMessage(err);
         console.error('Failed to fetch lands:', message, err);
         setApiError(message);

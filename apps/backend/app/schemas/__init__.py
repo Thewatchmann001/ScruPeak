@@ -90,6 +90,7 @@ class UserResponse(UserBase):
     kyc_verified: bool
     kyc_verified_at: Optional[datetime]
     has_pending_agent_application: Optional[bool] = False
+    has_pending_landowner_application: Optional[bool] = False
     is_active: bool
     last_login: Optional[datetime]
     created_at: datetime

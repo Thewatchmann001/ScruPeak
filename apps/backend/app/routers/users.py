@@ -9,7 +9,7 @@ import logging
 from typing import Optional
 
 from app.core.database import get_db
-from app.models import User, Agent, RoleApplication, UserRole, UserStatus
+from app.models import User, Agent, UserRole
 from app.schemas import UserResponse, UserUpdate, PaginatedResponse
 from app.utils.auth import get_current_user, hash_password, verify_password
 
@@ -96,53 +96,63 @@ async def get_user(
 
 
 @router.post(
-    "/apply-role",
-    status_code=status.HTTP_201_CREATED,
-    summary="Apply for LANDOWNER or AGENT role"
+    "/apply/seller",
+    response_model=UserResponse,
+    summary="Apply to become a landowner (seller)"
 )
-async def apply_role(
-    requested_role: UserRole,
-    documents: Optional[dict] = {},
-    geospatial_data: Optional[dict] = None,
+async def apply_seller(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Submit application for LANDOWNER or AGENT role.
+    Apply to become a landowner. Applications are sent to the admin dashboard for review.
     """
-    if requested_role not in [UserRole.OWNER, UserRole.AGENT]:
+    if current_user.role != UserRole.BUYER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Can only apply for OWNER or AGENT roles."
+            detail="Only buyers can apply to become landowners"
         )
 
-    # Check if already has this role verified
-    if current_user.role == requested_role and current_user.status == UserStatus.VERIFIED:
+    if current_user.has_pending_landowner_application:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"You are already a verified {requested_role.value}."
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Landowner application already pending"
         )
 
-    # Create new application
-    new_app = RoleApplication(
-        user_id=current_user.id,
-        requested_role=requested_role,
-        status=UserStatus.PENDING_VERIFICATION,
-        documents=documents,
-        geospatial_data=geospatial_data
-    )
-    
-    # Also update user status to pending if they were unverified/rejected
-    if current_user.status in [UserStatus.UNVERIFIED, UserStatus.REJECTED]:
-        current_user.status = UserStatus.PENDING_VERIFICATION
-        db.add(current_user)
-
-    db.add(new_app)
+    current_user.has_pending_landowner_application = True
+    db.add(current_user)
     await db.commit()
-    
-    logger.info(f"User {current_user.id} applied for role {requested_role.value}")
+    await db.refresh(current_user)
+    logger.info(f"Landowner application submitted: {current_user.id}")
+    return current_user
 
-    return {"message": "Application submitted successfully", "application_id": str(new_app.id)}
+
+@router.post(
+    "/upgrade/seller",
+    response_model=UserResponse,
+    summary="Upgrade to seller role"
+)
+async def upgrade_to_seller(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Upgrade current user to SELLER (Owner) role.
+    Requires KYC verification.
+    """
+    if not current_user.kyc_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="KYC verification required to become a seller"
+        )
+    
+    if current_user.role == UserRole.BUYER:
+        current_user.role = UserRole.OWNER
+        await db.commit()
+        await db.refresh(current_user)
+        logger.info(f"User upgraded to seller: {current_user.id}")
+    
+    return current_user
 
 
 @router.get(
@@ -161,7 +171,7 @@ async def list_users(
     """List all users with pagination and filtering (admin only)"""
     
     # Check admin privilege
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can list users"
@@ -274,7 +284,7 @@ async def verify_user(
 ):
     """Verify user account (admin only)"""
     
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can verify users"
@@ -309,7 +319,7 @@ async def ban_user(
 ):
     """Ban user account (admin only)"""
     
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can ban users"
@@ -352,7 +362,7 @@ async def unban_user(
 ):
     """Unban user account (admin only)"""
     
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators can unban users"

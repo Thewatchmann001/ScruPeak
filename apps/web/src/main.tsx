@@ -28,9 +28,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           accentColor: '#006AFF',
           logo: 'https://web-prod-kqr3pbuu3a-uc.a.run.app/images/logo.jpg',
         },
-        embeddedWallets: {
-          createOnLogin: 'users-without-wallets',
-        },
         // Properly configure iframe settings
         fundingMethodConfig: {
           moonpay: {

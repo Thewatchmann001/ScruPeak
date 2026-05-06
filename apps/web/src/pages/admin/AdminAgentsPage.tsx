@@ -3,7 +3,7 @@ import { api } from '@/services/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AgentApplication {
@@ -40,7 +40,7 @@ export default function AdminAgentsPage() {
 
   const fetchAgents = async () => {
     try {
-      const response = await api.get<AgentApplication[]>('/admin/agents/pending');
+      const response = await api.get<AgentApplication[]>('/api/v1/admin/agents/pending');
       setAgents(response.data);
     } catch (error) {
       console.error('Failed to fetch pending agents', error);
@@ -52,13 +52,30 @@ export default function AdminAgentsPage() {
 
   const handleVerify = async (agentId: string) => {
     try {
-      await api.post(`/admin/agents/${agentId}/verify`, {});
+      await api.post(`/api/v1/admin/agents/${agentId}/verify`, {});
       toast.success('Agent verified successfully');
       // Refresh list
       fetchAgents();
+      setSelectedAgent(null);
     } catch (error) {
       console.error('Failed to verify agent', error);
       toast.error('Failed to verify agent');
+    }
+  };
+
+  const handleReject = async (agentId: string) => {
+    const reason = window.prompt('Provide a reason for rejection:');
+    if (!reason) return;
+    try {
+      await api.post(`/api/v1/admin/agents/${agentId}/reject`, null, {
+        params: { reason }
+      });
+      toast.success('Agent rejected successfully');
+      fetchAgents();
+      setSelectedAgent(null);
+    } catch (error) {
+      console.error('Failed to reject agent', error);
+      toast.error('Failed to reject agent');
     }
   };
 
@@ -138,13 +155,23 @@ export default function AdminAgentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Button 
                         size="sm" 
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleVerify(agent.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white mr-2"
+                        onClick={(e) => { e.stopPropagation(); handleVerify(agent.id); }}
                         disabled={!agent.kyc_verified}
                         title={!agent.kyc_verified ? "User must complete KYC first" : "Approve Agent Application"}
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Approve
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={(e) => { e.stopPropagation(); handleReject(agent.id); }}
+                        title="Reject Agent Application"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Reject
                       </Button>
                     </td>
                   </tr>
@@ -192,13 +219,22 @@ export default function AdminAgentsPage() {
                   <CheckCircle className="w-3 h-3" />
                   Background Check Authorized
                 </div>
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700 mt-4"
-                  onClick={() => handleVerify(selectedAgent.id)}
-                  disabled={!selectedAgent.kyc_verified}
-                >
-                  Confirm & Verify Agent
-                </Button>
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => handleVerify(selectedAgent.id)}
+                    disabled={!selectedAgent.kyc_verified}
+                  >
+                    Confirm & Verify
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleReject(selectedAgent.id)}
+                  >
+                    Reject Application
+                  </Button>
+                </div>
               </div>
             </Card>
           ) : (

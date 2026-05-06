@@ -35,7 +35,7 @@ gcloud run deploy api-gateway \
   --timeout 60 \
   --set-env-vars="ALLOWED_ORIGINS=https://$WEB_DOMAIN,http://localhost:3000,http://localhost:5173" \
   --allow-unauthenticated \
-  --update-env-vars="CORE_SERVICE_URL=https://backend-prod-kqr3pbuu3a-uc.a.run.app,SPATIAL_SERVICE_URL=https://spatial-service-prod-kqr3pbuu3a-uc.a.run.app,AI_SERVICE_URL=https://ai-service-prod-kqr3pbuu3a-uc.a.run.app"
+  --update-env-vars="CORE_SERVICE_URL=https://backend-$PROJECT_ID.run.app,SPATIAL_SERVICE_URL=https://spatial-service-$PROJECT_ID.run.app,AI_SERVICE_URL=https://ai-service-$PROJECT_ID.run.app"
 
 cd ../..
 

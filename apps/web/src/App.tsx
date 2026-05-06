@@ -65,7 +65,7 @@ function App() {
                 <Route path="/map" element={<MapPage />} />
                 <Route path="/insights" element={<MarketInsightsDashboard />} />
                 <Route path="/sell" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><SellerDashboard /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['owner', 'agent']}><DashboardPage /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/apply-role" element={<RoleApplicationPage />} />
                 <Route path="/kyc" element={<KycPage />} />
                 <Route path="/chat" element={<ChatPage />} />

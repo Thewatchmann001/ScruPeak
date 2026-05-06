@@ -50,6 +50,9 @@ async def list_lands(
         stmt = stmt.where(Land.title.ilike(f"%{q}%") | Land.description.ilike(f"%{q}%"))
     if status:
         stmt = stmt.where(Land.status == status)
+    else:
+        # Hardened production: default to only showing AVAILABLE properties to the public
+        stmt = stmt.where(Land.status == LandStatus.AVAILABLE)
     if region:
         stmt = stmt.where(Land.region.ilike(f"%{region}%"))
     if min_price:
