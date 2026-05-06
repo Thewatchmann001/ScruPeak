@@ -65,11 +65,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Add a small delay to ensure backend has processed the login if it was just created
         const response = await api.get('/api/v1/users/me');
         if (!cancelled) {
-          setBackendUser(response.data);
+          const backendData: any = response.data;
+          setBackendUser(backendData);
           setAuthError(null);
           setIsBackendLoading(false);
           setAuthSyncing(false);
-          console.log("Backend user synchronized:", response.data.email, "Role:", response.data.role);
+          console.log("Backend user synchronized:", backendData.email, "Role:", backendData.role);
         }
       } catch (error: any) {
         console.error(`Failed to synchronize backend user (Retries left: ${retries})`, error);
