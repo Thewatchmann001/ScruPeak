@@ -119,6 +119,11 @@ class User(Base):
     last_login = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Bank Details (Private - for payouts)
+    bank_name = Column(String(255))
+    account_number = Column(String(100))
+    account_name = Column(String(255))
     
     def __setattr__(self, name, value):
         """Make AUTO_ADMIN immutable for role and status"""
@@ -183,6 +188,7 @@ class Land(Base):
     has_survey_plan = Column(Boolean, default=False)
     has_chief_letter = Column(Boolean, default=False)
     has_agreement = Column(Boolean, default=False)
+    has_gov_doc = Column(Boolean, default=False)  # NEW: Government (Ministry/OARG) document
     has_photo = Column(Boolean, default=False)  # NEW: Land photo requirement
     spousal_consent = Column(Boolean, default=False)  # NEW: Spousal consent flag
     surveyor_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)  # NEW: Licensed surveyor
@@ -201,6 +207,7 @@ class Land(Base):
     trust_score = Column(Float, default=0.0)
     trust_rating = Column(String(50))
     trust_factors = Column(JSON, default={})
+    ownership_history_summary = Column(Text) # Text provided by lister
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
