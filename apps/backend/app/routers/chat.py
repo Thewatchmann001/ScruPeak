@@ -33,20 +33,17 @@ async def send_message(
 ):
     """Send chat message with fraud detection"""
     
-    # Fraud detection logic (simplified)
-    fraud_alert = False
-    fraud_reason = None
+    # Jems AI Oversight
+    from app.services.ai_service import AIService
+    audit_result = await AIService.audit_chat(message_data.message, str(current_user.id))
     
-    # Check for external links
-    contains_external_link = "http://" in message_data.message or "https://" in message_data.message
+    fraud_alert = audit_result.get("fraud_alert", False)
+    fraud_reason = audit_result.get("fraud_reason")
     
-    # Check for phone numbers
+    # Check for external links/phones (already done by AI but for DB fields)
+    contains_external_link = "http" in message_data.message
     import re
     contains_phone = bool(re.search(r'(\d{10}|\+\d{1,3})', message_data.message))
-    
-    if contains_external_link or contains_phone:
-        fraud_alert = True
-        fraud_reason = "Suspicious content detected"
     
     new_message = ChatMessage(
         chat_id=message_data.chat_id,
@@ -63,7 +60,7 @@ async def send_message(
     await db.commit()
     await db.refresh(new_message)
     
-    logger.info(f"Message sent: {new_message.id} (fraud_alert: {fraud_alert})")
+    logger.info(f"Message sent: {new_message.id} (Jems AI Alert: {fraud_alert})")
     
     return new_message
 

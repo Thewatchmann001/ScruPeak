@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { VerificationBadge, VerificationIndicator } from "@/components/verification/VerificationUI";
 import { landService } from "@/services/landService";
 import { Button } from "@/components/ui/Button";
 import { AlertTriangle, X } from "lucide-react";
 import { useToast } from "@/context/ToastProvider";
+import { InteractiveMap } from "@/components/map/InteractiveMap";
 
 // Extended interface to include status
 interface LandDetailProps {
@@ -20,9 +21,15 @@ interface LandDetailProps {
   };
   size?: number;
   sizeUnit?: "sqm" | "acres";
+    latitude?: number;
+    longitude?: number;
+    ownership_history_summary?: string;
+    bank_name?: string;
+    account_number?: string;
+    account_name?: string;
+    verificationScore: number;
   purpose?: string;
   price?: number;
-  verificationScore?: number;
   ownership?: {
     familyName: string;
     yearsHeld: number;
@@ -43,9 +50,55 @@ export default function LandDetailPage(props: LandDetailProps) {
   const [loading, setLoading] = useState(!props.id && !!paramId);
   const [showObjectionModal, setShowObjectionModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<"overview" | "documents" | "intelligence">("overview");
+  const navigate = useNavigate();
+  const [showCheckout, setShowCheckout] = useState(false);
   
   // Objection Form State
   const [objectionReason, setObjectionReason] = useState("");
+  const [objectionDocs, setObjectionDocs] = useState<File[]>([]);
+
+  const handleStartChat = async () => {
+    try {
+      const res = await api.post(`/api/v1/chat/start/${land.id}`);
+      navigate(`/chat?chat_id=${res.data.chat_id}`);
+    } catch (err) {
+      showToast("Failed to start chat", "error");
+    }
+  };
+
+  const handleBuy = async () => {
+    setShowCheckout(true);
+  };
+
+  const confirmPurchase = async () => {
+    try {
+      // 1. Create escrow
+      const escrowRes = await api.post("/api/v1/escrow", {
+        land_id: land.id,
+        seller_id: land.owner_id || "00000000-0000-0000-0000-000000000000",
+        amount: land.price
+      });
+      
+      const escrowId = escrowRes.data.id;
+      
+      // 2. Start Monime Checkout
+      const checkoutRes = await api.post("/api/v1/payments/monime/checkout", {
+        escrow_id: escrowId,
+        currency: "SLE"
+      });
+      
+      showToast("Escrow created! Redirecting to Monime...", "success");
+      
+      // 3. Redirect to Monime
+      if (checkoutRes.data.redirectUrl) {
+          window.location.href = checkoutRes.data.redirectUrl;
+      }
+      
+      setShowCheckout(false);
+    } catch (err) {
+      showToast("Failed to initiate purchase", "error");
+    }
+  };
   const [submittingObjection, setSubmittingObjection] = useState(false);
   const { showToast } = useToast();
 
@@ -70,7 +123,7 @@ export default function LandDetailPage(props: LandDetailProps) {
             sizeUnit: "sqm",
             purpose: "Residential",
             price: 45000,
-            verificationScore: 92,
+            verificationScore: 9.2,
             ownership: {
                 familyName: "Kamara Family",
                 yearsHeld: 45,
@@ -119,7 +172,7 @@ export default function LandDetailPage(props: LandDetailProps) {
   // Fallback if no data
   if (!land.location) return <div className="min-h-screen flex items-center justify-center">Land not found</div>;
 
-  const riskLevel = (land.verificationScore || 0) >= 80 ? "low" : (land.verificationScore || 0) >= 50 ? "medium" : "high";
+  const riskLevel = (land.verificationScore || 0) >= 8.0 ? "low" : (land.verificationScore || 0) >= 5.0 ? "medium" : "high";
 
   return (
     <div className="min-h-screen bg-neutral-50 relative">
@@ -170,23 +223,32 @@ export default function LandDetailPage(props: LandDetailProps) {
       )}
 
       {/* Map Section */}
-      {land.mapImage && (
-        <div className="h-96 bg-neutral-200 relative overflow-hidden">
-          <img
-            src={land.mapImage}
-            alt="Land map"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-4 right-4 flex gap-2">
-            <button className="px-4 py-2 bg-white rounded-lg shadow-soft text-sm font-medium hover:bg-neutral-50">
-              Satellite
-            </button>
-            <button className="px-4 py-2 bg-white rounded-lg shadow-soft text-sm font-medium hover:bg-neutral-50">
-              Terrain
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="h-96 bg-neutral-200 relative overflow-hidden">
+        <InteractiveMap
+          listings={[{
+            id: land.id || "1",
+            location: {
+              ...land.location!,
+              coordinates: [8.456, -13.123], // [lat, lng]
+              bounds: [
+                [8.455, -13.124], 
+                [8.455, -13.122], 
+                [8.457, -13.122], 
+                [8.457, -13.124]
+              ] // Polygon bounds derived from survey
+            },
+            price: land.price || 0,
+            size: land.size || 0,
+            sizeUnit: land.sizeUnit || "sqm",
+            purpose: land.purpose || "Residential",
+            verificationScore: (land.verificationScore || 0) * 10,
+          }]}
+          selectedListingId={land.id}
+          height="100%"
+          mapType="satellite"
+          showControls={true}
+        />
+      </div>
 
       <div className="max-w-5xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -304,6 +366,14 @@ export default function LandDetailPage(props: LandDetailProps) {
                       </span>
                     </div>
                   </div>
+                  {land.ownership_history_summary && (
+                    <div className="mt-4 pt-4 border-t border-neutral-100">
+                      <p className="text-xs text-neutral-500 uppercase font-semibold mb-2">Historical Chain of Title</p>
+                      <p className="text-sm text-neutral-700 leading-relaxed italic">
+                        "{land.ownership_history_summary}"
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Risks */}
@@ -436,11 +506,17 @@ export default function LandDetailPage(props: LandDetailProps) {
 
             {/* CTA */}
             <div className="space-y-3">
-              <button className="w-full py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-soft">
-                Make Inquiry
+              <button 
+                onClick={handleBuy}
+                className="w-full py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-soft"
+              >
+                Buy This Property
               </button>
-              <button className="w-full py-3 border border-neutral-300 text-neutral-700 font-semibold rounded-lg hover:bg-neutral-50 transition-colors">
-                Save to List
+              <button 
+                onClick={handleStartChat}
+                className="w-full py-3 border border-neutral-300 text-neutral-700 font-semibold rounded-lg hover:bg-neutral-50 transition-colors"
+              >
+                Chat with Lister
               </button>
             </div>
 
@@ -503,6 +579,70 @@ export default function LandDetailPage(props: LandDetailProps) {
                     </Button>
                 </div>
             </div>
+        </div>
+      )}
+      {/* Checkout Modal */}
+      {showCheckout && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-neutral-900">Secure Checkout</h3>
+                <button 
+                  onClick={() => setShowCheckout(false)}
+                  className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-neutral-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex justify-between text-neutral-600">
+                  <span>Parcel Price</span>
+                  <span className="font-medium text-neutral-900">
+                    SLE {land.price?.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between text-neutral-600">
+                  <div className="flex items-center gap-1.5">
+                    <span>Platform Fee</span>
+                    <span className="px-1.5 py-0.5 bg-primary-50 text-primary-700 text-[10px] font-bold rounded uppercase tracking-wider">5%</span>
+                  </div>
+                  <span className="font-medium text-neutral-900">
+                    SLE {((land.price || 0) * 0.05).toLocaleString()}
+                  </span>
+                </div>
+                <div className="pt-4 border-t border-neutral-100 flex justify-between items-center">
+                  <span className="font-bold text-neutral-900">Total Amount</span>
+                  <span className="text-xl font-black text-primary-600">
+                    SLE {((land.price || 0) * 1.05).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 mb-8">
+                <div className="flex gap-3">
+                  <div className="p-1 bg-amber-100 rounded-full h-fit">
+                    <AlertTriangle className="w-4 h-4 text-amber-700" />
+                  </div>
+                  <div className="text-sm text-amber-800 leading-relaxed">
+                    Money will be held in <strong>ScruPeak Escrow</strong>. 
+                    Funds are only released to the seller after document verification is complete.
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={confirmPurchase}
+                className="w-full py-4 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 active:scale-[0.98]"
+              >
+                Pay & Start Escrow
+              </button>
+              <p className="text-center text-xs text-neutral-400 mt-4">
+                Secured by Jems AI Monitoring
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

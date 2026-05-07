@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+from decimal import Decimal
+
 @router.post(
     "",
     response_model=EscrowResponse,
@@ -27,7 +29,7 @@ async def create_escrow(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create new escrow for land transaction"""
+    """Create new escrow for land transaction with 5% platform fee"""
     
     # Verify land exists
     result = await db.execute(
@@ -40,11 +42,18 @@ async def create_escrow(
             detail="Land property not found"
         )
     
+    # Calculate fees
+    platform_fee = Decimal(str(escrow_data.amount)) * Decimal('0.05')
+    seller_payout = Decimal(str(escrow_data.amount)) - platform_fee
+    
     new_escrow = Escrow(
         land_id=escrow_data.land_id,
         buyer_id=current_user.id,
         seller_id=escrow_data.seller_id,
-        amount=escrow_data.amount
+        amount=escrow_data.amount,
+        platform_fee_amount=platform_fee,
+        seller_payout_amount=seller_payout,
+        status=EscrowStatus.PENDING
     )
     
     db.add(new_escrow)

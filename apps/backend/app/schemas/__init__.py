@@ -109,6 +109,13 @@ class UserResponse(UserBase):
         }
 
 
+class SellerApplicationCreate(BaseModel):
+    """Schema for landowner application with bank details"""
+    bank_name: str = Field(..., min_length=2, max_length=100)
+    account_number: str = Field(..., min_length=5, max_length=50)
+    account_name: str = Field(..., min_length=2, max_length=255)
+
+
 # ============================================================================
 # LAND SCHEMAS
 # ============================================================================
@@ -134,8 +141,12 @@ class LandBase(BaseModel):
     has_survey_plan: bool = False
     has_chief_letter: bool = False
     has_agreement: bool = False
+    has_gov_doc: bool = False  # NEW
     spousal_consent: bool = False  # NEW
     surveyor_id: Optional[UUID] = None  # NEW
+    
+    # Ownership History
+    ownership_history_summary: Optional[str] = None
 
 
 class LandCreate(LandBase):

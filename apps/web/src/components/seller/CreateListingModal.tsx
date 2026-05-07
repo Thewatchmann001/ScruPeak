@@ -27,6 +27,7 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
     longitude: '',
     spousal_consent: false,
     surveyor_id: '',
+    ownership_history_summary: '',
   });
 
   const [files, setFiles] = useState<{
@@ -73,6 +74,9 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
       formPayload.append('longitude', formData.longitude);
       formPayload.append('spousal_consent', formData.spousal_consent.toString());
       if (formData.surveyor_id) formPayload.append('surveyor_id', formData.surveyor_id);
+      
+      // Ownership
+      if (formData.ownership_history_summary) formPayload.append('ownership_history_summary', formData.ownership_history_summary);
 
       // Files
       if (!files.survey_plan) throw new Error("Survey Plan is required");
@@ -232,6 +236,18 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ownership History</label>
+              <textarea
+                name="ownership_history_summary"
+                value={formData.ownership_history_summary}
+                onChange={handleChange}
+                rows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Briefly describe the chain of ownership (e.g. Inherited from father in 1995, father bought from Chief in 1970)"
+              />
             </div>
 
             {/* Compliance Section */}

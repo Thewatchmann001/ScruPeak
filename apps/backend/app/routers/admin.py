@@ -28,6 +28,46 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Admin"])
 
 
+@router.post(
+    "/users/{user_id}/approve-seller",
+    response_model=UserResponse,
+    summary="Approve landowner application"
+)
+async def approve_seller_application(
+    user_id: UUID,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Approve user to become a landowner (seller)"""
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    if not user.has_pending_landowner_application:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User has no pending landowner application"
+        )
+    
+    user.role = UserRole.OWNER
+    user.has_pending_landowner_application = False
+    user.status = UserStatus.VERIFIED # Sellers must be verified
+    
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    
+    logger.info(f"Admin {current_user.id} approved landowner application for user {user_id}")
+    return user
+
+
 @router.get(
     "/users",
     response_model=List[UserResponse],
@@ -70,6 +110,54 @@ async def get_user_kyc_status(
         "kyc_verified": user.kyc_verified,
         "verified_at": user.kyc_verified_at
     }
+
+
+@router.post(
+    "/escrows/{escrow_id}/release",
+    summary="Release escrow funds to seller"
+)
+async def release_escrow_funds(
+    escrow_id: UUID,
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Admin releases funds from escrow to seller's account after docs are arranged"""
+    result = await db.execute(
+        select(Escrow).where(Escrow.id == escrow_id)
+    )
+    escrow = result.scalars().first()
+    
+    if not escrow:
+        raise HTTPException(status_code=404, detail="Escrow not found")
+        
+    if escrow.status != EscrowStatus.ACTIVE:
+        raise HTTPException(status_code=400, detail="Only active escrows can be released")
+        
+    # Fetch seller to get bank details
+    seller_result = await db.execute(
+        select(User).where(User.id == escrow.seller_id)
+    )
+    seller = seller_result.scalars().first()
+    
+    if not seller or not seller.bank_name:
+        raise HTTPException(status_code=400, detail="Seller bank details missing. Cannot release funds.")
+        
+    # Mark as completed
+    escrow.status = EscrowStatus.COMPLETED
+    escrow.completed_at = datetime.utcnow()
+    
+    # In production, trigger Monime payout here:
+    # MonimeClient().payout(
+    #     destination={"type": "bank", "bank_name": seller.bank_name, "account_number": seller.account_number, "account_name": seller.account_name},
+    #     amount_minor=to_minor_units(escrow.seller_payout_amount),
+    #     currency="SLE"
+    # )
+    
+    db.add(escrow)
+    await db.commit()
+    await db.refresh(escrow)
+    
+    return {"message": "Funds released successfully", "escrow_id": str(escrow_id)}
 
 
 @router.get(
@@ -509,18 +597,12 @@ async def approve_land(
         # Recalculate Trust Score upon Admin Approval
         from app.services.trust_score import calculate_trust_score
 
-        # Check provided mandatory docs (Max 4: Survey, Deed, Consent, Photo)
-        provided_count = 0
-        if land.has_survey_plan: provided_count += 1
-        if land.has_agreement: provided_count += 1 # Deed
-        if land.has_chief_letter: provided_count += 1 # Consent proxy
-        if getattr(land, 'has_photo', False): provided_count += 1
-
         ts_result = calculate_trust_score(
-            mandatory_docs_provided=provided_count,
-            admin_verified=True,
-            kyc_completeness=1.0 if land.owner and land.owner.kyc_verified else 0.0,
-            land_type="formal" if land.region and land.region.lower() in ["freetown", "western area"] else "traditional"
+            has_buyer_seller_doc=getattr(land, 'has_agreement', False),
+            has_surveyor_doc=getattr(land, 'has_survey_plan', False),
+            has_chief_attestation=getattr(land, 'has_chief_letter', False),
+            has_gov_doc=getattr(land, 'has_gov_doc', False),
+            dispute_history=False # Default to false for new approval
         )
 
         land.trust_score = ts_result["score"]

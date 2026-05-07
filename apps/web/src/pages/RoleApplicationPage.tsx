@@ -96,6 +96,12 @@ const RoleApplicationPage = () => {
     digital_signature: '',
   });
 
+  const [sellerBank, setSellerBank] = useState({
+    bank_name: '',
+    account_number: '',
+    account_name: '',
+  });
+
   const photoInputRef = useRef<HTMLInputElement>(null);
   const licenseInputRef = useRef<HTMLInputElement>(null);
   const idDocInputRef = useRef<HTMLInputElement>(null);
@@ -268,7 +274,7 @@ const RoleApplicationPage = () => {
     setLoading(true);
 
     try {
-      await api.post('/api/v1/users/apply/seller', {});
+      await api.post('/api/v1/users/apply/seller', sellerBank);
       setSuccess('Your landowner application has been submitted for admin review.');
       await checkAuth();
       setTimeout(() => {
@@ -351,7 +357,7 @@ const RoleApplicationPage = () => {
       {/* Landowner Card */}
       <Card
         className="hover:border-primary transition-all cursor-pointer group flex flex-col border-2 shadow-sm"
-        onClick={() => navigate('/kyc')}
+        onClick={() => setView('seller_confirmation')}
       >
         <CardHeader className="text-center pt-8">
           <div className="mx-auto p-4 bg-blue-50 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-colors w-16 h-16 flex items-center justify-center mb-4">
@@ -473,6 +479,46 @@ const RoleApplicationPage = () => {
                         <div>
                             <p className="text-sm font-semibold text-slate-900">Zero Listing Fees</p>
                             <p className="text-xs text-slate-500">Only pay a platform fee when your land is successfully sold.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100 space-y-4">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                        <CreditCard size={18} className="text-primary" />
+                        Payout Bank Details
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-4">
+                        Provide the bank account where you wish to receive funds from ScruPeak Escrow.
+                    </p>
+                    
+                    <div className="grid gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Bank Name</label>
+                            <Input
+                                value={sellerBank.bank_name}
+                                onChange={e => setSellerBank({...sellerBank, bank_name: e.target.value})}
+                                placeholder="e.g. Rokel Commercial Bank"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Account Name</label>
+                            <Input
+                                value={sellerBank.account_name}
+                                onChange={e => setSellerBank({...sellerBank, account_name: e.target.value})}
+                                placeholder="Full name on bank account"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Account Number</label>
+                            <Input
+                                value={sellerBank.account_number}
+                                onChange={e => setSellerBank({...sellerBank, account_number: e.target.value})}
+                                placeholder="BBAN or Account No."
+                                required
+                            />
                         </div>
                     </div>
                 </div>

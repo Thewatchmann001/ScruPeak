@@ -29,6 +29,17 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleApproveSeller = async (userId: string) => {
+    try {
+      await api.post(`/api/v1/admin/users/${userId}/approve-seller`);
+      toast.success('Landowner application approved');
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to approve landowner', error);
+      toast.error('Failed to approve landowner');
+    }
+  };
+
   const handleBan = async (userId: string, isBanned: boolean) => {
     const action = isBanned ? 'unban' : 'ban';
     let reason = undefined;
@@ -112,6 +123,15 @@ export default function AdminUsersPage() {
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    {user.has_pending_landowner_application && (
+                      <button 
+                        onClick={() => handleApproveSeller(user.id)} 
+                        className="text-green-600 hover:text-green-900 mr-3"
+                        title="Approve Landowner Application"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                      </button>
+                    )}
                     <button 
                       onClick={() => handleBan(user.id, (user as any).is_banned)} 
                       className={`${(user as any).is_banned ? 'text-green-600 hover:text-green-900' : 'text-red-600 hover:text-red-900'}`}
