@@ -98,7 +98,7 @@ export function VerificationIndicator({
             r="45"
             stroke="currentColor"
             strokeWidth="3"
-            strokeDasharray={`${score * 2.83} 283`}
+            strokeDasharray={`${(score / 10) * 283} 283`}
             className={config.color}
             strokeLinecap="round"
           />
@@ -109,7 +109,7 @@ export function VerificationIndicator({
             dy="0.3em"
             className={`text-3xl font-bold ${config.color}`}
           >
-            {score}%
+            {score.toFixed(1)}
           </text>
         </svg>
       </div>

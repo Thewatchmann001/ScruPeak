@@ -10,7 +10,7 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.models import User, Agent, UserRole
-from app.schemas import UserResponse, UserUpdate, PaginatedResponse
+from app.schemas import UserResponse, UserUpdate, PaginatedResponse, SellerApplicationCreate
 from app.utils.auth import get_current_user, hash_password, verify_password
 
 logger = logging.getLogger(__name__)
@@ -101,11 +101,12 @@ async def get_user(
     summary="Apply to become a landowner (seller)"
 )
 async def apply_seller(
+    application_data: SellerApplicationCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Apply to become a landowner. Applications are sent to the admin dashboard for review.
+    Apply to become a landowner with bank details for payouts.
     """
     if current_user.role != UserRole.BUYER:
         raise HTTPException(
@@ -120,6 +121,10 @@ async def apply_seller(
         )
 
     current_user.has_pending_landowner_application = True
+    current_user.bank_name = application_data.bank_name
+    current_user.account_number = application_data.account_number
+    current_user.account_name = application_data.account_name
+    
     db.add(current_user)
     await db.commit()
     await db.refresh(current_user)

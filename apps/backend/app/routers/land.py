@@ -166,9 +166,13 @@ async def create_land(
     spousal_consent: bool = Form(False),
     surveyor_id: Optional[UUID] = Form(None),
     
+    # Ownership & Bank Details
+    ownership_history_summary: Optional[str] = Form(None),
+    
     # Files
     survey_plan: UploadFile = File(...),
     title_deed: UploadFile = File(...),
+    gov_doc: Optional[UploadFile] = File(None), # NEW
     land_photo: Optional[UploadFile] = File(None), # NEW
     spousal_consent_doc: Optional[UploadFile] = File(None),
     
@@ -213,6 +217,10 @@ async def create_land(
     survey_plan_url = await save_upload_file(survey_plan, "survey_plans")
     title_deed_url = await save_upload_file(title_deed, "title_deeds")
     
+    gov_doc_url = None
+    if gov_doc:
+        gov_doc_url = await save_upload_file(gov_doc, "gov_docs")
+
     photo_url = None
     if land_photo:
         photo_url = await save_upload_file(land_photo, "land_photos")
@@ -220,10 +228,6 @@ async def create_land(
     spousal_url = None
     if spousal_consent and spousal_consent_doc:
         spousal_url = await save_upload_file(spousal_consent_doc, "consent_docs")
-    elif spousal_consent and not spousal_consent_doc:
-        # If consent is claimed but no doc provided, warn or fail?
-        # For now, we allow it but flag it for admin review
-        pass
 
     # 3. Create Land Record - SPATIAL-FIRST REGISTRATION
     from app.utils.spatial import compute_grid_id, generate_parcel_id
@@ -256,9 +260,14 @@ async def create_land(
         # Validation Flags
         has_survey_plan=True,
         has_agreement=True, # Assumed via Title Deed
+        has_gov_doc=bool(gov_doc_url),
+        has_chief_letter=bool(spousal_url), # Proxy for traditional attestation in this context
         has_photo=bool(photo_url),
         spousal_consent=spousal_consent,
         surveyor_id=surveyor_id,
+        
+        # Ownership & Bank
+        ownership_history_summary=ownership_history_summary,
         
         # Spatial
         grid_id=str(grid_id),
@@ -289,6 +298,15 @@ async def create_land(
     db.add(doc_survey)
     db.add(doc_title)
     
+    if gov_doc_url:
+        doc_gov = Document(
+            land_id=new_land.id,
+            document_type=DocumentType.TAX_CERTIFICATE, # Proxy
+            file_url=gov_doc_url,
+            verification_notes="Government Document"
+        )
+        db.add(doc_gov)
+
     if spousal_url:
         doc_consent = Document(
             land_id=new_land.id,
@@ -301,61 +319,17 @@ async def create_land(
     await db.commit()
     await db.refresh(new_land)
     
-    logger.info(f"New land listed (Pending): {new_land.id} by {current_user.id}")
+    logger.info(f"New land listed (Direct): {new_land.id} by {current_user.id}")
     
-    # 5. AI Extraction from Documents (Owner, Boundary, History)
-    from app.services.document_extractor import DocumentExtractor
-    from app.models import OwnershipHistory
-
-    # Extract from Survey Plan (Highest accuracy for coordinates/boundary)
-    extraction_result = await DocumentExtractor.extract_details(survey_plan_url, "survey_plan")
-
-    if extraction_result["success"]:
-        ext_data = extraction_result["data"]
-
-        # Update Boundary if polygon found
-        coords = ext_data.get("coordinates")
-        if coords and len(coords) >= 3:
-            # Construct WKT Polygon: POLYGON((lon lat, lon lat, ...))
-            # Note: GeoAlchemy2/PostGIS expects (lon lat)
-            polygon_pts = ", ".join([f"{p[1]} {p[0]}" for p in coords])
-            # Ensure it's closed
-            if coords[0] != coords[-1]:
-                polygon_pts += f", {coords[0][1]} {coords[0][0]}"
-
-            new_land.boundary = f"SRID=4326;POLYGON(({polygon_pts}))"
-            logger.info(f"Land {new_land.id} boundary extracted from document")
-
-        # Record Ownership History
-        history = ext_data.get("ownership_history", [])
-        for item in history:
-            oh = OwnershipHistory(
-                land_id=new_land.id,
-                public_summary=f"{item.get('event')} - {item.get('date', 'Unknown Date')}",
-                # Placeholder for historical mapping if we had historical user IDs
-            )
-            db.add(oh)
-
-        # Verify Owner Name Consistency
-        extracted_owner = ext_data.get("owner_name", "")
-        if extracted_owner and current_user.name.lower() not in extracted_owner.lower():
-            logger.warning(f"Owner Name Mismatch: Document says '{extracted_owner}', User is '{current_user.name}'")
-            # We could flag this for admin or lower trust score
-            new_land.rejection_reason = f"Name mismatch: Document mentions {extracted_owner}"
-
-    # 6. Calculate Initial Trust Score
+    # 5. Calculate Initial Trust Score
     from app.services.trust_score import calculate_trust_score
 
-    # Check provided mandatory docs (Max 4: Survey, Deed, Consent, Photo)
-    provided_count = 2 # Survey and Deed are mandatory in this endpoint
-    if spousal_url: provided_count += 1
-    if photo_url: provided_count += 1
-
     ts_result = calculate_trust_score(
-        mandatory_docs_provided=provided_count,
-        admin_verified=False,
-        kyc_completeness=1.0 if current_user.kyc_verified else 0.0,
-        land_type="formal" if region.lower() in ["freetown", "western area"] else "traditional"
+        has_buyer_seller_doc=new_land.has_agreement,
+        has_surveyor_doc=new_land.has_survey_plan,
+        has_chief_attestation=new_land.has_chief_letter,
+        has_gov_doc=new_land.has_gov_doc,
+        dispute_history=False
     )
 
     new_land.trust_score = ts_result["score"]

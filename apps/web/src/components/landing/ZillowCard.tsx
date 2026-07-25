@@ -72,8 +72,8 @@ export const ZillowCard: React.FC<ZillowCardProps> = ({ listing }) => {
 
           {/* Trust Score Badge */}
           <div className="ml-auto flex items-center gap-1 bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
-            <span className="text-[9px] font-black text-primary">{Math.round(listing.trust_score * 100)}%</span>
-            <span className="text-[8px] font-bold text-primary/70 uppercase">Score</span>
+            <span className="text-[10px] font-black text-primary">{listing.trust_score.toFixed(1)}/10</span>
+            <span className="text-[8px] font-bold text-primary/70 uppercase ml-1">Trust</span>
           </div>
         </div>
 

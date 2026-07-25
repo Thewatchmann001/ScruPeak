@@ -1,66 +1,60 @@
 """
 Trust Score Engine for ScruPeak
 Calculates a dynamic trust score for land parcels based on multiple verification factors.
+Refined for West Africa production level (0-10 scale).
 """
 from typing import Dict, Any, Optional
 
 def calculate_trust_score(
-    mandatory_docs_provided: int = 0,  # Number of mandatory docs (Max 4: Survey, Deed, Consent, Photo)
-    admin_verified: bool = False,
-    document_chain_depth: int = 0,    # Spec: Tracing back two ownership generations
-    satellite_boundary_match: bool = False,
-    land_type: str = "traditional",  # formal or traditional
-    dispute_history: bool = False,
-    kyc_completeness: float = 0.0,    # 0.0 to 1.0
-    verified_by_surveyor: bool = False,
-    is_internal_listing: bool = True  # Platform vs external listing
+    has_buyer_seller_doc: bool = False,  # Previous & Current owner names (Score: 3)
+    has_surveyor_doc: bool = False,      # Name of surveyor included (Score: 3)
+    has_chief_attestation: bool = False, # Chief/traditional ruler (Score: 2.5)
+    has_gov_doc: bool = False,           # Ministry/OARG document (Score: 1.5)
+    dispute_history: bool = False        # Penalty factor
 ) -> Dict[str, Any]:
     """
-    Calculate trust score (0-100) based on verification factors.
-    Priority given to mandatory documents and admin verification as requested.
-
-    Factors:
-    - Mandatory Documents (Max 50): +12.5 per doc (Survey, Deed, Consent, Photo)
-    - Admin Verification (Max 30): +30 if verified
-    - Document chain depth (Max 10): +5 per generation (max 2)
-    - Satellite boundary match (Max 5): +5
-    - KYC completeness (Max 5): +5 * completeness
-    - Dispute history (Negative): -50
+    Calculate trust score (0-10) based on specific West African verification factors.
+    Total possible: 10.0
+    
+    Criteria:
+    1. Buyer-seller/Land owner document: 3.0
+    2. Surveyor document (Name important): 3.0
+    3. Chief/traditional ruler attestation: 2.5
+    4. Government (Ministry, OARG) document: 1.5
     """
-    score = 0
+    score = 0.0
 
-    # 1. Mandatory Documents (Max 50) - Core requirement
-    score += min(mandatory_docs_provided * 12.5, 50)
+    # 1. Buyer-seller document (3.0)
+    if has_buyer_seller_doc:
+        score += 3.0
 
-    # 2. Admin Verification (Max 30) - Core requirement
-    if admin_verified:
-        score += 30
+    # 2. Surveyor document (3.0)
+    if has_surveyor_doc:
+        score += 3.0
 
-    # 3. Document chain depth (Max 10)
-    score += min(document_chain_depth * 5, 10)
+    # 3. Chief/traditional ruler attestation (2.5)
+    if has_chief_attestation:
+        score += 2.5
 
-    # 4. Satellite boundary match (Max 5)
-    if satellite_boundary_match:
-        score += 5
+    # 4. Government (Ministry, OARG) document (1.5)
+    if has_gov_doc:
+        score += 1.5
 
-    # 5. KYC completeness (Max 5)
-    score += int(kyc_completeness * 5)
-
-    # 6. Dispute history (Penalty)
+    # 5. Penalty for dispute history
     if dispute_history:
-        score -= 50
+        score = max(0.0, score - 5.0)
 
-    # Normalize score between 0 and 100
-    final_score = max(0, min(100, score))
+    # Normalize score between 0 and 10
+    final_score = round(max(0.0, min(10.0, score)), 1)
 
     # Determine rating category
-    if final_score >= 85:
+    if final_score >= 8.5:
         rating = "Premium"
         color = "text-green-600"
-    elif final_score >= 60:
+    elif final_score >= 6.0:
         rating = "Standard"
         color = "text-blue-600"
-    elif final_score >= 30:
+    elif final_score >= 4.0:
         rating = "Basic"
         color = "text-amber-600"
     else:
@@ -69,16 +63,14 @@ def calculate_trust_score(
 
     return {
         "score": final_score,
+        "max_score": 10.0,
         "rating": rating,
         "color": color,
         "factors": {
-            "mandatory_docs_count": mandatory_docs_provided,
-            "admin_verified": admin_verified,
-            "document_chain_depth": document_chain_depth,
-            "satellite_match": satellite_boundary_match,
-            "land_type": land_type,
-            "dispute_history": dispute_history,
-            "kyc_completeness": kyc_completeness,
-            "is_internal": is_internal_listing
+            "has_buyer_seller_doc": has_buyer_seller_doc,
+            "has_surveyor_doc": has_surveyor_doc,
+            "has_chief_attestation": has_chief_attestation,
+            "has_gov_doc": has_gov_doc,
+            "dispute_history": dispute_history
         }
     }
