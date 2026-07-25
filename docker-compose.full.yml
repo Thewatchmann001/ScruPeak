@@ -20,6 +20,41 @@ services:
       timeout: 5s
       retries: 5
 
+  # PgBouncer Connection Pooler
+  pgbouncer:
+    build:
+      context: .
+      dockerfile: apps/backend/scripts/Dockerfile
+    container_name: scrupeak_pgbouncer
+    environment:
+      DATABASE_URL: postgis_db:5432
+    ports:
+      - "6432:6432"
+    depends_on:
+      postgis_db:
+        condition: service_healthy
+    networks:
+      - scrupeak-network
+
+  # Secure Admin Bootstrap (Init Container)
+  admin-bootstrap:
+    build:
+      context: ./services/parcel-service
+      dockerfile: Dockerfile
+    container_name: scrupeak_admin_bootstrap
+    environment:
+      DATABASE_URL_DIRECT: postgresql+asyncpg://scrupeak:scrupeak@postgis_db:5432/scrupeak
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@scrupeak.gov.sl}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
+    volumes:
+      - ./apps/backend/scripts:/app/scripts
+    command: python /app/scripts/bootstrap_admin.py
+    depends_on:
+      postgis_db:
+        condition: service_healthy
+    networks:
+      - scrupeak-network
+
   # API Gateway
   api-gateway:
     build:
@@ -35,15 +70,15 @@ services:
       OWNERSHIP_SERVICE_URL: http://ownership-service:3004
       OWNER_SERVICE_URL: http://owner-service:3005
       DB_HOST: postgis_db
-      DB_PORT: 5432
+      DB_PORT: 6432
       DB_USER: scrupeak
       DB_PASSWORD: scrupeak
       DB_NAME: scrupeak
     ports:
       - "3000:3000"
     depends_on:
-      postgis_db:
-        condition: service_healthy
+      pgbouncer:
+        condition: service_started
     networks:
       - scrupeak-network
     healthcheck:

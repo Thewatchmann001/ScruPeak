@@ -39,8 +39,8 @@ def poly_to_shapely(polygon: List[Tuple[float, float]]) -> Polygon:
 
 
 def analyze_spatial_relation(
-    parcel_a: ParcelIdentity,
-    parcel_b: ParcelIdentity
+    parcel_a: CompositeSpatialIdentity,
+    parcel_b: CompositeSpatialIdentity
 ) -> SpatialResult:
     """
     Deterministic spatial relationship analysis.
@@ -102,8 +102,8 @@ def analyze_spatial_relation(
 
 
 def detect_conflicts(
-    subject: ParcelIdentity,
-    others: List[ParcelIdentity]
+    subject: CompositeSpatialIdentity,
+    others: List[CompositeSpatialIdentity]
 ) -> List[Tuple[ParcelIdentity, SpatialResult]]:
     """
     Find all spatial conflicts for subject parcel.
@@ -124,7 +124,7 @@ def detect_conflicts(
 
 def is_valid_subdivision(
     parent: ParcelIdentity,
-    children: List[ParcelIdentity],
+    children: List[CompositeSpatialIdentity], # Changed from ParcelIdentity
     tolerance_pct: float = 1.0
 ) -> Tuple[bool, str]:
     """
@@ -172,21 +172,21 @@ def is_valid_subdivision(
 
 
 def grid_bounded_query(
-    parcels: List[ParcelIdentity],
+    parcels: List[CompositeSpatialIdentity],
     grid_key: str
-) -> List[ParcelIdentity]:
+) -> List[CompositeSpatialIdentity]:
     """
     Grid-bounded spatial query: return parcels in grid cell.
     
     Optimization: Cache by grid_key in governance layer.
     """
-    return [p for p in parcels if p.reference_grid.key() == grid_key]
+    return [p for p in parcels if p.grid_ref.key() == grid_key]
 
 
 def find_overlaps_in_grid(
-    parcel: ParcelIdentity,
-    grid_parcels: List[ParcelIdentity]
-) -> List[Tuple[ParcelIdentity, SpatialResult]]:
+    parcel: CompositeSpatialIdentity,
+    grid_parcels: List[CompositeSpatialIdentity]
+) -> List[Tuple[CompositeSpatialIdentity, SpatialResult]]:
     """
     Find all overlaps with parcel in same grid cell.
     

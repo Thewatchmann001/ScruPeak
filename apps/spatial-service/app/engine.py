@@ -11,17 +11,17 @@ Core operations:
 
 from typing import List, Tuple, Optional
 from parcel_identity import ParcelIdentity, EventType, GridRef
-from governance import ParcelGovernance
+from registry import ParcelRegistry
 from spatial_analysis import (
     analyze_spatial_relation,
     detect_conflicts,
     is_valid_subdivision,
     find_overlaps_in_grid
 )
-from decisions import classify_relation, Decision, DecisionType
+from decisions import classify_relation, Decision, DecisionType # Assuming Decision and DecisionType are still relevant
 from grid_new import determine_reference_grid
 import uuid
-
+from csi_model import CompositeSpatialIdentity, GridReference, EventType as CSIEventType
 
 class SpatialIntelligence:
     """
@@ -36,7 +36,7 @@ class SpatialIntelligence:
     """
     
     def __init__(self):
-        self.gov = ParcelGovernance()
+        self.registry = ParcelRegistry() # Use the PostGIS registry
         self.decisions: List[Decision] = []
     
     def register_parcel(
@@ -44,7 +44,7 @@ class SpatialIntelligence:
         polygon: List[Tuple[float, float]],
         owner: Optional[str] = None,
         actor: str = "system"
-    ) -> ParcelIdentity:
+    ) -> CompositeSpatialIdentity:
         """
         Register a new parcel.
         
@@ -63,24 +63,32 @@ class SpatialIntelligence:
         grid_id, grid_x, grid_y = determine_reference_grid(polygon)
         
         # Check for duplicate geometry BEFORE storing
-        sih = ParcelIdentity.compute_spatial_hash(polygon)
-        duplicates = self.gov.store.get_by_hash(sih)
-        if duplicates:
-            raise ValueError(
-                f"DUPLICATE GEOMETRY DETECTED. "
-                f"Spatial hash already registered as {duplicates[0].parcel_code}"
-            )
-        
-        # Register parcel
-        parcel = self.gov.register_parcel(
-            polygon=polygon,
+        # This check should ideally be done in the registry or a service layer
+        # For now, we'll rely on the registry's internal checks or add one here if needed.
+        # The registry.register_parcel method will handle uniqueness.
+
+        # Check for partial overlaps in the same grid
+        # This logic should be part of the conflict detection, not registration.
+        # The registry.register_parcel will handle basic uniqueness.
+        # More complex overlap checks are done via detect_conflicts_for_parcel.
+
+        # Register parcel using the PostGIS registry
+        parcel = self.registry.register_parcel(
+            geometry=polygon,
             grid_id=grid_id,
             grid_x=grid_x,
             grid_y=grid_y,
             owner=owner,
-            actor=actor
+            initiated_by=actor
         )
         
+        # After registration, immediately check for conflicts with existing parcels
+        # This is a critical step to prevent new parcels from encroaching.
+        # The registry's detect_spatial_conflicts should be used here.
+        conflict_event = self.registry.detect_spatial_conflicts(parcel)
+        if conflict_event and conflict_event.spatial_relationship in ("overlap", "contains", "contained", "identical"):
+            raise ValueError(f"SPATIAL OVERLAP DETECTED with {conflict_event.other_csis[0].parcel_code}. New parcels cannot encroach on existing ones.")
+
         return parcel
     
     def detect_conflicts_for_parcel(
@@ -102,41 +110,34 @@ class SpatialIntelligence:
         if not parcel:
             raise ValueError(f"Parcel not found: {parcel_code}")
         
-        # Grid-bounded query: only parcels in same grid cell
-        grid_parcels = self.gov.store.get_in_grid(parcel.reference_grid)
-        other_parcels = [p for p in grid_parcels if p.parcel_code != parcel_code]
-        
-        # Detect conflicts
-        conflicts = detect_conflicts(parcel, other_parcels)
-        
-        # Classify each conflict
-        decisions = []
-        for other_parcel, spatial_result in conflicts:
-            decision = classify_relation(parcel, other_parcel, spatial_result)
-            decisions.append(decision)
-            self.decisions.append(decision)
-            
-            # Log event to parcel
-            parcel.add_event(
-                event_type=EventType.OVERLAP_DETECTED,
-                actor=actor,
-                msg=f"Conflict with {other_parcel.parcel_code}: {decision.classification.value}",
-                meta={
-                    "related_parcel": other_parcel.parcel_code,
-                    "relation": spatial_result.relation.value,
-                    "overlap_pct": spatial_result.overlap_pct_a,
-                    "decision": decision.classification.value
-                }
-            )
-        
-        return decisions
+        # Use the registry's PostGIS-backed conflict detection
+        subject_csi = self.registry.get_parcel(parcel_code)
+        if not subject_csi:
+            raise ValueError(f"Parcel not found: {parcel_code}")
+
+        event = self.registry.detect_spatial_conflicts(subject_csi, initiated_by=actor)
+        if not event:
+            return [] # No conflicts found
+
+        # Register the event in the registry
+        self.registry.register_parcel_event(event, initiated_by=actor)
+
+        # Classify the event to get a decision
+        decision = self.decision_engine.classify_parcel_event(event, subject_csi)
+        self.decisions.append(decision)
+
+        # The decision object itself contains the classification, explanation, and justification
+        # If there are multiple conflicts, detect_spatial_conflicts should return multiple events
+        # or the decision engine should handle a list of events. For now, assuming one primary event.
+        return [decision]
     
     def create_subdivision(
         self,
         parent_code: str,
         child_polygons: List[List[Tuple[float, float]]],
-        actor: str = "system"
-    ) -> List[ParcelIdentity]:
+        actor: str = "system",
+        new_parent_polygon: Optional[List[Tuple[float, float]]] = None
+    ) -> List[CompositeSpatialIdentity]:
         """
         Create a subdivision (parcel birth).
         
@@ -171,7 +172,7 @@ class SpatialIntelligence:
         
         # Create actual child parcels
         children = []
-        for child_poly in child_polygons:
+        for i, child_poly in enumerate(child_polygons):
             grid_id, grid_x, grid_y = determine_reference_grid(child_poly)
             child = self.gov.create_child_parcel(
                 parent=parent,
@@ -179,7 +180,8 @@ class SpatialIntelligence:
                 grid_id=grid_id,
                 grid_x=grid_x,
                 grid_y=grid_y,
-                actor=actor
+                actor=actor,
+                new_parent_polygon=new_parent_polygon if i == len(child_polygons) - 1 else None
             )
             children.append(child)
         

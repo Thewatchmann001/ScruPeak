@@ -7,12 +7,12 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from app.engine import SpatialIntelligence
+from app.engine import SpatialIntelligence # Now the refactored SpatialIntelligence
 
 app = FastAPI(title="Spatial Service", version="1.0.0")
 
 # Initialize Engine
-spatial_engine = SpatialIntelligence()
+spatial_engine = SpatialIntelligence() # Use the refactored SpatialIntelligence
 
 class PolygonRequest(BaseModel):
     polygon: List[Tuple[float, float]]
@@ -27,7 +27,7 @@ def health():
 def register_parcel(request: PolygonRequest):
     try:
         parcel = spatial_engine.register_parcel(
-            polygon=request.polygon, 
+            polygon=request.polygon,
             owner=request.owner,
             actor=request.actor
         )

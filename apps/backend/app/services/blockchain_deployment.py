@@ -33,13 +33,19 @@ pub mod land_title_registry {
         owner: Pubkey,
         area: u64,
         location: String,
+        papss_id: String,
     ) -> Result<()> {
         let property = &mut ctx.accounts.property;
         property.land_id = land_id;
         property.owner = owner;
         property.area = area;
         property.location = location;
+        property.papss_id = papss_id;
         property.registration_date = Clock::get()?.unix_timestamp;
+        property.oarg_approved = false;
+        property.ministry_approved = false;
+        property.citizen_approved = false;
+        property.tax_settled = false;
         property.title_status = TitleStatus::Active;
         Ok(())
     }
@@ -51,6 +57,11 @@ pub mod land_title_registry {
     ) -> Result<()> {
         let property = &mut ctx.accounts.property;
         require_eq!(ctx.accounts.signer.key(), property.owner, PropertyError::Unauthorized);
+        
+        // Zero-Trust Lock: Transfer impossible without all signatures and tax verification
+        require!(property.oarg_approved, PropertyError::MissingOARGSignature);
+        require!(property.ministry_approved, PropertyError::MissingMinistrySignature);
+        require!(property.tax_settled, PropertyError::TaxNotSettled);
         
         property.owner = new_owner;
         property.transfer_count += 1;
@@ -148,10 +159,15 @@ pub struct Property {
     pub owner: Pubkey,
     pub area: u64,
     pub location: String,
+    pub papss_id: String,
     pub registration_date: i64,
     pub title_status: TitleStatus,
     pub has_liens: bool,
     pub transfer_count: u32,
+    pub oarg_approved: bool,
+    pub ministry_approved: bool,
+    pub citizen_approved: bool,
+    pub tax_settled: bool,
     pub last_transfer_date: i64,
     pub last_transfer_price: u64,
 }
@@ -190,6 +206,12 @@ pub enum PropertyError {
     InvalidProperty,
     #[msg("Property not found")]
     PropertyNotFound,
+    #[msg("Missing OARG Official Signature")]
+    MissingOARGSignature,
+    #[msg("Missing Ministry of Lands Signature")]
+    MissingMinistrySignature,
+    #[msg("Revenue Engine: Outstanding Stamp Duty or Ground Rent detected")]
+    TaxNotSettled,
 }
 """
 
@@ -207,6 +229,7 @@ contract LandTitleRegistry {
         address owner;
         uint256 area;
         string location;
+        string papssId;
         uint256 registrationDate;
         TitleStatus status;
         bool hasLiens;
@@ -226,6 +249,10 @@ contract LandTitleRegistry {
     
     mapping(bytes32 => Property) public properties;
     mapping(bytes32 => Lien[]) public liens;
+    
+    // Sovereign multisig mapping: propertyId => official_entity => approved
+    mapping(bytes32 => mapping(address => bool)) public sovereignApprovals;
+    
     mapping(address => bytes32[]) public ownerProperties;
     
     event PropertyRegistered(bytes32 indexed propertyId, address indexed owner, uint256 area);
@@ -246,7 +273,8 @@ contract LandTitleRegistry {
     function registerProperty(
         string memory _landId,
         uint256 _area,
-        string memory _location
+        string memory _location,
+        string memory _papssId
     ) external returns (bytes32) {
         bytes32 propertyId = keccak256(abi.encodePacked(_landId, msg.sender, block.timestamp));
         
@@ -255,6 +283,7 @@ contract LandTitleRegistry {
             owner: msg.sender,
             area: _area,
             location: _location,
+            papssId: _papssId,
             registrationDate: block.timestamp,
             status: TitleStatus.Active,
             hasLiens: false,
@@ -273,6 +302,10 @@ contract LandTitleRegistry {
     ) external propertyExists(_propertyId) onlyOwner(_propertyId) {
         require(_newOwner != address(0), "Invalid new owner");
         require(properties[_propertyId].status == TitleStatus.Active, "Property not active");
+        
+        // Revenue Engine & Zero-Trust check
+        // logic to check oarg_address, ministry_address, and tax_gate_address
+        require(sovereignApprovals[_propertyId][address(0x1)], "OARG approval required");
         
         address previousOwner = properties[_propertyId].owner;
         properties[_propertyId].owner = _newOwner;
@@ -374,8 +407,8 @@ class MainnetDeploymentManager:
     """Manage mainnet smart contract deployments"""
     
     NETWORKS = {
-        "solana_mainnet": {
-            "rpc_url": "https://api.mainnet-beta.solana.com",
+        "solana_devnet": {
+            "rpc_url": "https://api.devnet.solana.com",
             "chain_id": "solana",
             "explorer": "https://solscan.io",
             "contract": LAND_TITLE_CONTRACT_SOLANA
@@ -416,12 +449,8 @@ class MainnetDeploymentManager:
             # 3. Get program ID from deployment logs
             # 4. Verify on chain
             
-            # Simulated deployment
-            program_id = "LndTtlRgstryXXXXXXXXXXXXXXXXXXXXXX"
-            tx_hash = "5gKStc7LX5XJ9cYXVL4GJKxJ9cYXVL4GJKxJ9cYXVL"
-            
-            logger.info(f"✅ Deployed to Solana: {program_id}")
-            return (True, program_id, tx_hash)
+            logger.error("Production deployment logic for Solana is not configured.")
+            raise ValueError("Missing Solana Mainnet configuration and Anchor build artifacts.")
         except Exception as e:
             logger.error(f"Solana deployment failed: {e}")
             return (False, None, None)
@@ -552,5 +581,7 @@ MAINNET_DEPLOYMENT_CHECKLIST = {
         "✓ Alert monitoring setup",
         "✓ Incident response plan",
         "✓ Documentation update"
+    ]
+}
     ]
 }

@@ -171,7 +171,8 @@ class ParcelGovernance:
         grid_id: int,
         grid_x: int,
         grid_y: int,
-        actor: str = "system"
+        actor: str = "system",
+        new_parent_polygon: Optional[List[Tuple[float, float]]] = None
     ) -> ParcelIdentity:
         """
         Create a child parcel (subdivision).
@@ -201,6 +202,14 @@ class ParcelGovernance:
         # Store child
         self.store.store(child)
         
+        # If mother polygon needs to shrink/update due to subdivision
+        if new_parent_polygon:
+            parent.update_geometry(
+                new_geometry=new_parent_polygon,
+                actor=actor,
+                reason=f"Shrunk due to subdivision of {child.parcel_code}"
+            )
+
         # Update parent
         parent.register_child(child_code)
         parent.add_event(

@@ -1,32 +1,34 @@
 import logging
 from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Optional, List
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
+from app.core.config import get_settings
 from app.models import Land, LandStatus
 from app.models.taxation import TaxAssessment, TaxType, TaxStatus
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 class TaxService:
     """
     Service for calculating and managing land taxes (Stamp Duty, Ground Rent)
     """
-    
-    # Constants for tax calculation (should be in config/DB in real system)
-    STAMP_DUTY_RATE = 0.05  # 5% of property value
-    GROUND_RENT_PER_SQM = 2.50  # Currency units per sqm per year
+    STAMP_DUTY_RATE = Decimal(str(getattr(settings, "STAMP_DUTY_RATE", "0.05")))
+    GROUND_RENT_PER_SQM = Decimal(str(getattr(settings, "GROUND_RENT_PER_SQM", "2.50")))
     
     @staticmethod
-    async def calculate_stamp_duty(price: float) -> float:
+    async def calculate_stamp_duty(price: Decimal) -> Decimal:
         """Calculate Stamp Duty based on property price"""
         return price * TaxService.STAMP_DUTY_RATE
     
     @staticmethod
-    async def calculate_ground_rent(size_sqm: float) -> float:
+    async def calculate_ground_rent(size_sqm: Decimal) -> Decimal:
         """Calculate Ground Rent based on size"""
         return size_sqm * TaxService.GROUND_RENT_PER_SQM
 
@@ -34,25 +36,28 @@ class TaxService:
     async def assess_transfer_tax(
         db: AsyncSession, 
         land_id: UUID, 
-        transaction_price: float,
+        transaction_price: Decimal,
         buyer_id: UUID
     ) -> TaxAssessment:
         """
         Assess Stamp Duty/Transfer Tax upon sale.
         This should be called during the Escrow/Transfer process.
         """
-        amount = await TaxService.calculate_stamp_duty(transaction_price)
+        price_decimal = Decimal(str(transaction_price))
+        amount = await TaxService.calculate_stamp_duty(price_decimal)
         
         assessment = TaxAssessment(
             land_id=land_id,
             owner_id=buyer_id,  # Buyer pays stamp duty usually
             tax_type=TaxType.STAMP_DUTY,
             fiscal_year=str(datetime.utcnow().year),
-            assessed_value=transaction_price,
+            fiscal_year=str(datetime.now(timezone.utc).year),
+            assessed_value=float(price_decimal), # DB Column is float, but logic is Decimal
             tax_rate=TaxService.STAMP_DUTY_RATE,
             amount_due=amount,
             status=TaxStatus.PENDING,
             due_date=datetime.utcnow() + timedelta(days=30), # 30 days to pay
+            due_date=datetime.now(timezone.utc) + timedelta(days=30), # 30 days to pay
             generated_by="system_transfer_event"
         )
         
@@ -87,14 +92,14 @@ class TaxService:
         if existing:
             return existing
             
-        amount = await TaxService.calculate_ground_rent(float(land.size_sqm))
+        amount = await TaxService.calculate_ground_rent(Decimal(str(land.size_sqm)))
         
         assessment = TaxAssessment(
             land_id=land.id,
             owner_id=land.owner_id,
             tax_type=TaxType.GROUND_RENT,
             fiscal_year=current_year,
-            assessed_value=float(land.price or 0), # Estimated value
+            assessed_value=float(land.price or 0),
             tax_rate=0.0, # Flat rate per sqm
             amount_due=amount,
             status=TaxStatus.PENDING,

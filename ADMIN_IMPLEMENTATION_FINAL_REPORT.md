@@ -27,7 +27,7 @@ The admin role-based access control (RBAC) system has been **successfully implem
 
 #### 1. Admin Management Page ⭐ NEW
 - **Location**: `/admin/manage`
-- **Access**: Super admin only (josephemsamah@gmail.com)
+- **Access**: Super admin only (Defined by BOOTSTRAP_ADMIN_EMAIL env var)
 - **Features**:
   - View all existing admins with roles and permissions
   - Add new admins via form (email, name, role selection)
@@ -137,7 +137,7 @@ The admin role-based access control (RBAC) system has been **successfully implem
 
 ### Requirement 1: "Admin only open to only and automatically to josephemsamah@gmail.com"
 ✅ **COMPLETE**
-- Super admin email: `josephemsamah@gmail.com` (hardcoded)
+- Super admin email: Configurable via Environment Variable (Security Improvement)
 - Automatic access when signing in
 - Other admins cannot access `/admin/manage`
 - Protected routes with AdminLayout

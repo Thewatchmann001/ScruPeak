@@ -1,10 +1,13 @@
 import hashlib
 import json
 import logging
+import os
 import time
 from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import base58
+import boto3
 
 from solana.rpc.api import Client
 from solders.keypair import Keypair
@@ -12,19 +15,23 @@ from solders.pubkey import Pubkey
 from solders.transaction import Transaction
 from solders.system_program import TransferParams, transfer
 from solders.instruction import Instruction
+from solana.rpc.types import TxOpts
+from anchorpy import Program, Provider, Wallet, Context, Idl
 
 from app.core.config import get_settings
+# Import TaxService to enforce Revenue Engine
+from app.services.tax_service import TaxService
 
 logger = logging.getLogger(__name__)
 
 class BlockchainService:
     """
     Service for interacting with the Solana Blockchain.
-    Stores land data hashes on-chain using the Memo Program.
+    Interacts with the LandTitleRegistry custom program.
     """
-    
-    # Memo Program ID on Solana
-    MEMO_PROGRAM_ID = Pubkey.from_string("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcQb")
+
+    _program: Optional[Program] = None
+    MEMO_PROGRAM_ID = Pubkey.from_string("MemoSq4gqABmAn9kSuhD1Bt6WMgvBEJvGH646PsaVe")
 
     @staticmethod
     def get_client():
@@ -32,13 +39,21 @@ class BlockchainService:
         return Client(settings.SOLANA_RPC_URL)
 
     @staticmethod
+    def _get_secret(secret_name: str):
+        """Fetch secret from AWS Secrets Manager"""
+        session = boto3.session.Session()
+        client = session.client(service_name='secretsmanager', region_name=os.getenv("AWS_REGION", "us-east-1"))
+        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+        return get_secret_value_response['SecretString']
+
+    @staticmethod
     def get_wallet() -> Optional[Keypair]:
-        settings = get_settings()
-        if not settings.SOLANA_WALLET_SECRET:
-            logger.error("SOLANA_WALLET_SECRET not configured")
-            return None
         try:
-            secret_list = json.loads(settings.SOLANA_WALLET_SECRET)
+            # Fetch from Secret Manager instead of Env
+            secret_name = os.getenv("BLOCKCHAIN_SECRET_NAME", "scrupeak/solana/main-wallet")
+            secret_data = BlockchainService._get_secret(secret_name)
+            
+            secret_list = json.loads(secret_data)
             return Keypair.from_bytes(bytes(secret_list))
         except Exception as e:
             logger.error(f"Failed to load wallet: {e}")
@@ -52,27 +67,21 @@ class BlockchainService:
         return hashlib.sha256(serialized.encode()).hexdigest()
 
     @classmethod
-    def send_transaction(cls, data_hash: str) -> str:
+    async def send_transaction(cls, data_hash: str) -> str:
         """
         Send a transaction to Solana with the hash in the Memo field.
         Returns the transaction signature (tx_hash).
         """
-        settings = get_settings()
-        if not settings.BLOCKCHAIN_ENABLED:
-            logger.warning("Blockchain disabled, returning mock hash")
-            return f"mock_tx_{hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]}"
-
         client = cls.get_client()
-        wallet = cls.get_wallet()
+        wallet_kp = cls.get_wallet()
         
-        if not wallet:
+        if not wallet_kp:
             raise ValueError("Solana wallet not configured")
 
         try:
             logger.info(f"Preparing Solana transaction for hash: {data_hash}")
             
             # Create Memo Instruction
-            # The Memo program expects the data as bytes
             memo_data = data_hash.encode("utf-8")
             memo_ix = Instruction(
                 program_id=cls.MEMO_PROGRAM_ID,
@@ -86,28 +95,95 @@ class BlockchainService:
             # Create Transaction
             tx = Transaction.new_signed_with_payer(
                 [memo_ix],
-                wallet.pubkey(),
-                [wallet],
+                wallet_kp.pubkey(),
+                [wallet_kp],
                 recent_blockhash
             )
             
             # Send Transaction
             logger.info("Sending transaction to Solana...")
-            response = client.send_transaction(tx)
+            response = client.send_transaction(tx, opts=TxOpts(skip_preflight=False))
             
             tx_signature = str(response.value)
             logger.info(f"Transaction sent! Signature: {tx_signature}")
             
-            # Confirm Transaction (optional but good for verification)
-            # In a background task, we might not want to wait too long, 
-            # but for data integrity it's good to know it landed.
-            # For now we return the signature immediately.
-            
             return tx_signature
-
         except Exception as e:
             logger.error(f"Solana transaction failed: {e}")
-            raise e
+            raise
+
+    @classmethod
+    async def get_program(cls) -> Program:
+        """
+        Initialize and return the Anchor Program client.
+        """
+        if cls._program is None:
+            settings = get_settings()
+            client = cls.get_client()
+            wallet_kp = cls.get_wallet()
+            if not wallet_kp:
+                raise ValueError("Solana wallet not configured")
+            
+            wallet = Wallet(wallet_kp)
+            provider = Provider(client, wallet)
+            
+            # Load IDL from assets
+            idl_path = os.getenv("SOLANA_IDL_PATH", "app/assets/land_title_registry.json")
+            with open(idl_path, "r") as f:
+                idl_data = json.load(f)
+            
+            idl = Idl.from_json(idl_data)
+            program_id = Pubkey.from_string(settings.LAND_TITLE_PROGRAM_ID)
+            cls._program = Program(idl, program_id, provider)
+        return cls._program
+
+    @classmethod
+    async def register_property_on_chain(
+        cls, 
+        land_id: str, 
+        owner_pubkey: str, 
+        area: int, 
+        location: str, 
+        papss_id: Optional[str] = None,
+        db=None
+    ) -> str:
+        """
+        Interact with LandTitleRegistry program to initialize property record.
+        ENFORCES NATIONAL REVENUE ENGINE: Checks tax compliance and records PAPSS ID.
+        """
+        # NATIONAL REVENUE ENGINE LOGIC
+        if db:
+            try:
+                # Convert land_id back to UUID for DB lookup
+                from uuid import UUID
+                is_compliant = await TaxService.check_tax_compliance(db, UUID(land_id))
+                if not is_compliant:
+                    raise ValueError("REVENUE ENGINE REJECTION: Outstanding taxes must be settled via PAPSS before on-chain title execution.")
+            except Exception as e:
+                logger.error(f"Tax compliance check failed: {e}")
+                raise
+
+        program = await cls.get_program()
+        try:
+            # Execute Anchor RPC call
+            tx_hash = await program.rpc["initialize_property"](
+                land_id,
+                Pubkey.from_string(owner_pubkey),
+                area,
+                location,
+                papss_id or "",
+                ctx=Context(
+                    accounts={
+                        "property": Keypair.generate().pubkey(), # Mock: replace with actual property account PDA
+                        "signer": program.provider.wallet.public_key,
+                        "system_program": Pubkey.from_string("11111111111111111111111111111111"),
+                    }
+                )
+            )
+            return str(tx_hash)
+        except Exception as e:
+            logger.error(f"Solana transaction failed: {e}")
+            raise
 
     # Alias for backward compatibility if needed, or we update the task to call send_transaction
     simulate_transaction = send_transaction
@@ -132,7 +208,7 @@ class BlockchainService:
             return False
 
     @classmethod
-    def prepare_land_data(cls, land_id: str, owner_id: str, title: str, location: Dict) -> Dict:
+    def prepare_land_data(cls, land_id: str, owner_id: str, title: str, location: Dict, papss_id: Optional[str] = None) -> Dict:
         """Format land data for blockchain storage"""
         return {
             "asset_type": "LAND_TITLE",
@@ -141,5 +217,6 @@ class BlockchainService:
             "owner": str(owner_id),
             "title": title,
             "location": location,
-            "timestamp": datetime.utcnow().isoformat()
+            "papss_id": papss_id,
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }

@@ -1,4 +1,6 @@
 from typing import Any, Dict, Optional, List
+import hmac
+import hashlib
 from uuid import UUID
 import httpx
 import logging
@@ -44,6 +46,22 @@ class MonimeClient:
         if idempotency_key:
             hdrs["Idempotency-Key"] = idempotency_key
         return hdrs
+
+    async def verify_webhook_signature(self, raw_body: bytes, signature: Optional[str]) -> bool:
+        """
+        Verifies the HMAC signature from Monime to ensure request authenticity.
+        """
+        if not signature or not settings.MONIME_WEBHOOK_SECRET:
+            logger.error("Missing webhook signature or secret configuration.")
+            return False
+            
+        expected_sig = hmac.new(
+            settings.MONIME_WEBHOOK_SECRET.encode(),
+            raw_body,
+            hashlib.sha256
+        ).hexdigest()
+        
+        return hmac.compare_digest(expected_sig, signature)
 
     async def create_financial_account(self, currency: str, name: str, metadata: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         url = f"{self.base_url}/financial-accounts"
@@ -128,4 +146,3 @@ class MonimeClient:
                 "destination_account": tx.get("destinationAccountId"),
             },
         }
-

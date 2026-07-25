@@ -69,13 +69,34 @@ class ParcelIdentity:
     @staticmethod
     def compute_spatial_hash(polygon: List[Tuple[float, float]]) -> str:
         """
-        Compute deterministic SHA256 hash of polygon geometry.
+        Compute a starting-point and winding-order independent SHA256 hash.
         Used for duplicate/identity detection.
-        
-        Invariant: Same polygon always produces same hash.
         """
-        # Serialize polygon as ordered lat/lon pairs (high precision)
-        coords_str = ";".join([f"{lat:.10f},{lon:.10f}" for lat, lon in polygon])
+        if not polygon:
+            return ""
+
+        # 1. Normalize: Remove closing vertex
+        verts = polygon[:-1] if (len(polygon) > 1 and polygon[0] == polygon[-1]) else polygon
+        
+        # 2. Stringify nodes with fixed precision to handle floating point noise
+        nodes = [f"{lat:.10f},{lon:.10f}" for lat, lon in verts]
+        n = len(nodes)
+        if n == 0:
+            return ""
+        
+        # 3. Handle starting-point independence (Canonical Rotation)
+        forward_rotations = [nodes[i:] + nodes[:i] for i in range(n)]
+        canonical_f = min(forward_rotations)
+        
+        # 4. Handle winding-order independence (Reversal)
+        rev_nodes = nodes[::-1]
+        reverse_rotations = [rev_nodes[i:] + rev_nodes[:i] for i in range(n)]
+        canonical_r = min(reverse_rotations)
+        
+        # Final sequence is the lexicographically smaller of the two directions
+        final_canonical = min(canonical_f, canonical_r)
+        
+        coords_str = ";".join(final_canonical)
         return hashlib.sha256(coords_str.encode()).hexdigest()
     
     @staticmethod
@@ -85,31 +106,45 @@ class ParcelIdentity:
         
         Returns area in approximate square meters (rough; use proper projection for accuracy).
         """
-        if len(polygon) < 3:
+        if len(polygon) < 4:
             return 0.0
         
-        # Remove closing vertex if present
-        verts = polygon[:-1] if polygon[0] == polygon[-1] else polygon
-        
-        # Shoelace formula
         area = 0.0
-        for i in range(len(verts)):
-            lat1, lon1 = verts[i]
-            lat2, lon2 = verts[(i + 1) % len(verts)]
-            area += lat1 * lon2 - lat2 * lon1
+        n = len(polygon)
+        
+        for i in range(n - 1):
+            lat1, lon1 = polygon[i]
+            lat2, lon2 = polygon[i + 1]
+            # Sum of cross products: (x1*y2 - x2*y1)
+            area += (lon1 * lat2) - (lon2 * lat1)
         
         area = abs(area) / 2.0
         
-        # Very rough conversion from decimal degrees to sqm (~111km per degree)
-        area_sqm = area * 111000 * 111000
-        return area_sqm
+        # Conversion from square degrees to square meters (approx 12.3 billion sqm per sq degree)
+        # In Sierra Leone (~8.5°N), 1 degree lat is ~110.6km and 1 degree lon is ~110.1km.
+        return area * 110600 * 110100
+
+    def update_geometry(self, new_geometry: List[Tuple[float, float]], actor: str, reason: str):
+        """Update geometry while maintaining identity (ID)"""
+        if not self.validate_polygon(new_geometry):
+            raise ValueError("New geometry must be a valid closed polygon")
+
+        old_area = self.area
+        self.polygon = new_geometry
+        self.sih = self.compute_spatial_hash(new_geometry)
+        self.area = self.compute_polygon_area(new_geometry)
+
+        self.add_event(
+            event_type=EventType.PARCEL_GEOMETRY_CONFIRMED,
+            actor=actor,
+            msg=f"Geometry updated: {reason}",
+            metadata={"reason": reason, "prev_area": old_area, "new_area": self.area}
+        )
     
     @staticmethod
     def validate_polygon(polygon: List[Tuple[float, float]]) -> bool:
         """Validate closed polygon"""
-        if len(polygon) < 4:
-            return False
-        return polygon[0] == polygon[-1]
+        return len(polygon) >= 4 and polygon[0] == polygon[-1]
     
     def add_event(self, event_type: EventType, actor: str, msg: str, meta: Optional[Dict] = None):
         """Append event to immutable log"""

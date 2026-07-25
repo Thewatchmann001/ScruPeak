@@ -6,11 +6,17 @@ High-throughput caching for frequently accessed data
 import json
 import logging
 from typing import Any, Dict, List, Optional, Set
-from datetime import datetime, timedelta
+import collections
+from datetime import datetime, timedelta, timezone
 from enum import Enum
+import redis.asyncio as redis
 import asyncio
+import time
+import uuid
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 # ============================================================================
@@ -48,9 +54,9 @@ class CacheCategory(str, Enum):
 class RedisCacheService:
     """High-performance Redis caching service"""
     
-    def __init__(self, redis_url: str = "redis://localhost:6379/0"):
-        self.redis_url = redis_url
-        self.redis_client = None  # In production: aioredis.from_url()
+    def __init__(self, redis_url: Optional[str] = None):
+        self.redis_url = redis_url or settings.REDIS_URL
+        self.redis_client: Optional[redis.Redis] = None
         self.cache_stats = {
             "hits": 0,
             "misses": 0,
@@ -59,6 +65,9 @@ class RedisCacheService:
             "deletes": 0
         }
         self.cache_config = self._get_default_config()
+        # Event tracking for hot-key detection
+        self._event_counts = collections.Counter()
+        self._listener_task: Optional[asyncio.Task] = None
     
     def _get_default_config(self) -> Dict:
         """Default cache configuration"""
@@ -72,12 +81,43 @@ class RedisCacheService:
     async def initialize(self):
         """Initialize Redis connection"""
         try:
-            # In production: await aioredis.from_url(self.redis_url)
+            self.redis_client = redis.from_url(
+                self.redis_url, 
+                encoding="utf-8", 
+                decode_responses=True
+            )
             logger.info("✅ Redis cache initialized")
+            
+            # Start background listener for keyspace notifications to detect hot keys
+            self._listener_task = asyncio.create_task(self._listen_to_keyspace())
+            
         except Exception as e:
             logger.error(f"Redis initialization failed: {e}")
             raise
     
+    async def _listen_to_keyspace(self):
+        """Internal background task to track key activity via PubSub notifications"""
+        if not self.redis_client:
+            return
+            
+        try:
+            # Enable K: Keyspace, E: Keyevent, A: All events (writes, expires, etc.)
+            await self.redis_client.config_set("notify-keyspace-events", "KEA")
+            
+            pubsub = self.redis_client.pubsub()
+            # Subscribe to all key events in the default database (0)
+            await pubsub.psubscribe("__keyevent@0__:*")
+            
+            async for message in pubsub.listen():
+                if message["type"] == "pmessage":
+                    # In keyevent channels, the 'data' field contains the key name
+                    key_name = str(message.get("data"))
+                    self._event_counts[key_name] += 1
+        except asyncio.CancelledError:
+            logger.debug("Keyspace listener task stopping...")
+        except Exception as e:
+            logger.error(f"Redis keyspace listener error: {e}")
+
     async def get(
         self,
         key: str,
@@ -85,12 +125,13 @@ class RedisCacheService:
     ) -> Optional[Any]:
         """Get value from cache"""
         try:
-            # Simulated cache retrieval
-            if key in self.cache_stats:
-                self.cache_stats["hits"] += 1
-                logger.debug(f"Cache hit: {key}")
-                # In production: return await self.redis_client.get(key)
+            if not self.redis_client:
                 return None
+                
+            data = await self.redis_client.get(key)
+            if data:
+                self.cache_stats["hits"] += 1
+                return json.loads(data) if deserialize else data
             else:
                 self.cache_stats["misses"] += 1
                 return None
@@ -108,8 +149,12 @@ class RedisCacheService:
     ) -> bool:
         """Set value in cache"""
         try:
+            if not self.redis_client:
+                return False
+                
+            val = json.dumps(value) if serialize else value
+            await self.redis_client.setex(key, ttl, val)
             self.cache_stats["sets"] += 1
-            # In production: await self.redis_client.setex(key, ttl, value)
             logger.debug(f"Cache set: {key} (TTL: {ttl}s)")
             return True
         except Exception as e:
@@ -119,8 +164,10 @@ class RedisCacheService:
     async def delete(self, key: str) -> bool:
         """Delete key from cache"""
         try:
+            if not self.redis_client:
+                return False
+            await self.redis_client.delete(key)
             self.cache_stats["deletes"] += 1
-            # In production: await self.redis_client.delete(key)
             logger.debug(f"Cache delete: {key}")
             return True
         except Exception as e:
@@ -131,8 +178,13 @@ class RedisCacheService:
         """Delete keys matching pattern"""
         try:
             # In production: keys = await self.redis_client.keys(pattern)
-            # count = await self.redis_client.delete(*keys)
-            logger.info(f"Cache pattern delete: {pattern}")
+            keys = []
+            async for key in self.redis_client.scan_iter(match=pattern):
+                keys.append(key)
+            if keys:
+                count = await self.redis_client.delete(*keys)
+                logger.info(f"Cache pattern delete: {pattern}, deleted {count} keys")
+                return count
             return 0
         except Exception as e:
             logger.error(f"Cache pattern delete error: {e}")
@@ -141,26 +193,21 @@ class RedisCacheService:
     async def exists(self, key: str) -> bool:
         """Check if key exists"""
         try:
-            # In production: return await self.redis_client.exists(key)
-            return False
+            return await self.redis_client.exists(key)
         except Exception as e:
             logger.error(f"Cache exists error: {e}")
             return False
     
     async def get_ttl(self, key: str) -> int:
         """Get remaining TTL in seconds"""
-        try:
-            # In production: return await self.redis_client.ttl(key)
-            return -1
-        except Exception as e:
-            logger.error(f"Cache TTL error: {e}")
-            return -1
+        return await self.redis_client.ttl(key)
     
     async def incr(self, key: str, amount: int = 1) -> int:
         """Increment counter"""
         try:
-            # In production: return await self.redis_client.incrby(key, amount)
-            return 0
+            if not self.redis_client:
+                return 0
+            return await self.redis_client.incrby(key, amount)
         except Exception as e:
             logger.error(f"Cache incr error: {e}")
             return 0
@@ -168,8 +215,7 @@ class RedisCacheService:
     async def flush_all(self) -> bool:
         """Clear all cache"""
         try:
-            # In production: await self.redis_client.flushall()
-            logger.warning("⚠️  Flushing all cache!")
+            await self.redis_client.flushall()
             return True
         except Exception as e:
             logger.error(f"Cache flush error: {e}")
@@ -184,7 +230,7 @@ class RedisCacheService:
             **self.cache_stats,
             "total_requests": total,
             "hit_rate": f"{hit_rate:.1%}",
-            "memory_usage": "256MB (simulated)"
+            "memory_usage": "Dynamic"
         }
 
 
@@ -329,14 +375,51 @@ class CacheInvalidationManager:
 class RateLimitManager:
     """Manage API rate limiting using cache"""
     
-    def __init__(self, cache: RedisCacheService):
+    def __init__(self, cache: RedisCacheService, whitelist: Optional[List[str]] = None, default_burst: int = 0):
         self.cache = cache
+        # Initialize whitelist from settings or passed list
+        self.whitelist = set(whitelist or getattr(settings, "INTERNAL_IPS", []))
+        self.default_burst = default_burst
+
         self.limits = {
+            # Apply default burst capacity to all limits if not specified
             "search": {"requests": 100, "window": 60},  # 100 req/min
             "price_estimate": {"requests": 50, "window": 60},  # 50 req/min
             "fraud_check": {"requests": 200, "window": 60},  # 200 req/min
             "general": {"requests": 1000, "window": 3600}  # 1000 req/hour
         }
+
+        # Lua Script for Sliding Window Rate Limiting
+        for endpoint_config in self.limits.values():
+            endpoint_config.setdefault("burst", self.default_burst)
+
+        # KEYS[1]: The rate limit key
+        # ARGV[1]: Current timestamp (seconds)
+        # ARGV[2]: Window size (seconds)
+        # ARGV[3]: Max requests allowed
+        # ARGV[4]: Unique member ID to ensure uniqueness in ZSET
+        self._lua_sliding_window = """
+        local key = KEYS[1]
+        local now = tonumber(ARGV[1])
+        local window = tonumber(ARGV[2])
+        local limit = tonumber(ARGV[3])
+        local member = ARGV[4]
+
+        -- Remove elements outside the sliding window
+        redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+        
+        -- Count remaining elements
+        local current_count = redis.call('ZCARD', key)
+
+        if current_count < limit then
+            -- Add new request to the set
+            redis.call('ZADD', key, now, member)
+            redis.call('EXPIRE', key, window)
+            return {1, current_count + 1}
+        else
+            return {0, current_count}
+        end
+        """
     
     async def check_rate_limit(
         self,
@@ -344,33 +427,61 @@ class RateLimitManager:
         endpoint: str
     ) -> tuple[bool, Dict]:
         """Check if user has exceeded rate limit"""
+
+        # 1. IP Whitelisting Check
+        if user_id in self.whitelist:
+            return (True, {"allowed": True, "whitelisted": True})
         
         limit_config = self.limits.get(endpoint, self.limits["general"])
+        normal_limit = limit_config["requests"]
+        burst_capacity = limit_config.get("burst", self.default_burst)
+        total_capacity = normal_limit + burst_capacity
         key = f"rate_limit:{user_id}:{endpoint}"
         
-        current_count = await self.cache.get(key) or 0
+        if not self.cache.redis_client:
+            return (True, {"allowed": True, "cache_unavailable": True})
+
+        # 2. Sliding Window Execution via Lua
+        now = time.time()
+        unique_id = str(uuid.uuid4())
         
-        if current_count >= limit_config["requests"]:
+        try:
+            # Result returns [is_allowed, current_count]
+            result = await self.cache.redis_client.eval(
+                self._lua_sliding_window, 
+                1, 
+                key, 
+                now, 
+                limit_config["window"],
+                total_capacity, # Pass total_capacity to the Lua script
+                unique_id
+            )
+            
+            allowed = bool(result[0])
+            current_count = result[1]
+        except Exception as e:
+            logger.error(f"Rate limit Lua execution error: {e}")
+            return (True, {"allowed": True, "error": True})
+        
+        if not allowed:
             return (False, {
                 "limit_exceeded": True,
+                "limit": normal_limit,
+                "burst_limit": burst_capacity,
+                "total_capacity": total_capacity,
                 "current": current_count,
-                "limit": limit_config["requests"],
                 "reset_in_seconds": limit_config["window"]
             })
-        
-        # Increment counter
-        await self.cache.incr(key)
-        
-        # Set TTL on first request
-        if current_count == 0:
-            # In production: await self.cache.client.expire(key, limit_config["window"])
-            pass
-        
+
         return (True, {
             "allowed": True,
-            "current": current_count + 1,
-            "limit": limit_config["requests"],
-            "remaining": limit_config["requests"] - current_count - 1
+            "current": current_count,
+            "limit": normal_limit,
+            "burst_limit": burst_capacity,
+            "total_capacity": total_capacity,
+            "remaining": max(0, normal_limit - current_count),
+            "burst_remaining": max(0, total_capacity - current_count),
+            "using_burst": current_count > normal_limit
         })
 
 
@@ -386,7 +497,7 @@ class CacheAnalytics:
     
     async def get_performance_report(self) -> Dict:
         """Get comprehensive cache performance report"""
-        stats = self.cache.get_stats()
+        stats = await self.cache.get_stats()
         
         return {
             "timestamp": datetime.now().isoformat(),
@@ -423,6 +534,15 @@ class CacheAnalytics:
             {"key": "search:*", "access_count": 95000, "hit_ratio": 0.88},
             {"key": "market_data:*", "access_count": 42000, "hit_ratio": 0.95}
         ]
+        # Use real-time event counts from the keyspace listener
+        hot_keys = []
+        for key, count in self.cache._event_counts.most_common(10):
+            hot_keys.append({
+                "key": key,
+                "event_count": count,
+                "last_active": datetime.now().isoformat()
+            })
+        return hot_keys or [{"info": "No keyspace activity detected yet"}]
     
     async def _identify_cold_keys(self) -> List[Dict]:
         """Identify least frequently accessed keys"""
@@ -446,7 +566,7 @@ class CacheMonitoring:
     
     async def check_cache_health(self) -> Dict:
         """Check overall cache health"""
-        stats = self.cache.get_stats()
+        stats = await self.cache.get_stats()
         
         hit_rate = float(stats["hit_rate"].strip("%")) / 100
         status = "healthy" if hit_rate > self.alert_threshold else "degraded"

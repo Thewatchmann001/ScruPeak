@@ -112,9 +112,11 @@ class DocumentExtractor:
             # Lat: 8.484, Lon: -13.232
             r"(?:Lat|Latitude)[:\s]*([+-]?\d+\.\d+)[,\s]*(?:Lon|Longitude)[:\s]*([+-]?\d+\.\d+)",
             # 8.484 N, 13.232 W
-            r"([0-9]+\.[0-9]+)\s*[°]?\s*[Nn].*?([0-9]+\.[0-9]+)\s*[°]?\s*[WwEe]",
-            # UTM-like references (simple detection)
-            r"Easting[:\s]*(\d+).*?Northing[:\s]*(\d+)" 
+            r"([0-9]+\.[0-9]+)\s*[°]?\s*[Nn].*?([0-9]+\.[0-9]+)\s*[°]?\s*[WwEe]", 
+            # CONTINENTAL INTEROPERABILITY: African UTM coordinate standard detection
+            r"UTM\s*Zone\s*(\d+[A-Z])",
+            r"E[:\s]*(\d+\.?\d*)\s*m?.*?N[:\s]*(\d+\.?\d*)\s*m?",
+            r"Easting[:\s]*(\d+).*?Northing[:\s]*(\d+)"
         ]
         
         for pattern in patterns:

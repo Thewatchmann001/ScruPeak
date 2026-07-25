@@ -3,7 +3,7 @@ Composite Spatial Identity (CSI) Model
 
 Represents the complete, immutable identity of a land parcel:
 - geometry (closed polygon)
-- grid reference
+- grid reference (deterministic)
 - lineage (parent/child relationships)
 - verification history (append-only)
 """
@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 from enum import Enum
+from exceptions import InvalidGeometryError
 
 
 class EventType(Enum):
@@ -80,8 +81,12 @@ class CompositeSpatialIdentity:
     """
     CSI: The canonical identity of a land parcel.
     
+    Option B Architectural Policy:
+    - Identity (parcel_code) is persistent.
+    - Geometry is MUTABLE only via audited administrative processes (e.g., subdivision).
+    - All geometric changes must increment the 'version' and be logged in 'history'.
+
     Invariants:
-    - geometry is immutable (closed polygon)
     - parcel_code is unique and immutable
     - history is append-only
     - no overwrite allowed
@@ -91,11 +96,12 @@ class CompositeSpatialIdentity:
     csi_id: str  # unique, immutable UUID
     parcel_code: str  # human-readable code from grid + sequence
     
-    # Geometry (immutable)
+    # Geometry (Mutable via audited update_geometry)
     geometry: List[Tuple[float, float]]  # closed polygon: [(lat, lon), ...]
     
     # Grid reference
     grid_ref: GridReference
+    version: int = 1
     
     # Lineage
     parent_lineage: Optional[LineageLink] = None
@@ -137,28 +143,6 @@ class CompositeSpatialIdentity:
         if child_parcel_code not in self.child_parcel_codes:
             self.child_parcel_codes.append(child_parcel_code)
 
-    def update_geometry(self, new_geometry: List[Tuple[float, float]], actor: str, reason: str):
-        """
-        Update the geometry of the parcel (e.g., shrinking due to subdivision).
-        Note: While the CSI model states geometry is immutable, the ScruPeak
-        spec requires the 'mother polygon' to shrink while retaining its ID.
-        """
-        if new_geometry[0] != new_geometry[-1]:
-            raise ValueError("Geometry must be a closed polygon")
-
-        old_geometry = self.geometry
-        self.geometry = new_geometry
-
-        self.add_history_event(
-            event_type=EventType.PARCEL_GEOMETRY_CONFIRMED,
-            actor=actor,
-            description=f"Geometry updated: {reason}",
-            metadata={
-                "previous_vertices": len(old_geometry),
-                "new_vertices": len(new_geometry),
-                "reason": reason
-            }
-        )
     
     def is_closed_polygon(self) -> bool:
         """Validate that geometry is a closed polygon"""

@@ -1,70 +1,50 @@
 "use client";
 
+import React, { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { AlertCircle } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { Loader } from "lucide-react";
 
-const SUPER_ADMIN_EMAIL = "josephemsamah@gmail.com";
+// Environment variable for Super Admin identity
+const SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
-
-export function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, loading } = useAuth();
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading) {
-      // Check if user is authenticated
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+    // Wait for auth state to resolve
+    if (isLoading) return;
 
-      // Check if user is admin
-      if (user.role !== "admin") {
-        router.push("/");
-        return;
-      }
+    // 1. Unauthenticated users go to login
+    if (!user) {
+      router.push("/auth/login");
+      return;
     }
-  }, [user, loading, router]);
 
-  if (loading) {
+    // 2. Authenticated but not an admin goes home
+    if (user.role !== "admin") {
+      router.push("/");
+      return;
+    }
+
+    // 3. Authorization for Super Admin pages
+    const isManagePage = pathname.startsWith("/admin/manage");
+    if (isManagePage && user.email !== SUPER_ADMIN_EMAIL) {
+      router.push("/admin");
+    }
+  }, [user, isLoading, router, pathname]);
+
+  // Show loading state while checking permissions
+  if (isLoading || !user || user.role !== "admin") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Only allow super admin to access full admin panel
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
-  const isAdmin = user?.role === "admin";
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
-        <div className="max-w-md w-full mx-4 p-6 bg-red-500/5 border border-red-500/20 rounded-lg">
-          <div className="flex gap-3">
-            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
-            <div>
-              <h1 className="font-bold text-red-700">Access Denied</h1>
-              <p className="text-sm text-red-600 mt-1">
-                You do not have permission to access the admin panel.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-muted-foreground animate-pulse">Verifying credentials...</p>
       </div>
     );
   }
 
   return <>{children}</>;
 }
-
-export { SUPER_ADMIN_EMAIL };

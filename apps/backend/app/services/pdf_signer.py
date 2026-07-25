@@ -1,6 +1,6 @@
 import io
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Optional, Tuple
 from uuid import UUID
 
@@ -11,6 +11,9 @@ from reportlab.lib.colors import black, blue, red
 from reportlab.lib.units import inch
 
 from jose import jwt, jws
+from app.core.config import get_settings
+
+settings = get_settings()
 
 class PdfSignerService:
     """
@@ -87,7 +90,7 @@ class PdfSignerService:
                     y = sig.get('y', 100)
                     text = sig.get('text', '')
                     signer = sig.get('signer_name', 'Signer')
-                    date_str = sig.get('signed_at', datetime.utcnow()).strftime("%Y-%m-%d %H:%M")
+                    date_str = sig.get('signed_at', datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M")
                     
                     # Draw text signature
                     c.setFont("Helvetica", 10)
@@ -123,7 +126,7 @@ class PdfSignerService:
         
         c.setFont("Helvetica", 12)
         c.drawCentredString(width / 2, height - 130, f"Certificate Number: {certificate_number}")
-        c.drawCentredString(width / 2, height - 150, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        c.drawCentredString(width / 2, height - 150, f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
         
         # Line
         c.line(50, height - 170, width - 50, height - 170)
@@ -137,7 +140,7 @@ class PdfSignerService:
         c.setFont("Helvetica", 12)
         for sig in signatures:
             signer = sig.get('signer_name', 'Unknown')
-            date_str = sig.get('signed_at', datetime.utcnow()).strftime("%Y-%m-%d %H:%M:%S UTC")
+            date_str = sig.get('signed_at', datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M:%S UTC")
             ip = sig.get('ip_address', 'N/A')
             
             c.drawString(70, y, f"• Signed by {signer}")
@@ -167,10 +170,10 @@ class PdfSignerService:
         payload = {
             "req_id": str(request_id),
             "cert_num": certificate_number,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "signers": [s.get('signer_name') for s in signatures]
         }
-        token = jwt.encode(payload, PdfSignerService.PLATFORM_PRIVATE_KEY, algorithm=PdfSignerService.ALGORITHM)
+        token = jwt.encode(payload, settings.PDF_SIGNING_PRIVATE_KEY, algorithm=PdfSignerService.ALGORITHM)
         
         # Split token into lines
         chunks = [token[i:i+80] for i in range(0, len(token), 80)]

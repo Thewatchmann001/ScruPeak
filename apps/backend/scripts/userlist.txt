@@ -1,0 +1,2 @@
+"user" "pass"
+"scrupeak_admin" "admin_secret_pass"

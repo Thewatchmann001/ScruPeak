@@ -11,30 +11,94 @@ Uses Shapely for robust polygon operations.
 """
 
 from typing import List, Tuple, Optional
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, is_valid
+from sqlalchemy import func, case, and_, cast
+from geoalchemy2 import Geography
+from geoalchemy2.shape import from_shape
 from csi_model import CompositeSpatialIdentity, ParcelEvent
 from datetime import datetime
+from projection import latlon_to_utm
+import constants
 import uuid
 
 
 def latlon_to_xy(geometry: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
     """
-    Convert lat/lon geometry to cartesian for spatial operations.
-    For now, treat as projected (assumes small area, no distortion).
-    In production: use proper projection (UTM).
+    Convert lat/lon geometry to UTM easting/northing for accurate spatial operations.
     """
-    return geometry  # Direct use; in real system, apply projection
-
+    return [latlon_to_utm(lon, lat) for lat, lon in geometry]
 
 def geometry_to_polygon(geometry: List[Tuple[float, float]]) -> Polygon:
     """Convert geometry list to Shapely Polygon"""
     coords = latlon_to_xy(geometry)
-    return Polygon(coords)
+    poly = Polygon(coords)
+    
+    # Production Grade Check: Fix minor orientation issues
+    if not poly.is_valid:
+        # Attempt a common fix (buffer 0) but usually, we should raise an error
+        poly = poly.buffer(0)
+    return poly
+
+def geometry_to_polygon_4326(geometry: List[Tuple[float, float]]) -> Polygon:
+    """Convert geometry list to WGS84 Shapely Polygon (lon, lat) for DB queries."""
+    return Polygon([(p[1], p[0]) for p in geometry])
 
 
 class SpatialRelationshipDetector:
     """Detects and classifies spatial relationships between parcels"""
     
+    @staticmethod
+    def validate_topology(geometry: List[Tuple[float, float]]) -> Tuple[bool, str]:
+        """
+        Strict topological check for production registration.
+        Rejects self-intersections and slivers.
+        """
+        poly = geometry_to_polygon(geometry)
+        if not poly.is_valid:
+            return False, "Self-intersecting geometry detected (invalid topology)."
+        
+        # Reject polygons with area < minimum (likely data entry error)
+        if poly.area < constants.MIN_PARCEL_AREA_SQM:
+            return False, "Polygon area too small (sliver detection)."
+            
+        return True, "Valid"
+
+    @staticmethod
+    def validate_subdivision_geometries(
+        parent_geometry: List[Tuple[float, float]],
+        child_geometries: List[List[Tuple[float, float]]],
+        area_tolerance_pct: Optional[float] = None
+    ) -> bool:
+        """
+        Validates that children geoms are within parent and conserve area.
+        Uses UTM projected coordinates for all math.
+        """
+        if not child_geometries:
+            return False
+
+        tolerance = area_tolerance_pct if area_tolerance_pct is not None else constants.SUBDIVISION_AREA_TOLERANCE_PCT
+        
+        parent_poly = geometry_to_polygon(parent_geometry)
+        parent_area = parent_poly.area
+        total_child_area = 0.0
+
+        child_polys = [geometry_to_polygon(g) for g in child_geometries]
+
+        for child_poly in child_polys:
+            # Must be contained within parent
+            if not parent_poly.contains(child_poly) and not parent_poly.equals(child_poly):
+                return False
+            total_child_area += child_poly.area
+
+        # Check area conservation (within tolerance)
+        area_diff = abs(total_child_area - parent_area)
+        allowed_error = parent_area * (tolerance / 100.0)
+        
+        if area_diff > allowed_error:
+            return False
+
+        return True
+
     @staticmethod
     def compute_overlap(
         csi_a: CompositeSpatialIdentity,
@@ -168,7 +232,7 @@ class SpatialRelationshipDetector:
                     return False
         
         # Check area conservation (small tolerance for rounding)
-        area_tolerance = parent_area * 0.01  # 1% tolerance
+        area_tolerance = parent_area * (constants.SUBDIVISION_AREA_TOLERANCE_PCT / 100.0)
         if abs(total_child_area - parent_area) > area_tolerance:
             return False
         

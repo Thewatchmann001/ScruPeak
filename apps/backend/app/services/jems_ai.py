@@ -9,7 +9,7 @@ import logging
 import json
 import os
 from typing import Dict, Optional, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 from app.core.config import get_settings
@@ -18,6 +18,17 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "https://ai-service-prod-198638918293.us-central1.run.app")
+
+# Enhanced terminology context for Sierra Leone Land domain extraction
+AFRICA_LAND_EXTRACTION_PROMPT = """
+Instructions: Extract land data for African Sovereign Land Registries.
+- Map 'OARG' to registry authority.
+- Identify 'Deed of Conveyance' or 'Statutory Declaration' as primary title sources.
+- Parse 'Town Lots' or 'Acres' as the area unit.
+- Extract 'Survey Numbers', 'UTM Coordinates', and 'OARG Registration Volume/Page'.
+- Detect 'Stamp Duty' and 'Ground Rent' status.
+- Verify settlement via Pan-African Payment and Settlement System (PAPSS) identifiers.
+"""
 
 class JemsAIService:
     """
@@ -49,7 +60,7 @@ class JemsAIService:
                     "explanation": "Internal routing to Mistral AI service active.",
                     "cautions": ["Advisory only."],
                     "next_steps": ["Consult a professional."],
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
         except Exception as e:
             logger.error(f"Guidance error: {e}")
@@ -76,7 +87,7 @@ class JemsAIService:
                     "summary": "Document moderation check completed.",
                     "red_flags": ["Flagged"] if data.get("flagged") else [],
                     "recommendations": ["Manual review required"] if data.get("flagged") else ["Looks good."],
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
         except Exception as e:
             logger.error(f"Document review error: {e}")
@@ -88,11 +99,26 @@ class JemsAIService:
         document_type: str = "land_document"
     ) -> Dict[str, Any]:
         """Extract data - fallback to basic or use a specific extraction endpoint if added to main.py"""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{AI_SERVICE_URL}/ai/extract-land-data",
+                    json={
+                        "text": document_text,
+                        "document_type": document_type,
+                        "domain_rules": SL_LAND_EXTRACTION_PROMPT
+                    }
+                )
+                if response.status_code == 200:
+                    return {"success": True, "data": response.json().get("data")}
+        except Exception as e:
+            logger.error(f"Extraction error: {e}")
+            
         # For now, returning a structure that won't break the caller
         return {
             "success": False,
             "error": "Extraction endpoint needs migration to Mistral",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 # Singleton instance

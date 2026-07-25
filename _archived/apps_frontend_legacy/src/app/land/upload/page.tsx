@@ -12,11 +12,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { extractLandMetadata } from "@/lib/aiDocumentProcessor";
 
 export default function UploadLandPage() {
   const [formData, setFormData] = useState({
@@ -31,6 +33,8 @@ export default function UploadLandPage() {
   const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const landTypes = [
     { value: "residential", label: "Residential" },
@@ -53,33 +57,79 @@ export default function UploadLandPage() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImages(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      setImages(files);
+
+      // If a document is uploaded, try to extract data via AI
+      const docFile = files.find(f => f.type === 'application/pdf' || f.name.match(/\.(jpg|jpeg|png)$/i));
+      if (docFile) {
+        setIsAiProcessing(true);
+        try {
+          const result = await extractLandMetadata(docFile);
+          setFormData(prev => ({
+            ...prev,
+            title: result.ownerName ? `Property of ${result.ownerName}` : prev.title,
+            dimensions: result.dimensions || prev.dimensions,
+            area: result.areaSquareMeters?.toString() || prev.area,
+          }));
+          // You could also show a toast here: "AI extracted data from your deed!"
+        } catch (err) {
+          console.error("AI processing failed, user will fill manually", err);
+        } finally {
+          setIsAiProcessing(false);
+        }
+      }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    // Simulate upload
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        data.append(key, value);
+      });
+      
+      images.forEach((image) => {
+        data.append("images", image);
+      });
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/land/`, {
+        method: 'POST',
+        body: data,
+        // Note: Browser automatically sets Content-Type to multipart/form-data with boundary
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json();
+        throw new Error(errorBody.detail || "Failed to publish land listing");
+      }
+
       setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        setFormData({
-          title: "",
-          location: "",
-          price: "",
-          area: "",
-          dimensions: "",
-          description: "",
-          landType: "residential",
-        });
-        setImages([]);
-      }, 3000);
-    }, 2000);
+      setFormData({
+        title: "",
+        location: "",
+        price: "",
+        area: "",
+        dimensions: "",
+        description: "",
+        landType: "residential",
+      });
+      setImages([]);
+      
+      // Clear success message after delay
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred while uploading.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -119,6 +169,7 @@ export default function UploadLandPage() {
           <Card className="p-4 bg-green-500/5 border border-green-500/20">
             <div className="flex items-start gap-3">
               <Loader className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5 animate-spin-slow" />
+              <Loader2 className={`w-5 h-5 text-green-500 flex-shrink-0 mt-0.5 ${isAiProcessing ? 'animate-spin' : ''}`} />
               <div>
                 <p className="font-medium text-sm">AI Processing</p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -153,6 +204,19 @@ export default function UploadLandPage() {
                 <p className="text-sm text-green-600 mt-1">
                   Your land is now visible on the marketplace. Buyers can start viewing and making offers.
                 </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <Card className="p-6 mb-8 bg-destructive/10 border border-destructive/30">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-destructive">Listing Failed</p>
+                <p className="text-sm text-destructive/80 mt-1">{error}</p>
               </div>
             </div>
           </Card>
@@ -243,7 +307,7 @@ export default function UploadLandPage() {
               <div className="space-y-2">
                 <label className="block font-medium flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
-                  Price (₦)
+                  Price (USD)
                 </label>
                 <Input
                   type="number"
@@ -324,9 +388,12 @@ export default function UploadLandPage() {
               className="w-full bg-primary hover:bg-primary/90 text-white h-12 text-base"
             >
               {loading ? (
+              {loading || isAiProcessing ? (
                 <>
                   <Loader className="w-4 h-4 mr-2 animate-spin" />
                   Publishing Your Land...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isAiProcessing ? "AI analyzing deed..." : "Publishing Your Land..."}
                 </>
               ) : (
                 <>
